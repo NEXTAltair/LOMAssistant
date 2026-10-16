@@ -24,6 +24,7 @@
     - [多功能 Mod](https://mod.3dmgame.com/mod/210629)：Jim97
     - [任意位置存档](https://mod.3dmgame.com/mod/210679)：NothingNullNull
 - 修炼、锻造、炼丹相关功能参考了风灵月影《活侠传》修改器的功能思路（未使用其代码）。
+- 存档备注在存档栏下方单独显示的做法，移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 许可）及其[汉化版](https://github.com/shiluodeqiou/LOM_SaveSlotExpander-zh)（shiluodeqiou）。
 - 下载包中附带的 [BepInEx](https://github.com/BepInEx/BepInEx)、[UnityDoorstop](https://github.com/NeighTools/UnityDoorstop)、[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) 为各自作者的开源项目，按其原许可证分发。
 
 如果原作者不希望本项目公开，请提 issue 联系，会及时处理。
@@ -54,7 +55,7 @@
   - 弹珠小游戏中：直接设定总分、得分倍率
   - 存档/读档界面中：给所选存档写备注
 - **存档栏位**：手动存档栏位从 20 个增加到 100 个（配置 `SaveSlotCount`）。
-- **存档备注**：在存档/读档界面按 F8，可给所选存档写备注，备注显示在存档栏位标题后面。备注保存为存档旁的 `Save_XXX.dat.note`，随 Steam 云存档同步。
+- **存档备注**：在存档/读档界面按 F8，可给所选存档写备注，备注以「【备注】」显示在存档栏下方。备注保存为存档旁的 `Save_XXX.dat.note`，随 Steam 云存档同步。
 - **自动存档历史**：养成、剧情、战斗三类自动存档各额外保留 5 个旧档（配置 `AutoSaveHistory`）。读档界面每张自动存档卡片右侧的 ▲/▼ 可以切换到较新/更早的旧档，再点卡片读取。
 - **增强存档（随时存档）默认关闭**：原版的这个功能在新版游戏中会导致读档回到上个事件、出现奇怪背景音。仍可在配置中用 `EnableSaveSystem` 打开。
 

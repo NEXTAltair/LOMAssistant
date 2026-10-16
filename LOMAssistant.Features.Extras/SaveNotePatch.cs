@@ -9,12 +9,10 @@ namespace LOMAssistant.Features.Extras;
 
 /// <summary>
 /// 存档备注：每个手动存档旁边存一个 Save_XXX.dat.note（UTF-8 文本），会随云存档一起同步。
-/// 存档/读档界面的标题行显示为“第X年X月X旬｜备注”；在存档/读档界面按 F8，可给所选存档写备注。
+/// 存档/读档界面在存档栏下方显示“【备注】”；在存档/读档界面按 F8，可给所选存档写备注。
 /// </summary>
 public static class SaveNotePatch
 {
-	private const string Separator = "｜";
-
 	// slot -> note, so the F8 panel doesn't re-read the file on every GUI event.
 	private static readonly System.Collections.Generic.Dictionary<string, string> Cache = new System.Collections.Generic.Dictionary<string, string>();
 
@@ -87,7 +85,7 @@ public static class SaveNotePatch
 		return dat + ".note";
 	}
 
-	// ---- 显示：在各存档栏位的标题后追加备注 ----
+	// ---- 显示：在各存档栏位下方单独一行显示“【备注】” ----
 
 	[HarmonyPostfix]
 	[HarmonyPatch(typeof(SaveSlotPanel), "SetupText")]
@@ -112,28 +110,9 @@ public static class SaveNotePatch
 
 	private static void AppendNote(object panel, GameSave data)
 	{
-		if (data == null)
-		{
-			return;
-		}
 		var tr = Traverse.Create(panel);
-		string note = GetNote(tr.Field("_slot").GetValue<string>());
-		if (note.Length == 0)
-		{
-			return;
-		}
-		Text[] titles = tr.Field("_titleText").GetValue<Text[]>();
-		if (titles == null)
-		{
-			return;
-		}
-		foreach (Text t in titles)
-		{
-			if (t != null && !t.text.Contains(Separator))
-			{
-				t.text = t.text + Separator + note;
-			}
-		}
+		string note = data != null ? GetNote(tr.Field("_slot").GetValue<string>()) : "";
+		SaveNoteLabel.Apply((UnityEngine.Component)panel, tr.Field("_titleText").GetValue<Text[]>(), tr.Field("_timeText").GetValue<Text[]>(), note);
 	}
 
 	// ---- 删除存档时一并删除备注 ----
