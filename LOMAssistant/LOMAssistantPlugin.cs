@@ -17,7 +17,7 @@ using UnityEngine;
 
 namespace LOMAssistant;
 
-[BepInPlugin("LOMAssistant", "活侠传助手", "1.0.0")]
+[BepInPlugin("LOMAssistant", "活侠传拓展", "1.0.0")]
 public class LOMAssistantPlugin : BaseUnityPlugin
 {
 	private Harmony _harmony;
@@ -35,8 +35,8 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 		ConfigManager.Init();
 		SaveManager.Init();
 		SaveManager.OnLoadComplete += SavePatches.RestoreMusicOnLoadComplete;
-		LogInfo("活侠传助手已加载。");
-		FileLogger.Log("活侠传助手已加载。");
+		LogInfo("活侠传拓展已加载。");
+		FileLogger.Log("活侠传拓展已加载。");
 		_harmony = new Harmony(base.Info.Metadata.GUID);
 		ApplyPatches();
 	}

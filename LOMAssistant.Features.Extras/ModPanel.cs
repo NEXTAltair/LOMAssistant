@@ -64,7 +64,7 @@ public class ModPanel : MonoBehaviour
 			_lastSections = sections;
 			_windowRect.height = 10f;
 		}
-		_windowRect = GUILayout.Window(WindowId, _windowRect, DrawWindow, "活侠传助手", _window);
+		_windowRect = GUILayout.Window(WindowId, _windowRect, DrawWindow, "活侠传拓展", _window);
 	}
 
 	private void DrawWindow(int id)

@@ -1,4 +1,4 @@
-# 活侠传助手
+# 活侠传拓展
 
 《活侠传》（Legend of Mortal）的 BepInEx 6 插件。
 

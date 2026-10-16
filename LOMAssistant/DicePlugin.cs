@@ -127,7 +127,7 @@ public class DicePlugin : MonoBehaviour
 		}
 		if (showLogWindow)
 		{
-			logWindowRect = GUILayout.Window(1, logWindowRect, DrawLogWindow, "活侠传助手");
+			logWindowRect = GUILayout.Window(1, logWindowRect, DrawLogWindow, "活侠传拓展");
 		}
 	}
 

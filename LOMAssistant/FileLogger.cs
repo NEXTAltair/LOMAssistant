@@ -28,7 +28,7 @@ public static class FileLogger
 			string path = "LOMAssistant_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".log";
 			_logFilePath = Path.Combine(text, path);
 			_initialized = true;
-			Log("活侠传助手日志系统已初始化。");
+			Log("活侠传拓展日志系统已初始化。");
 		}
 		catch (Exception ex)
 		{
