@@ -86,7 +86,7 @@ internal static class OptionInfoPatch
 		{
 			if (LuaParser.Instance.OptionResult.TryGetValue(key, out var value))
 			{
-				string text = LuaParser.Description(value);
+				string text = TextConverter.ToSimplified(LuaParser.Description(value));
 				if (!text.IsNullOrWhiteSpace())
 				{
 					string text2 = Regex.Replace(text, "<.*?>", string.Empty);

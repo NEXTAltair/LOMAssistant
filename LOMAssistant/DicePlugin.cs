@@ -133,19 +133,19 @@ public class DicePlugin : MonoBehaviour
 
 	public void AddOptionEntry(string key, string description = "")
 	{
-		key = RichText.Golden(key);
-		optionEntries.Add((key, description));
+		key = RichText.Golden(TextConverter.ToSimplified(key));
+		optionEntries.Add((key, TextConverter.ToSimplified(description)));
 	}
 
 	public void AddSwitchEntry(string key, string description)
 	{
-		key = RichText.Golden(key);
-		switchEntries.Add((key, description));
+		key = RichText.Golden(TextConverter.ToSimplified(key));
+		switchEntries.Add((key, TextConverter.ToSimplified(description)));
 	}
 
 	public void AddEventEntry(PositionEventData eventData, string key, string description)
 	{
-		eventEntries.Add((eventData, key, description));
+		eventEntries.Add((eventData, TextConverter.ToSimplified(key), TextConverter.ToSimplified(description)));
 	}
 
 	public void AddMissionEntry(MissionCheckData missionData, string key, string description)
