@@ -51,6 +51,8 @@ public static class ConfigManager
 
 	public static ConfigElement<int> AutoSaveHistory;
 
+	public static ConfigElement<bool> EnableShopAllItems;
+
 	public static ConfigElement<bool> EnableDebugPanel;
 
 	public static ConfigElement<KeyCode> DebugPanelKey;
@@ -141,6 +143,7 @@ public static class ConfigManager
 		CheatDuelNoDamage = new ConfigElement<bool>("CheatDuelNoDamage", "决斗中造成伤害为 0：敌方不受伤害（可在游戏内面板切换）", defaultValue: false);
 		SaveSlotCount = new ConfigElement<int>("SaveSlotCount", "手动存档栏位数量（原版 20，小于 20 时按 20）", 100);
 		AutoSaveHistory = new ConfigElement<int>("AutoSaveHistory", "每类自动存档（养成/剧情/战斗）额外保留的旧档数量，0=不保留", 5);
+		EnableShopAllItems = new ConfigElement<bool>("EnableShopAllItems", "四师兄商店售卖全部物品（书籍、杂物、特殊物品；不卖《证类本草》，提前买会导致六月后山事件出 bug）。true=开，false=关，改后重启生效", defaultValue: false);
 		EnableDebugPanel = new ConfigElement<bool>("EnableDebugPanel", "是否启用游戏内置测试面板。true=开，false=关，改后重启生效", defaultValue: true);
 		DebugPanelKey = new ConfigElement<KeyCode>("DebugPanelKey", "打开游戏内置测试面板的热键，如 F9 / P 等", KeyCode.F9);
 		EnableSaveSystem = new ConfigElement<bool>("EnableSaveSystem", "是否启用增强存档系统（随时存档/读档）。true=开，false=关，改后重启生效", defaultValue: false);

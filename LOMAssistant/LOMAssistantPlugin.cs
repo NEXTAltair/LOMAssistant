@@ -146,6 +146,8 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			LogInfo("存档备注补丁已应用。");
 			_harmony.PatchAll(typeof(AutoSaveHistoryPatch));
 			LogInfo("自动存档历史补丁已应用。");
+			_harmony.PatchAll(typeof(ShopAllItemsPatch));
+			LogInfo(ConfigManager.EnableShopAllItems.Value ? "四师兄商店补丁已应用（售卖全部物品：开）。" : "四师兄商店补丁已应用（售卖全部物品：关）。");
 			if (!ConfigManager.EnableSaveSystem.Value)
 			{
 				return;
