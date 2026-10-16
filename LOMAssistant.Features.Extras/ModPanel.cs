@@ -9,7 +9,7 @@ using UnityEngine.EventSystems;
 namespace LOMAssistant.Features.Extras;
 
 /// <summary>
-/// 游戏内面板（默认 F8）：修炼/锻造/炼丹开关；弹珠小游戏中额外显示分数设置；存档/读档界面中可给所选存档写备注。
+/// 游戏内面板（默认 F8）：修炼/锻造/炼丹/决斗开关；天命点；弹珠小游戏中额外显示分数设置；存档/读档界面中可给所选存档写备注。
 /// 修改即时生效并保存到配置文件。
 /// </summary>
 public class ModPanel : MonoBehaviour
@@ -28,6 +28,7 @@ public class ModPanel : MonoBehaviour
 	private PinballManager _boundPinball;
 	private string _totalInput = "";
 	private string _multiplierInput = "";
+	private string _fateInput;
 
 	private int _lastSections;
 
@@ -57,7 +58,7 @@ public class ModPanel : MonoBehaviour
 		}
 		// Shrink to content only when the pinball section appears or disappears; resetting
 		// the height on every OnGUI call (Layout/Repaint/mouse events) makes the window flicker.
-		int sections = (PinballManager.Instance != null && PinballManager.Instance.isActiveAndEnabled ? 1 : 0) | (GetNoteSlot() != null ? 2 : 0);
+		int sections = (PinballManager.Instance != null && PinballManager.Instance.isActiveAndEnabled ? 1 : 0) | (GetNoteSlot() != null ? 2 : 0) | (InGame() ? 8 : 0);
 		if (sections != _lastSections && Event.current.type == EventType.Layout)
 		{
 			_lastSections = sections;
@@ -82,6 +83,7 @@ public class ModPanel : MonoBehaviour
 		{
 			DrawPinball(pinball);
 		}
+		DrawFate();
 		DrawNote();
 		GUI.DragWindow();
 	}
@@ -153,6 +155,43 @@ public class ModPanel : MonoBehaviour
 			return null;
 		}
 		return _noteSlot;
+	}
+
+	// 天命点（GameStatType.命運），骰子“逆天”时消耗；只在进入存档后（地图/剧情）显示。
+	private static bool InGame()
+	{
+		return (Mortal.Free.FreeManager.Instance != null && Mortal.Free.FreeManager.Instance.isActiveAndEnabled)
+			|| (Mortal.Story.StoryManager.Instance != null && Mortal.Story.StoryManager.Instance.isActiveAndEnabled);
+	}
+
+	private void DrawFate()
+	{
+		if (!InGame())
+		{
+			_fateInput = null;
+			return;
+		}
+		GameStat fate = PlayerStatManagerData.Instance.Stats.Get(GameStatType.命運);
+		if (fate == null)
+		{
+			return;
+		}
+		if (_fateInput == null)
+		{
+			_fateInput = fate.Value.ToString();
+		}
+		GUILayout.Space(8f * _scale);
+		GUILayout.BeginHorizontal();
+		GUILayout.Label($"天命点 {fate.FinalValue}/{fate.Max}", _label, GUILayout.Width(170f * _scale));
+		_fateInput = GUILayout.TextField(_fateInput, 6, _field, GUILayout.Width(100f * _scale));
+		if (GUILayout.Button("设定", _button) && int.TryParse(_fateInput.Trim(), out int value))
+		{
+			int old = fate.Value;
+			fate.SetValue(value);
+			_fateInput = fate.Value.ToString();
+			FileLogger.Log($"天命点：{old} -> {fate.Value}（面板修改）");
+		}
+		GUILayout.EndHorizontal();
 	}
 
 	private void DrawNote()
