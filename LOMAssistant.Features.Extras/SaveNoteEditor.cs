@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 namespace LOMAssistant.Features.Extras;
 
 /// <summary>
-/// 存档备注输入框（IMGUI，屏幕居中）。存档后自动弹出，也可以从 F8 面板打开。
+/// 存档备注输入框（IMGUI，屏幕居中），从 F8 面板打开。
 /// </summary>
 public class SaveNoteEditor : MonoBehaviour
 {
@@ -72,9 +72,32 @@ public class SaveNoteEditor : MonoBehaviour
 		Input.imeCompositionMode = _prevIme;
 		if (_pausedEventSystem != null)
 		{
-			_pausedEventSystem.enabled = true;
+			StartCoroutine(ResumeEventSystem(_pausedEventSystem));
 			_pausedEventSystem = null;
 		}
+	}
+
+	// Re-enable the game UI only after the click/Enter that closed the box is released,
+	// otherwise the same click lands on the save slot behind it (e.g. reopening "overwrite?").
+	private System.Collections.IEnumerator ResumeEventSystem(EventSystem eventSystem)
+	{
+		yield return null;
+		while (Input.GetMouseButton(0) || Input.GetMouseButton(1) || Input.GetKey(KeyCode.Return) || Input.GetKey(KeyCode.KeypadEnter))
+		{
+			yield return null;
+		}
+		yield return null;
+		if (eventSystem == null)
+		{
+			yield break;
+		}
+		if (IsOpen)
+		{
+			// Reopened meanwhile: keep it paused and let the next Close restore it.
+			_pausedEventSystem = eventSystem;
+			yield break;
+		}
+		eventSystem.enabled = true;
 	}
 
 	private void OnGUI()

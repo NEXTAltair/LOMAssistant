@@ -9,7 +9,7 @@ namespace LOMAssistant.Features.Extras;
 
 /// <summary>
 /// 存档备注：每个手动存档旁边存一个 Save_XXX.dat.note（UTF-8 文本），会随云存档一起同步。
-/// 存档/读档界面的标题行显示为“第X年X月X旬｜备注”；存档后弹出备注输入框。
+/// 存档/读档界面的标题行显示为“第X年X月X旬｜备注”；在存档/读档界面按 F8，可给所选存档写备注。
 /// </summary>
 public static class SaveNotePatch
 {
@@ -143,36 +143,5 @@ public static class SaveNotePatch
 	public static void SaveSystem_DeleteSaveData_Postfix(string slot)
 	{
 		SetNote(slot, "");
-	}
-
-	// ---- 存档后弹出备注输入框 ----
-
-	[HarmonyPrefix]
-	[HarmonyPatch(typeof(SaveGamePanel), "ConfirmSaveSlot")]
-	public static void SaveGamePanel_ConfirmSaveSlot_Prefix(SaveGamePanel __instance, out string __state)
-	{
-		__state = Traverse.Create(__instance).Field("_currentConfirmSlot").GetValue<string>();
-	}
-
-	[HarmonyPostfix]
-	[HarmonyPatch(typeof(SaveGamePanel), "ConfirmSaveSlot")]
-	public static void SaveGamePanel_ConfirmSaveSlot_Postfix(SaveGamePanel __instance, string __state)
-	{
-		OpenEditor(__instance, __state);
-	}
-
-	[HarmonyPostfix]
-	[HarmonyPatch(typeof(SaveGamePanel), "SaveData")]
-	public static void SaveGamePanel_SaveData_Postfix(SaveGamePanel __instance, string number)
-	{
-		OpenEditor(__instance, number);
-	}
-
-	private static void OpenEditor(SaveGamePanel panel, string slot)
-	{
-		if (IsManualSlot(slot))
-		{
-			SaveNoteEditor.Open(slot, () => Traverse.Create(panel).Method("UpdateSlot").GetValue());
-		}
 	}
 }
