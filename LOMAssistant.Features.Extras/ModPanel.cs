@@ -74,6 +74,8 @@ public class ModPanel : MonoBehaviour
 		Toggle(ConfigManager.CheatUnlimitedUpgrade, "无限锻造、炼丹次数");
 		Toggle(ConfigManager.CheatFastUpgrade, "快速锻造、炼丹");
 		Toggle(ConfigManager.CheatFreeUpgradeMoney, "锻造、炼丹不消耗银两");
+		Toggle(ConfigManager.CheatDuelInvincible, "决斗中无敌");
+		Toggle(ConfigManager.CheatDuelNoDamage, "决斗中造成伤害为0");
 
 		PinballManager pinball = PinballManager.Instance;
 		if (pinball != null && pinball.isActiveAndEnabled)

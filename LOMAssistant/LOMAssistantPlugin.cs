@@ -138,10 +138,14 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 				base.gameObject.AddComponent<ModPanel>();
 			}
 			LogInfo("修炼/锻造/炼丹修改补丁已应用。");
+			_harmony.PatchAll(typeof(DuelCheatPatch));
+			LogInfo("决斗修改补丁已应用。");
 			_harmony.PatchAll(typeof(SaveSlotPatch));
 			LogInfo("存档栏位补丁已应用。");
 			_harmony.PatchAll(typeof(SaveNotePatch));
 			LogInfo("存档备注补丁已应用。");
+			_harmony.PatchAll(typeof(AutoSaveHistoryPatch));
+			LogInfo("自动存档历史补丁已应用。");
 			if (!ConfigManager.EnableSaveSystem.Value)
 			{
 				return;
