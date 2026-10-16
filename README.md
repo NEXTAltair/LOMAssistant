@@ -1,0 +1,81 @@
+# 活侠传助手
+
+《活侠传》（Legend of Mortal）的 BepInEx 6 插件。
+
+在原版「活侠传助手」的基础上修复了新版游戏的兼容问题，并加入了一些新功能。
+
+## 下载安装
+
+**[⬇ 下载 LOMAssistant.zip](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip)**（已包含 BepInEx，解压即用）
+
+1. Steam 中右键《活侠传》→ 管理 → 浏览本地文件，打开游戏目录（里面有 `Mortal.exe`）。
+2. 把压缩包里的所有内容解压到这个目录，提示同名文件时选择覆盖。
+3. 正常启动游戏即可。
+
+之前装过旧版 BepInEx 或原版助手的，同样直接覆盖即可。卸载：删除游戏目录下的 `winhttp.dll`。
+
+## 来源声明
+
+本项目不是从零开发的，功能思路和大部分代码来自以下作者，在此感谢：
+
+- **[活侠传助手](https://mod.3dmgame.com/mod/256420)**：作者 爱死（3DM：wowowo4567）。本项目的基础，源码由其发布的插件反编译而来后再修改。
+  - 该 Mod 又整合自三个原 Mod：
+    - [骰子大师](https://mod.3dmgame.com/mod/210536)：Gmhaxx
+    - [多功能 Mod](https://mod.3dmgame.com/mod/210629)：Jim97
+    - [任意位置存档](https://mod.3dmgame.com/mod/210679)：NothingNullNull
+- 修炼、锻造、炼丹相关功能参考了风灵月影《活侠传》修改器的功能思路（未使用其代码）。
+- 下载包中附带的 [BepInEx](https://github.com/BepInEx/BepInEx)、[UnityDoorstop](https://github.com/NeighTools/UnityDoorstop)、[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) 为各自作者的开源项目，按其原许可证分发。
+
+如果原作者不希望本项目公开，请提 issue 联系，会及时处理。
+
+## 功能
+
+### 原版助手已有
+
+- Tab：信息窗口（选项、开关、事件、任务）
+- 对话选项结果直接显示
+- 骰子手动选择：点击线路直接选中，跳过逆天判定
+- 讲经堂解锁显示
+- 决斗中按 ESC，菜单里有“直接获胜”
+- F9：游戏内置的测试/编辑面板
+
+### 本项目新增 / 修改
+
+- **适配新版游戏**：修复新版游戏中 `CharacterIntroPanel.Show` 新增重载导致的补丁报错。
+- **空过**：唐门地图界面按 ESC，菜单里有“空过”，消耗 1 次行动、不触发任何事件。主线任务等待中时不可空过。
+- **团战直接获胜**：团战中按 ESC 暂停，菜单里有“直接获胜”。
+- **F8 面板**（勾选即时生效，自动保存到配置）：
+  - 无限修炼次数（武学点补满）、快速修炼
+  - 无限锻造、炼丹次数（锻造点、炼丹点补满）、快速锻造、炼丹
+  - 锻造、炼丹不消耗银两
+  - 弹珠小游戏中：直接设定总分、得分倍率
+  - 存档/读档界面中：给所选存档写备注
+- **存档栏位**：手动存档栏位从 20 个增加到 100 个（配置 `SaveSlotCount`）。
+- **存档备注**：存档后弹出备注输入框，备注显示在存档栏位标题后面。备注保存为存档旁的 `Save_XXX.dat.note`，随 Steam 云存档同步。
+- **增强存档（随时存档）默认关闭**：原版的这个功能在新版游戏中会导致读档回到上个事件、出现奇怪背景音。仍可在配置中用 `EnableSaveSystem` 打开。
+
+## 设置
+
+常用开关都在游戏内 F8 面板里。其余设置在首次启动后生成的 `BepInEx\config\LOMAssistant.cfg` 中，改完重启游戏生效。
+
+## 从源码构建
+
+普通玩家直接用上面的下载包即可，这一节只给想改代码的人。
+
+需要 .NET 8 SDK 和已安装 BepInEx 6（Unity.Mono，x64）的游戏目录（编译时直接引用游戏和 BepInEx 的程序集，本仓库不包含任何游戏文件）。
+
+```bash
+GAME="D:/Steam/steamapps/common/LegendOfMortal" DOTNET=/path/to/dotnet ./build.sh
+```
+
+脚本直接调用 Roslyn（csc）编译，并把 `LOMAssistant.dll` 复制进游戏的 `BepInEx\plugins\LOMAssistant\`。`Newtonsoft.Json.dll` 可以从下载包中获取。
+
+## 目录
+
+| 目录 | 内容 |
+|---|---|
+| `LOMAssistant/` | 插件入口、日志、骰子与信息窗口等（原版） |
+| `LOMAssistant.Config/` | 配置项 |
+| `LOMAssistant.Features.*` | 原版各功能 |
+| `LOMAssistant.Features.Extras/` | 本项目新增的功能 |
+| `build.sh` | 构建脚本 |
