@@ -42,6 +42,7 @@ public class ModPanel : MonoBehaviour
 			_visible = !_visible;
 		}
 		TrackSelectedSlot();
+		GameSpeed.Tick();
 	}
 
 	private void OnGUI()
@@ -77,6 +78,7 @@ public class ModPanel : MonoBehaviour
 		Toggle(ConfigManager.CheatFreeUpgradeMoney, "锻造、炼丹不消耗银两");
 		Toggle(ConfigManager.CheatDuelInvincible, "决斗中无敌");
 		Toggle(ConfigManager.CheatDuelNoDamage, "决斗中造成伤害为0");
+		DrawSpeed();
 
 		PinballManager pinball = PinballManager.Instance;
 		if (pinball != null && pinball.isActiveAndEnabled)
@@ -124,6 +126,24 @@ public class ModPanel : MonoBehaviour
 		{
 			GUILayout.Label($"配置中固定总分 {ConfigManager.PinballFixedScore.Value}，离开时覆盖", _label);
 		}
+	}
+
+	private void DrawSpeed()
+	{
+		GUILayout.Space(8f * _scale);
+		GUILayout.BeginHorizontal();
+		GUILayout.Label("游戏倍速", _label, GUILayout.Width(120f * _scale));
+		float current = ConfigManager.GameSpeed.Value;
+		foreach (float option in GameSpeed.Options)
+		{
+			bool selected = Mathf.Approximately(current, option);
+			bool on = GUILayout.Toggle(selected, option + "x", _button);
+			if (on && !selected)
+			{
+				GameSpeed.Set(option);
+			}
+		}
+		GUILayout.EndHorizontal();
 	}
 
 	private void TrackSelectedSlot()
