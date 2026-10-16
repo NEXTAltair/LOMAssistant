@@ -4,6 +4,8 @@
 
 在原版「活侠传助手」的基础上修复了新版游戏的兼容问题，并加入了一些新功能。
 
+**[▶ B 站功能演示视频](https://www.bilibili.com/video/BV1LZJh6YEUy/)**（3 分钟看完全部功能和安装方法）
+
 ## 下载安装
 
 **[⬇ 下载 LOMAssistant.zip](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip)**（已包含 BepInEx，解压即用）
