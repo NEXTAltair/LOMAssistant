@@ -18,6 +18,7 @@ public static class SaveNotePatch
 
 	public static string GetNote(string slot)
 	{
+		ImportFromSaveSlotExpander();
 		if (slot != null && Cache.TryGetValue(slot, out string cached))
 		{
 			return cached;
@@ -83,6 +84,78 @@ public static class SaveNotePatch
 		}
 		string dat = Traverse.Create(SaveSystem.Instance).Method("GetSaveDataFile", new[] { typeof(string) }).GetValue<string>(slot);
 		return dat + ".note";
+	}
+
+	// ---- 从 LOM_SaveSlotExpander 迁移备注（一次性） ----
+
+	private const string ExpanderCommentFile = "SaveSlotComments.ini";
+	private const string ImportedMarker = ".imported";
+	private static bool _importChecked;
+
+	/// <summary>
+	/// LOM_SaveSlotExpander 把备注存在存档目录的 SaveSlotComments.ini（“001 = 备注”）。
+	/// 第一次读备注时把它们导入成我们的 Save_XXX.dat.note：已有我们备注的栏位跳过，
+	/// 对方的 ini 不改动；导入后写一个 .imported 标记，之后不再重复导入
+	/// （否则在我们这边删掉的备注下次启动又会回来）。
+	/// </summary>
+	private static void ImportFromSaveSlotExpander()
+	{
+		if (_importChecked || SaveSystem.Instance == null)
+		{
+			return;
+		}
+		_importChecked = true;
+		try
+		{
+			string anyDat = Traverse.Create(SaveSystem.Instance).Method("GetSaveDataFile", new[] { typeof(string) }).GetValue<string>("001");
+			string dir = anyDat != null ? Path.GetDirectoryName(anyDat) : null;
+			string ini = dir != null ? Path.Combine(dir, ExpanderCommentFile) : null;
+			if (ini == null || !File.Exists(ini) || File.Exists(ini + ImportedMarker))
+			{
+				return;
+			}
+			int imported = 0, skipped = 0;
+			foreach (string raw in File.ReadAllLines(ini, Encoding.UTF8))
+			{
+				string line = raw.Trim();
+				if (line.Length == 0 || line[0] == '#' || line[0] == ';' || line[0] == '[')
+				{
+					continue;
+				}
+				int sep = line.IndexOf('=');
+				if (sep <= 0)
+				{
+					continue;
+				}
+				string key = line.Substring(0, sep).Trim();
+				string value = line.Substring(sep + 1).Trim();
+				if (!int.TryParse(key, out int number) || number <= 0 || value.Length == 0)
+				{
+					continue;
+				}
+				string slot = number.ToString().PadLeft(3, '0');
+				string path = GetNotePath(slot);
+				if (path == null)
+				{
+					continue;
+				}
+				if (File.Exists(path) && File.ReadAllText(path, Encoding.UTF8).Trim().Length > 0)
+				{
+					skipped++;
+					continue;
+				}
+				SetNote(slot, value);
+				imported++;
+			}
+			File.WriteAllText(ini + ImportedMarker, $"活侠传拓展已于 {DateTime.Now:yyyy-MM-dd HH:mm:ss} 导入本文件的备注：{imported} 条，跳过 {skipped} 条（已有备注）。\r\n删除本文件会在下次启动时重新导入。\r\n", new UTF8Encoding(false));
+			string msg = $"存档备注：已从 LOM_SaveSlotExpander 导入 {imported} 条备注，跳过 {skipped} 条（已有备注）。";
+			LOMAssistantPlugin.LogInfo(msg);
+			FileLogger.Log(msg);
+		}
+		catch (Exception e)
+		{
+			LOMAssistantPlugin.LogError("存档备注：导入 LOM_SaveSlotExpander 备注失败: " + e.Message);
+		}
 	}
 
 	// ---- 显示：在各存档栏位下方单独一行显示“【备注】” ----
