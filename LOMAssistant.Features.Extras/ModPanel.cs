@@ -24,6 +24,7 @@ public class ModPanel : MonoBehaviour
 	private GUIStyle _button;
 	private GUIStyle _field;
 	private GUIStyle _window;
+	private GUIStyle _warning;
 
 	private PinballManager _boundPinball;
 	private string _totalInput = "";
@@ -31,6 +32,7 @@ public class ModPanel : MonoBehaviour
 	private string _fateInput;
 
 	private int _lastSections;
+	private bool _conflictShown;
 
 	// Last save/load slot the player selected (clicking this IMGUI window can clear the uGUI selection).
 	private MonoBehaviour _noteSlot;
@@ -43,6 +45,12 @@ public class ModPanel : MonoBehaviour
 		}
 		TrackSelectedSlot();
 		GameSpeed.Tick();
+		// 检测到冲突时自动弹出一次面板，玩家不按 F8 也能看到
+		if (ConflictDetector.Warnings.Count > 0 && !_conflictShown)
+		{
+			_conflictShown = true;
+			_visible = true;
+		}
 	}
 
 	private void OnGUI()
@@ -59,7 +67,7 @@ public class ModPanel : MonoBehaviour
 		}
 		// Shrink to content only when the pinball section appears or disappears; resetting
 		// the height on every OnGUI call (Layout/Repaint/mouse events) makes the window flicker.
-		int sections = (PinballManager.Instance != null && PinballManager.Instance.isActiveAndEnabled ? 1 : 0) | (GetNoteSlot() != null ? 2 : 0) | (InGame() ? 8 : 0);
+		int sections = (PinballManager.Instance != null && PinballManager.Instance.isActiveAndEnabled ? 1 : 0) | (GetNoteSlot() != null ? 2 : 0) | (InGame() ? 8 : 0) | (ConflictDetector.Warnings.Count > 0 ? 16 : 0);
 		if (sections != _lastSections && Event.current.type == EventType.Layout)
 		{
 			_lastSections = sections;
@@ -71,6 +79,10 @@ public class ModPanel : MonoBehaviour
 	private void DrawWindow(int id)
 	{
 		GUILayout.Space(8f * _scale);
+		foreach (string warning in ConflictDetector.Warnings)
+		{
+			GUILayout.Label("【注意】" + warning, _warning);
+		}
 		Toggle(ConfigManager.CheatUnlimitedTraining, "无限修炼次数");
 		Toggle(ConfigManager.CheatFastTraining, "快速修炼");
 		Toggle(ConfigManager.CheatUnlimitedUpgrade, "无限锻造、炼丹次数");
@@ -269,6 +281,8 @@ public class ModPanel : MonoBehaviour
 		_button = new GUIStyle(GUI.skin.button) { fontSize = fontSize };
 		_field = new GUIStyle(GUI.skin.textField) { fontSize = fontSize };
 		_window = new GUIStyle(GUI.skin.window) { fontSize = fontSize };
+		_warning = new GUIStyle(_label) { fontStyle = FontStyle.Bold };
+		_warning.normal.textColor = new Color(1f, 0.45f, 0.35f);
 		_window.padding.top = (int)(30f * scale);
 	}
 }
