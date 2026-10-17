@@ -1,0 +1,41 @@
+using HarmonyLib;
+using Mortal.Core;
+using UnityEngine;
+
+namespace LOMAssistant.Features.Extras;
+
+/// <summary>
+/// 防止读档被连点两次。游戏的自动存档、最近存档卡片读档前不检查是否已经在读档，
+/// 点击被触发两次时会同时跑两个读档流程，把声音管理器等常驻对象弄坏，一直卡在读取中。
+/// 这里在读档开始后 3 秒内，或场景正在切换时，忽略再来的读档点击。
+/// </summary>
+public static class LoadClickGuard
+{
+	private const float Window = 3f;
+	private static float _lastLoad = -100f;
+
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(AutoSaveSlotPanel), "OnTitleClick")]
+	public static bool AutoSave_Prefix() => Allow("自动存档");
+
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(RecentSaveSlotPanel), "OnTitleClick")]
+	public static bool RecentSave_Prefix() => Allow("最近存档");
+
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(LoadSlotPanel), "OnTitleClick")]
+	public static bool LoadSlot_Prefix() => Allow("手动存档");
+
+	private static bool Allow(string kind)
+	{
+		SceneController scenes = SceneController.Instance;
+		bool busy = scenes != null && (scenes.IsPrepare || scenes.IsLoading);
+		if (busy || Time.realtimeSinceStartup - _lastLoad < Window)
+		{
+			FileLogger.Log($"读档：忽略重复的{kind}读档点击（正在读档）");
+			return false;
+		}
+		_lastLoad = Time.realtimeSinceStartup;
+		return true;
+	}
+}
