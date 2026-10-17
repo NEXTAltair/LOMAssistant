@@ -21,6 +21,23 @@ public static class AutoSaveHistoryPatch
 
 	[HarmonyPrefix]
 	[HarmonyPatch(typeof(SaveSystem), "AutoSaveData")]
+	public static void SaveSystem_AutoSaveData_Timing(out System.Diagnostics.Stopwatch __state)
+	{
+		__state = System.Diagnostics.Stopwatch.StartNew();
+	}
+
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(SaveSystem), "AutoSaveData")]
+	public static void SaveSystem_AutoSaveData_TimingEnd(string slot, System.Diagnostics.Stopwatch __state)
+	{
+		if (__state != null && __state.ElapsedMilliseconds >= 100)
+		{
+			FileLogger.Log($"[性能] 自动存档 {slot} 用时 {__state.ElapsedMilliseconds} 毫秒（含保留旧档）");
+		}
+	}
+
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(SaveSystem), "AutoSaveData")]
 	public static void SaveSystem_AutoSaveData_Prefix(SaveSystem __instance, string slot)
 	{
 		int max = MaxHistory;
@@ -65,21 +82,45 @@ public static class AutoSaveHistoryPatch
 		}
 	}
 
+	// 每类自动存档最近一次写入时的时间点（年月旬 + 场景 + 剧情脚本）。
+	private static readonly System.Collections.Generic.Dictionary<string, string> LastPoint = new System.Collections.Generic.Dictionary<string, string>();
+
 	/// <summary>
 	/// The game autosaves again whenever the scene reloads at the same point (e.g. re-entering
 	/// the hub with full actions); don't push those duplicates into the history.
+	/// 现在的时间点直接从游戏数据读；旧档的时间点记在内存里，只有本次启动后第一次才读一次文件。
+	/// 以前每次都把旧档完整反序列化、再多生成一份存档数据，存档大时每个节点都多卡一下。
 	/// </summary>
 	private static bool IsSamePoint(SaveSystem system, string slot)
 	{
-		AutoGameSave old = system.GetAutoSaveData(slot);
-		GameSave now = Traverse.Create(system).Method("CreateSaveData").GetValue<GameSave>();
-		if (old?.GameSave == null || now == null)
+		string now = CurrentPoint();
+		if (now == null)
 		{
 			return false;
 		}
-		GameSave o = old.GameSave;
-		return o.CurrentYear == now.CurrentYear && o.CurrentMonth == now.CurrentMonth && o.CurrentStage == now.CurrentStage
-			&& o.CurrentScene == now.CurrentScene && o.CurrentStoryScript == now.CurrentStoryScript;
+		if (!LastPoint.TryGetValue(slot, out string old))
+		{
+			GameSave o = system.GetAutoSaveData(slot)?.GameSave;
+			old = o == null ? null : PointKey(o.CurrentYear, o.CurrentMonth, o.CurrentStage, o.CurrentScene, o.CurrentStoryScript);
+		}
+		LastPoint[slot] = now;
+		return old == now;
+	}
+
+	private static string CurrentPoint()
+	{
+		PlayerStatManagerData stat = PlayerStatManagerData.Instance;
+		if (stat == null)
+		{
+			return null;
+		}
+		GameTime t = stat.GameTime;
+		return PointKey(t.Year, t.Month, t.Stage, stat.CurrentScene, stat.CurrentStoryScript);
+	}
+
+	private static string PointKey(int year, int month, object stage, string scene, string script)
+	{
+		return $"{year}-{month}-{stage}|{scene}|{script}";
 	}
 
 	private static string GetFile(SaveSystem system, string slot)
