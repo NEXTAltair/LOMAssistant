@@ -3,6 +3,7 @@ using System.Collections;
 using HarmonyLib;
 using Mortal.Core;
 using Mortal.Free;
+using Mortal.Story;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -12,6 +13,8 @@ namespace LOMAssistant.Features.Extras;
 /// 空过：在养成（唐门地图）界面的 ESC 菜单加一个“空过”按钮。
 /// 消耗 1 次行动但不执行任何场所脚本，然后走与剧情结束回到地图相同的流程
 /// （LuaManager.ChangeScene("Free")）：检查任务、行动次数归零时自动进入下一旬。
+/// 留学、在外行动时是剧情里的自由行动菜单（脚本名带 break_start），剧情 ESC 菜单里也有“空过”，
+/// 只在这类菜单所在的脚本里显示：消耗行动后重新载入剧情场景，和做完一项活动回到菜单的流程相同。
 /// </summary>
 public static class SkipActionPatch
 {
@@ -121,5 +124,99 @@ public static class SkipActionPatch
 		{
 			SceneController.Instance.LoadFree();
 		}
+	}
+
+	private const string StoryButtonName = "LOMAssistant_StorySkipButton";
+
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(StoryManager), "Awake")]
+	public static void StoryManager_Awake_Postfix(StoryManager __instance)
+	{
+		try
+		{
+			MenuPanel menu = Traverse.Create(__instance).Field("_menuPanelController").GetValue<MenuPanel>();
+			if (menu == null)
+			{
+				LOMAssistantPlugin.LogWarning("空过：找不到剧情界面菜单。");
+				return;
+			}
+			var tr = Traverse.Create(menu);
+			Button template = tr.Field("_continueButton").GetValue<Button>()
+				?? tr.Field("_loadButton").GetValue<Button>()
+				?? tr.Field("_titleButton").GetValue<Button>();
+			if (template == null)
+			{
+				return;
+			}
+			Button skip = MenuButtonHelper.CloneButton(template, "空过", StoryButtonName);
+			MenuNavChain.Ensure(skip.transform.parent);
+			skip.onClick.AddListener(OnStorySkipClick);
+			skip.gameObject.SetActive(false);
+		}
+		catch (Exception e)
+		{
+			LOMAssistantPlugin.LogError("空过：添加剧情菜单按钮失败: " + e);
+		}
+	}
+
+	// 打开剧情 ESC 菜单时，只在自由行动菜单的脚本里显示“空过”
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(StoryManager), "Menu")]
+	public static void StoryManager_Menu_Postfix(StoryManager __instance, bool enabled)
+	{
+		try
+		{
+			MenuPanel menu = Traverse.Create(__instance).Field("_menuPanelController").GetValue<MenuPanel>();
+			Transform skip = menu != null ? FindDeep(menu.transform, StoryButtonName) : null;
+			if (skip != null)
+			{
+				skip.gameObject.SetActive(enabled && InBreakMenu());
+			}
+		}
+		catch (Exception e)
+		{
+			FileLogger.LogWarning("空过：切换剧情菜单按钮失败: " + e.Message);
+		}
+	}
+
+	private static Transform FindDeep(Transform root, string name)
+	{
+		foreach (Transform t in root.GetComponentsInChildren<Transform>(includeInactive: true))
+		{
+			if (t.name == name)
+			{
+				return t;
+			}
+		}
+		return null;
+	}
+
+	private static bool InBreakMenu()
+	{
+		string script = PlayerStatManagerData.Instance != null ? PlayerStatManagerData.Instance.CurrentStoryScript : null;
+		return !string.IsNullOrEmpty(script) && script.IndexOf("break_start", StringComparison.OrdinalIgnoreCase) >= 0
+			&& PlayerStatManagerData.Instance.CurrentActionCount > 0;
+	}
+
+	private static void OnStorySkipClick()
+	{
+		StoryManager story = StoryManager.Instance;
+		SceneController scenes = SceneController.Instance;
+		if (story == null || LuaManager.Instance == null || scenes == null || scenes.IsPrepare || scenes.IsLoading || !InBreakMenu())
+		{
+			return;
+		}
+		story.Menu(enabled: false);
+		Time.timeScale = 1f;
+		PlayerStatManagerData stats = PlayerStatManagerData.Instance;
+		GameTime before = stats.GameTime;
+		string script = stats.CurrentStoryScript;
+		int spend = ActionModePatch.Mode == ActionModePatch.Unlimited ? stats.CurrentActionCount : 1;
+		stats.Stats.Add(GameStatType.行動次數, -spend);
+		string msg = $"空过（剧情 {script}）：{before.Year}年{before.Month}月{before.Stage} 消耗 {spend} 次行动，剩余 {stats.CurrentActionCount}。";
+		LOMAssistantPlugin.LogInfo(msg);
+		FileLogger.Log(msg);
+		// 和自由行动菜单里做完一项活动后的流程一样：重新载入剧情场景，行动次数归零就进入下一旬
+		LuaManager.Instance.ChangeScene("Story", "", "");
 	}
 }

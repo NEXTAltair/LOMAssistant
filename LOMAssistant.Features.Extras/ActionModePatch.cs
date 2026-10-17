@@ -61,6 +61,17 @@ public static class ActionModePatch
 		value = target - current;
 	}
 
+	// 留学、在外行动等剧情里的自由行动菜单，扣行动点走的是剧情脚本的 statmodifymanager.Player("action", -1, ...)
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(Mortal.Story.StatModifyManager), "Player")]
+	public static void StoryPlayer_Prefix(string name, ref int value)
+	{
+		if (name == "action")
+		{
+			UpdateActionValue_Prefix(ref value);
+		}
+	}
+
 	[HarmonyPostfix]
 	[HarmonyPatch(typeof(PlayerStatManagerData), "GetMaxActionCount")]
 	public static void GetMaxActionCount_Postfix(ref int __result)
