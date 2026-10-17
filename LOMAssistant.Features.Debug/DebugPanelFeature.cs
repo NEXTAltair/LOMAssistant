@@ -47,6 +47,10 @@ public static class DebugPanelFeature
 			}
 		}
 		value2.SetActive(!value2.activeSelf);
+		if (value2.activeSelf)
+		{
+			FlagBrowser.Attach(value2);
+		}
 		StoryManager instance = StoryManager.Instance;
 		if (instance != null && !Traverse.Create(instance).Field("_statusOpen").GetValue<bool>())
 		{
