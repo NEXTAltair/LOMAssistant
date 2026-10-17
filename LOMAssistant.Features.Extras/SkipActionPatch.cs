@@ -42,6 +42,7 @@ public static class SkipActionPatch
 			}
 
 			Button skip = MenuButtonHelper.CloneButton(template, "空过", ButtonName);
+			MenuNavChain.Ensure(skip.transform.parent);
 			skip.onClick.AddListener(OnSkipClick);
 			FileLogger.Log("空过：已添加按钮 " + MenuButtonHelper.DescribeHierarchy(skip.transform));
 		}

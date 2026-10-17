@@ -62,6 +62,7 @@ public static class CombatAssistPatch
 			BattleWin(menuPanel);
 		});
 		gameObject.SetActive(value: true);
+		LOMAssistant.Features.Extras.MenuNavChain.Ensure(gameObject.transform.parent);
 		LOMAssistantPlugin.LogInfo("战斗辅助：已添加直接获胜按钮。");
 		FileLogger.Log("战斗辅助：已添加直接获胜按钮。");
 	}

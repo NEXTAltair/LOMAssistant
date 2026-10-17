@@ -28,6 +28,7 @@ public static class BattleWinPatch
 			}
 
 			Button win = MenuButtonHelper.CloneButton(giveup, "直接获胜", ButtonName);
+			MenuNavChain.Ensure(win.transform.parent);
 			win.onClick.AddListener(() =>
 			{
 				LOMAssistantPlugin.LogInfo("团战直接获胜：已执行。");

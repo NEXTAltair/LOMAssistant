@@ -117,3 +117,70 @@ internal static class MenuButtonHelper
 		return sb.ToString();
 	}
 }
+
+/// <summary>
+/// 菜单按钮的手柄上下顺序。游戏菜单的按钮把上下跳到哪个按钮写死在场景里，
+/// 复制出来的按钮也照抄了，手柄按上下会跳过它。这里按当前显示的按钮（同一父节点、按排列顺序）
+/// 重新串起上下顺序；按钮显示/隐藏变化时自动重串。
+/// </summary>
+internal class MenuNavChain : MonoBehaviour
+{
+	private readonly List<Button> _last = new List<Button>();
+
+	public static void Ensure(Transform parent)
+	{
+		if (parent.GetComponent<MenuNavChain>() == null)
+		{
+			parent.gameObject.AddComponent<MenuNavChain>();
+		}
+	}
+
+	// 菜单每次打开都重串一次，防止游戏在打开时又改回原来的设置
+	private void OnEnable()
+	{
+		_last.Clear();
+	}
+
+	private void LateUpdate()
+	{
+		var buttons = new List<Button>();
+		foreach (Transform child in transform)
+		{
+			Button b = child.GetComponent<Button>();
+			if (b != null && child.gameObject.activeInHierarchy && b.interactable)
+			{
+				buttons.Add(b);
+			}
+		}
+		if (SameAs(buttons))
+		{
+			return;
+		}
+		_last.Clear();
+		_last.AddRange(buttons);
+		for (int i = 0; i < buttons.Count; i++)
+		{
+			Navigation nav = buttons[i].navigation;
+			nav.mode = Navigation.Mode.Explicit;
+			nav.selectOnUp = i > 0 ? buttons[i - 1] : null;
+			nav.selectOnDown = i < buttons.Count - 1 ? buttons[i + 1] : null;
+			buttons[i].navigation = nav;
+		}
+	}
+
+	private bool SameAs(List<Button> buttons)
+	{
+		if (buttons.Count != _last.Count)
+		{
+			return false;
+		}
+		for (int i = 0; i < buttons.Count; i++)
+		{
+			if (buttons[i] != _last[i])
+			{
+				return false;
+			}
+		}
+		return true;
+	}
+}
