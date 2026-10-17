@@ -65,9 +65,9 @@ public class ModPanel : MonoBehaviour
 			BuildStyles(scale);
 			_windowRect = new Rect(Screen.width - 400f * scale - 20f * scale, 20f * scale, 400f * scale, 10f);
 		}
-		// Shrink to content only when the pinball section appears or disappears; resetting
+		// Shrink to content only when a section appears or disappears (pinball, note, action-point hints); resetting
 		// the height on every OnGUI call (Layout/Repaint/mouse events) makes the window flicker.
-		int sections = (PinballManager.Instance != null && PinballManager.Instance.isActiveAndEnabled ? 1 : 0) | (GetNoteSlot() != null ? 2 : 0) | (InGame() ? 8 : 0) | (ConflictDetector.Warnings.Count > 0 ? 16 : 0);
+		int sections = (PinballManager.Instance != null && PinballManager.Instance.isActiveAndEnabled ? 1 : 0) | (GetNoteSlot() != null ? 2 : 0) | (InGame() ? 8 : 0) | (ConflictDetector.Warnings.Count > 0 ? 16 : 0) | (ActionModePatch.Mode << 5);
 		if (sections != _lastSections && Event.current.type == EventType.Layout)
 		{
 			_lastSections = sections;
@@ -176,11 +176,11 @@ public class ModPanel : MonoBehaviour
 		GUILayout.EndHorizontal();
 		if (current == ActionModePatch.Unlimited)
 		{
-			GUILayout.Label("剩 1 点后不再消耗；ESC「空过」结束本旬", _label);
+			GUILayout.Label("剩1点后不再消耗；ESC「空过」结束本旬", _label);
 		}
 		if (current != ActionModePatch.Normal)
 		{
-			GUILayout.Label("会影响剧情触发（如小竹回家），建议多周目使用，切换前先存档", _warning);
+			GUILayout.Label("可能影响剧情触发，请谨慎使用", _warning);
 		}
 	}
 
