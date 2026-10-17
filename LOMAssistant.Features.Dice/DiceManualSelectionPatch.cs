@@ -46,15 +46,25 @@ public static class DiceManualSelectionPatch
 				diceManualSelectionButton.index = i + 1;
 			}
 		}
+		DiceGamepadSelector.Attach(__instance);
 		LOMAssistantPlugin.LogInfo("骰子手动选择：已注册按钮点击事件。");
 		FileLogger.Log("骰子手动选择：已注册按钮点击事件。");
 	}
 
 	public static void OnButtonClick(PointerEventData obj, int i)
 	{
-		if (obj.button == PointerEventData.InputButton.Left && !(Menu == null))
+		if (obj.button == PointerEventData.InputButton.Left)
 		{
-			LOMAssistantPlugin.LogInfo("骰子手动选择：点击线路 " + i);
+			Choose(i);
+		}
+	}
+
+	/// <summary>选定第 i 条线路（鼠标点击和手柄共用）。</summary>
+	public static void Choose(int i)
+	{
+		if (!(Menu == null))
+		{
+			LOMAssistantPlugin.LogInfo("骰子手动选择：选中线路 " + i);
 			FileLogger.Log("[DicePatch] OnButtonClick: line=" + i);
 			Traverse traverse = Traverse.Create(Menu);
 			IsClickedIndex = i;
