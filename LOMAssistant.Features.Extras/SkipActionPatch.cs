@@ -89,8 +89,18 @@ public static class SkipActionPatch
 		PlayerStatManagerData stats = PlayerStatManagerData.Instance;
 		GameTime before = stats.GameTime;
 		string beforeText = $"{before.Year}年{before.Month}月{before.Stage}";
-		yield return free.UpdateActionValue(-1);
-		string msg = $"空过：{beforeText} 消耗 1 次行动，剩余 {stats.CurrentActionCount}。";
+		string msg;
+		if (ActionModePatch.Mode == ActionModePatch.Unlimited)
+		{
+			// 行动点不消耗时，空过就是「结束本旬」，否则永远到不了下一旬
+			yield return ActionModePatch.SpendAll(free);
+			msg = $"空过：{beforeText} 行动点不消耗模式，结束本旬。";
+		}
+		else
+		{
+			yield return free.UpdateActionValue(-1);
+			msg = $"空过：{beforeText} 消耗 1 次行动，剩余 {stats.CurrentActionCount}。";
+		}
 		LOMAssistantPlugin.LogInfo(msg);
 		FileLogger.Log(msg);
 

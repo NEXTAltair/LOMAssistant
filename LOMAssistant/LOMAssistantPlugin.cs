@@ -165,6 +165,8 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			TryPatchAll(typeof(AutoSaveHistoryPatch));
 			TryPatchAll(typeof(SaveDataCache));
 			TryPatchAll(typeof(SaveDataCache.GetSaveDataPatch));
+			TryPatchAll(typeof(ActionModePatch));
+			LogInfo("行动点模式补丁已应用（当前：" + ActionModePatch.Label(ActionModePatch.Mode) + "）。");
 			LogInfo("自动存档历史补丁已应用。");
 			TryPatchAll(typeof(ShopAllItemsPatch));
 			LogInfo(ConfigManager.EnableShopAllItems.Value ? "四师兄商店补丁已应用（售卖全部物品：开）。" : "四师兄商店补丁已应用（售卖全部物品：关）。");

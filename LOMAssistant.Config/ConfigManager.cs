@@ -49,6 +49,8 @@ public static class ConfigManager
 
 	public static ConfigElement<float> GameSpeed;
 
+	public static ConfigElement<int> ActionMode;
+
 	public static ConfigElement<int> SaveSlotCount;
 
 	public static ConfigElement<int> AutoSaveHistory;
@@ -144,6 +146,7 @@ public static class ConfigManager
 		CheatDuelInvincible = new ConfigElement<bool>("CheatDuelInvincible", "决斗中无敌：我方不受伤害（可在游戏内面板切换）", defaultValue: false);
 		CheatDuelNoDamage = new ConfigElement<bool>("CheatDuelNoDamage", "决斗中造成伤害为 0：敌方不受伤害（可在游戏内面板切换）", defaultValue: false);
 		GameSpeed = new ConfigElement<float>("GameSpeed", "游戏倍速（在游戏原本速度上再乘以该值；1=原速）。可在游戏内面板切换", 1f);
+		ActionMode = new ConfigElement<int>("ActionMode", "养成行动点：0=正常，1=不消耗（扣到剩 1 点后不再扣，可一直行动；用「空过」结束本旬），2=每旬只有 1 点。可在游戏内面板切换", 0);
 		SaveSlotCount = new ConfigElement<int>("SaveSlotCount", "手动存档栏位数量（原版 20，小于 20 时按 20）", 100);
 		AutoSaveHistory = new ConfigElement<int>("AutoSaveHistory", "每类自动存档（养成/剧情/战斗）额外保留的旧档数量，0=不保留", 5);
 		EnableShopAllItems = new ConfigElement<bool>("EnableShopAllItems", "四师兄商店售卖全部物品（书籍、杂物、特殊物品；不卖《证类本草》，提前买会导致六月后山事件出 bug）。true=开，false=关，改后重启生效", defaultValue: false);

@@ -91,6 +91,7 @@ public class ModPanel : MonoBehaviour
 		Toggle(ConfigManager.CheatDuelInvincible, "决斗中无敌");
 		Toggle(ConfigManager.CheatDuelNoDamage, "决斗中造成伤害为0");
 		DrawSpeed();
+		DrawActionMode();
 
 		PinballManager pinball = PinballManager.Instance;
 		if (pinball != null && pinball.isActiveAndEnabled)
@@ -156,6 +157,27 @@ public class ModPanel : MonoBehaviour
 			}
 		}
 		GUILayout.EndHorizontal();
+	}
+
+	private void DrawActionMode()
+	{
+		GUILayout.BeginHorizontal();
+		GUILayout.Label("养成行动点", _label, GUILayout.Width(120f * _scale));
+		int current = ActionModePatch.Mode;
+		foreach (int option in ActionModePatch.Options)
+		{
+			bool selected = current == option;
+			bool on = GUILayout.Toggle(selected, ActionModePatch.Label(option), _button);
+			if (on && !selected)
+			{
+				ActionModePatch.Set(option);
+			}
+		}
+		GUILayout.EndHorizontal();
+		if (current == ActionModePatch.Unlimited)
+		{
+			GUILayout.Label("剩 1 点后不再消耗；ESC「空过」结束本旬", _label);
+		}
 	}
 
 	private void TrackSelectedSlot()
