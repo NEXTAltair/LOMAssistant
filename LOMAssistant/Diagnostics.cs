@@ -61,6 +61,19 @@ public static class Diagnostics
 			return string.IsNullOrEmpty(appId) ? "否（没有 SteamAppId 环境变量，可能是直接双击 exe）" : "是（SteamAppId=" + appId + "）";
 		});
 		Safe("Steam 客户端在运行", () => Process.GetProcessesByName("steam").Length > 0 ? "是" : "否");
+		Safe("Doorstop 环境变量", () =>
+		{
+			var names = new System.Collections.Generic.List<string>();
+			foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+			{
+				if (entry.Key is string name && name.StartsWith("DOORSTOP_", StringComparison.OrdinalIgnoreCase))
+				{
+					names.Add(name);
+				}
+			}
+			names.Sort();
+			return names.Count > 0 ? string.Join("，", names.ToArray()) : "无";
+		});
 		Safe("游戏目录", () => Paths.GameRootPath);
 		Safe("winhttp.dll", () => DescribeFile(Path.Combine(Paths.GameRootPath, "winhttp.dll")));
 		Safe("doorstop_config.ini", () => DescribeFile(Path.Combine(Paths.GameRootPath, "doorstop_config.ini")));
@@ -102,7 +115,7 @@ public static class Diagnostics
 			MethodInfo init = steamApi != null ? AccessTools.Method(steamApi, "Init") : null;
 			if (restart != null)
 			{
-				harmony.Patch(restart, postfix: new HarmonyMethod(typeof(Diagnostics), nameof(RestartPostfix)));
+				harmony.Patch(restart, prefix: new HarmonyMethod(typeof(Diagnostics), nameof(RestartPrefix)), postfix: new HarmonyMethod(typeof(Diagnostics), nameof(RestartPostfix)));
 			}
 			if (init != null)
 			{
@@ -116,6 +129,32 @@ public static class Diagnostics
 		catch (Exception e)
 		{
 			FileLogger.LogWarning("[诊断] 挂接 Steam 接口失败：" + e.Message);
+		}
+	}
+
+	// Doorstop 在游戏进程里设置 DOORSTOP_* 环境变量，并用 DOORSTOP_INITIALIZED 防止重复加载。
+	// Steam 没在运行时，RestartAppIfNecessary 会由游戏进程拉起 Steam，Steam 继承这些变量，
+	// 再由它启动的游戏就会被 Doorstop 当成「已经加载过」而跳过，Mod 不生效，而且这个 Steam 不退就一直如此。
+	// 所以在交给 Steam 之前把这些变量清掉。此时 BepInEx 早已启动完毕，不再需要它们。
+	private static void RestartPrefix()
+	{
+		try
+		{
+			var cleared = new System.Collections.Generic.List<string>();
+			foreach (System.Collections.DictionaryEntry entry in Environment.GetEnvironmentVariables())
+			{
+				string name = entry.Key as string;
+				if (name != null && name.StartsWith("DOORSTOP_", StringComparison.OrdinalIgnoreCase))
+				{
+					Environment.SetEnvironmentVariable(name, null);
+					cleared.Add(name);
+				}
+			}
+			FileLogger.Log("[诊断] 交给 Steam 检查前清除 Doorstop 环境变量：" + (cleared.Count > 0 ? string.Join("，", cleared.ToArray()) : "无"));
+		}
+		catch (Exception e)
+		{
+			FileLogger.LogWarning("[诊断] 清除 Doorstop 环境变量失败：" + e.Message);
 		}
 	}
 
