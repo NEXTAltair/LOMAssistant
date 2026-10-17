@@ -6,6 +6,8 @@
 
 **[▶ B 站功能演示视频](https://www.bilibili.com/video/BV1LZJh6YEUy/)**（3 分钟看完全部功能和安装方法）
 
+**QQ 群：496887060**（使用中遇到问题、有建议，欢迎进群反馈）
+
 ## 下载安装
 
 **[⬇ 下载 LOMAssistant.zip](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip)**（已包含 BepInEx，解压即用）
