@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using HarmonyLib;
 using Mortal.Core;
 
@@ -75,18 +77,27 @@ public static class SaveDataCache
 		}
 	}
 
-	[HarmonyPrefix]
-	[HarmonyPatch(typeof(SaveSystem), "GetSaveData", new[] { typeof(string) })]
-	public static bool GetSaveData_Prefix(SaveSystem __instance, string slot, ref GameSave __result, out string __state)
+	// SaveSystem 里同时有 GetSaveData(string) 和泛型 GetSaveData<T>(string)，
+	// 按名字加参数找方法在部分玩家的环境里会报「Ambiguous match」，所以这里明确挑非泛型的那个。
+	[HarmonyPatch]
+	public static class GetSaveDataPatch
 	{
-		return TryCached(__instance, slot, ref __result, out __state);
-	}
+		public static MethodBase TargetMethod()
+		{
+			return AccessTools.GetDeclaredMethods(typeof(SaveSystem)).First(m =>
+				m.Name == "GetSaveData" && !m.IsGenericMethodDefinition && m.ReturnType == typeof(GameSave)
+				&& m.GetParameters().Length == 1 && m.GetParameters()[0].ParameterType == typeof(string));
+		}
 
-	[HarmonyPostfix]
-	[HarmonyPatch(typeof(SaveSystem), "GetSaveData", new[] { typeof(string) })]
-	public static void GetSaveData_Postfix(GameSave __result, string __state)
-	{
-		Store(__state, __result);
+		public static bool Prefix(SaveSystem __instance, string slot, ref GameSave __result, out string __state)
+		{
+			return TryCached(__instance, slot, ref __result, out __state);
+		}
+
+		public static void Postfix(GameSave __result, string __state)
+		{
+			Store(__state, __result);
+		}
 	}
 
 	[HarmonyPrefix]

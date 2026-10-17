@@ -96,68 +96,83 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 		}
 	}
 
+	// 每组补丁单独打：一组失败（例如某些环境下找不到目标方法）只记日志，不影响后面其他功能。
+	private void TryPatchAll(Type type)
+	{
+		try
+		{
+			_harmony.PatchAll(type);
+		}
+		catch (Exception ex)
+		{
+			LogError(type.Name + " 补丁应用失败，该功能不可用，其他功能不受影响: " + ex.Message);
+			FileLogger.LogError(type.Name + " 补丁应用失败: " + ex);
+		}
+	}
+
 	private void ApplyPatches()
 	{
 		try
 		{
 			if (ConfigManager.EnableOptionInfo.Value)
 			{
-				_harmony.PatchAll(typeof(OptionInfoPatch));
+				TryPatchAll(typeof(OptionInfoPatch));
 				LogInfo("选项信息补丁已应用。");
 			}
 			if (ConfigManager.EnableManualDiceSelection.Value)
 			{
-				_harmony.PatchAll(typeof(DiceManualSelectionPatch));
+				TryPatchAll(typeof(DiceManualSelectionPatch));
 				LogInfo("骰子手动选择补丁已应用。");
 				EnsurePatched("Roll", AccessTools.Method(typeof(DiceMenuDialog), "Roll"), "Roll_Prefix");
 				EnsurePatched("CheckRevolution", AccessTools.Method(typeof(DiceMenuDialog), "CheckRevolution"), "CheckRevolution_Prefix");
 			}
 			if (ConfigManager.EnableLibraryDisplay.Value)
 			{
-				_harmony.PatchAll(typeof(LibraryDisplayPatch));
+				TryPatchAll(typeof(LibraryDisplayPatch));
 				LogInfo("讲经堂显示补丁已应用。");
 			}
 			if (ConfigManager.EnableCombatAssist.Value)
 			{
-				_harmony.PatchAll(typeof(CombatAssistPatch));
+				TryPatchAll(typeof(CombatAssistPatch));
 				LogInfo("战斗辅助补丁已应用。");
 			}
 			if (ConfigManager.EnableSkipAction.Value)
 			{
-				_harmony.PatchAll(typeof(SkipActionPatch));
+				TryPatchAll(typeof(SkipActionPatch));
 				LogInfo("空过补丁已应用。");
 			}
 			if (ConfigManager.EnableBattleWin.Value)
 			{
-				_harmony.PatchAll(typeof(BattleWinPatch));
+				TryPatchAll(typeof(BattleWinPatch));
 				LogInfo("团战直接获胜补丁已应用。");
 			}
-			_harmony.PatchAll(typeof(PinballScorePatch));
+			TryPatchAll(typeof(PinballScorePatch));
 			LogInfo("弹珠分数补丁已应用。");
-			_harmony.PatchAll(typeof(TrainingCheatPatch));
-			_harmony.PatchAll(typeof(TrainingCheatPatch.MartialCountPatch));
-			_harmony.PatchAll(typeof(TrainingCheatPatch.UpgradeCountPatch));
+			TryPatchAll(typeof(TrainingCheatPatch));
+			TryPatchAll(typeof(TrainingCheatPatch.MartialCountPatch));
+			TryPatchAll(typeof(TrainingCheatPatch.UpgradeCountPatch));
 			if (base.gameObject.GetComponent<ModPanel>() == null)
 			{
 				base.gameObject.AddComponent<ModPanel>();
 			}
 			LogInfo("修炼/锻造/炼丹修改补丁已应用。");
-			_harmony.PatchAll(typeof(DuelCheatPatch));
+			TryPatchAll(typeof(DuelCheatPatch));
 			LogInfo("决斗修改补丁已应用。");
-			_harmony.PatchAll(typeof(SaveSlotPatch));
+			TryPatchAll(typeof(SaveSlotPatch));
 			LogInfo("存档栏位补丁已应用。");
-			_harmony.PatchAll(typeof(SaveNotePatch));
+			TryPatchAll(typeof(SaveNotePatch));
 			LogInfo("存档备注补丁已应用。");
-			_harmony.PatchAll(typeof(AutoSaveHistoryPatch));
-			_harmony.PatchAll(typeof(SaveDataCache));
+			TryPatchAll(typeof(AutoSaveHistoryPatch));
+			TryPatchAll(typeof(SaveDataCache));
+			TryPatchAll(typeof(SaveDataCache.GetSaveDataPatch));
 			LogInfo("自动存档历史补丁已应用。");
-			_harmony.PatchAll(typeof(ShopAllItemsPatch));
+			TryPatchAll(typeof(ShopAllItemsPatch));
 			LogInfo(ConfigManager.EnableShopAllItems.Value ? "四师兄商店补丁已应用（售卖全部物品：开）。" : "四师兄商店补丁已应用（售卖全部物品：关）。");
 			if (!ConfigManager.EnableSaveSystem.Value)
 			{
 				return;
 			}
-			_harmony.PatchAll(typeof(SavePatches));
+			TryPatchAll(typeof(SavePatches));
 			LogInfo("增强存档补丁已应用。");
 			try
 			{

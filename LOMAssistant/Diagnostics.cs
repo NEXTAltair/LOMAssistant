@@ -161,7 +161,7 @@ public static class Diagnostics
 	private static void RestartPostfix(bool __result)
 	{
 		Both(__result
-			? "[诊断] Steam 要求重启游戏：这个进程马上会退出，由 Steam 重新启动游戏（玩家看到的「闪退一下重进」）。请看下一个日志文件。"
+			? "[诊断] Steam 要求重启游戏：这个进程马上会退出，由 Steam 重新启动游戏（玩家看到的「闪退一下重进」）。请看下一个日志文件。如果重进后 Mod 没生效（没有新日志、F8 没反应），请从托盘完全退出 Steam，再重新打开 Steam 后从 Steam 启动游戏。"
 			: "[诊断] Steam 检查通过，不需要重启。");
 	}
 
