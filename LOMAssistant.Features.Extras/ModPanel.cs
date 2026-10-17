@@ -90,6 +90,7 @@ public class ModPanel : MonoBehaviour
 		Toggle(ConfigManager.CheatFreeUpgradeMoney, "锻造、炼丹不消耗银两");
 		Toggle(ConfigManager.CheatDuelInvincible, "决斗中无敌");
 		Toggle(ConfigManager.CheatDuelNoDamage, "决斗中造成伤害为0");
+		Toggle(ConfigManager.ShowFlagChanges, "剧情旗标变化提示");
 		DrawSpeed();
 		DrawActionMode();
 
