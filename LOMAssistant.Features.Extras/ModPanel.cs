@@ -178,6 +178,10 @@ public class ModPanel : MonoBehaviour
 		{
 			GUILayout.Label("剩 1 点后不再消耗；ESC「空过」结束本旬", _label);
 		}
+		if (current != ActionModePatch.Normal)
+		{
+			GUILayout.Label("会影响剧情触发（如小竹回家），建议多周目使用，切换前先存档", _warning);
+		}
 	}
 
 	private void TrackSelectedSlot()
