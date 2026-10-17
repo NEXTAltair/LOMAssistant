@@ -25,8 +25,10 @@ public static class FileLogger
 			{
 				Directory.CreateDirectory(text);
 			}
-			string path = "LOMAssistant_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".log";
+			// 带进程 ID：Steam 重启游戏时，前后两个进程会在同一秒内各写一个日志
+			string path = "LOMAssistant_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + "_pid" + System.Diagnostics.Process.GetCurrentProcess().Id + ".log";
 			_logFilePath = Path.Combine(text, path);
+			CleanupOldLogs(text, 30);
 			_initialized = true;
 			Log("活侠传拓展日志系统已初始化。");
 		}
@@ -34,6 +36,22 @@ public static class FileLogger
 		{
 			_initialized = false;
 			Console.WriteLine("[LOMAssistant] 初始化日志文件失败: " + ex);
+		}
+	}
+
+	private static void CleanupOldLogs(string directory, int keep)
+	{
+		try
+		{
+			FileInfo[] files = new DirectoryInfo(directory).GetFiles("LOMAssistant_*.log");
+			Array.Sort(files, (a, b) => b.LastWriteTime.CompareTo(a.LastWriteTime));
+			for (int i = keep; i < files.Length; i++)
+			{
+				files[i].Delete();
+			}
+		}
+		catch
+		{
 		}
 	}
 

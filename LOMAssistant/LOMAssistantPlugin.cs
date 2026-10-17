@@ -37,8 +37,11 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 		SaveManager.OnLoadComplete += SavePatches.RestoreMusicOnLoadComplete;
 		LogInfo("活侠传拓展已加载。");
 		FileLogger.Log("活侠传拓展已加载。");
+		Diagnostics.LogStartup(base.Info);
 		_harmony = new Harmony(base.Info.Metadata.GUID);
+		Diagnostics.PatchSteam(_harmony);
 		ApplyPatches();
+		Diagnostics.LogPatchSummary(_harmony);
 	}
 
 	private void Update()
