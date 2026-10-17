@@ -12,6 +12,10 @@
 
 **[⬇ 下载 LOMAssistant.zip](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip)**（已包含 BepInEx，解压即用）
 
+**一键安装（推荐）：** 把压缩包解压到任意文件夹，双击里面的 `活侠传拓展安装器.exe`，点「一键安装 / 更新」。安装器会自动找到游戏目录、联网下载最新版（连不上 GitHub 就安装压缩包里自带的版本），并把已知会冲突的旧 Mod 移到 `BepInEx\已停用的Mod`（不删除）。Windows 提示「已保护你的电脑」时，点「更多信息」→「仍要运行」。
+
+**手动安装：**
+
 1. Steam 中右键《活侠传》→ 管理 → 浏览本地文件，打开游戏目录（里面有 `Mortal.exe`）。
 2. 把压缩包里的所有内容解压到这个目录，提示同名文件时选择覆盖。
 3. 正常启动游戏即可。
@@ -56,6 +60,9 @@
   - 无限锻造、炼丹次数（锻造点、炼丹点补满）、快速锻造、炼丹
   - 锻造、炼丹不消耗银两
   - 决斗中无敌、决斗中造成伤害为 0
+  - 剧情旗标变化提示（默认关）：剧情改动旗标时屏幕上提示，如「【旗标】神兵帖进度  1 → 2」
+  - 剧情分支条件提示（默认关）：剧情走到分支判断时列出各分支条件，满足为绿、不满足为红，并写明走了第几个
+  - 这两项可能剧透，按需打开
   - 游戏倍速：1x / 2x / 3x / 5x（在游戏原本速度上再加速，暂停、剧情快进照常；多周目跳过剧情很方便）
   - 养成行动点：正常 / 不消耗 / 每旬 1 点（**会影响剧情触发，请谨慎使用**，详见下方「养成行动点模式」）
   - 设定天命点（骰子“逆天”消耗的点数，进入存档后显示）
@@ -103,6 +110,12 @@ GAME="D:/Steam/steamapps/common/LegendOfMortal" DOTNET=/path/to/dotnet ./build.s
 
 脚本直接调用 Roslyn（csc）编译，并把 `LOMAssistant.dll` 复制进游戏的 `BepInEx\plugins\LOMAssistant\`。`Newtonsoft.Json.dll` 可以从下载包中获取。
 
+一键安装器（Windows 自带的 .NET Framework 4.5+ 即可运行）：
+
+```bash
+DOTNET=/path/to/dotnet ./Installer/build-installer.sh
+```
+
 ## 目录
 
 | 目录 | 内容 |
@@ -112,3 +125,4 @@ GAME="D:/Steam/steamapps/common/LegendOfMortal" DOTNET=/path/to/dotnet ./build.s
 | `LOMAssistant.Features.*` | 原版各功能 |
 | `LOMAssistant.Features.Extras/` | 本项目新增的功能 |
 | `build.sh` | 构建脚本 |
+| `Installer/` | 一键安装器 |

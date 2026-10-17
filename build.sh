@@ -20,7 +20,7 @@ done
 
 mkdir -p bin
 "$DOTNET" "$CSC" -nologo -noconfig -nostdlib+ -target:library -langversion:12 -optimize+ -deterministic \
-	-nowarn:CS1701,CS1702 -out:bin/LOMAssistant.dll "${refs[@]}" $(find . -name '*.cs' -not -path './bin/*')
+	-nowarn:CS1701,CS1702 -out:bin/LOMAssistant.dll "${refs[@]}" $(find . -name '*.cs' -not -path './bin/*' -not -path './Installer/*')
 
 cp bin/LOMAssistant.dll "$P/LOMAssistant.dll"
 echo "Installed to $P/LOMAssistant.dll"
