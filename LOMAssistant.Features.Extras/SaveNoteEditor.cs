@@ -120,7 +120,10 @@ public class SaveNoteEditor : MonoBehaviour
 	private void DrawWindow(int id)
 	{
 		Event e = Event.current;
-		if (e.type == EventType.KeyDown && (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter))
+		// 中文输入法还在候选（拼音没上屏）时，回车是给输入法确认用的，不能当成「保存」把输入框关掉：
+		// 输入框在输入法组字途中消失，有玩家反馈会闪退。
+		if (e.type == EventType.KeyDown && (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter)
+			&& string.IsNullOrEmpty(Input.compositionString))
 		{
 			e.Use();
 			Close(save: true);
