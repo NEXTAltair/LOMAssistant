@@ -73,8 +73,6 @@ public static class ConfigManager
 
 	public static ConfigElement<KeyCode> DebugPanelKey;
 
-	public static ConfigElement<bool> EnableSaveSystem;
-
 	public static ConfigElement<bool> EnableAnytimeSave;
 
 	public static ConfigElement<KeyCode> AnytimeSaveKey;
@@ -178,7 +176,6 @@ public static class ConfigManager
 		EnableShopAllItems = new ConfigElement<bool>("EnableShopAllItems", "四师兄商店售卖全部物品（书籍、杂物、特殊物品；不卖《证类本草》，提前买会导致六月后山事件出 bug）。true=开，false=关，改后重启生效", defaultValue: false);
 		EnableDebugPanel = new ConfigElement<bool>("EnableDebugPanel", "是否启用游戏内置测试面板。true=开，false=关，改后重启生效", defaultValue: true);
 		DebugPanelKey = new ConfigElement<KeyCode>("DebugPanelKey", "打开游戏内置测试面板的热键，如 F9 / P 等", KeyCode.F9);
-		EnableSaveSystem = new ConfigElement<bool>("EnableSaveSystem", "是否启用增强存档系统（随时存档/读档）。true=开，false=关，改后重启生效", defaultValue: false);
 		EnableAnytimeSave = new ConfigElement<bool>("EnableAnytimeSave", "是否启用随时存档（剧情台词、选项、掷骰和养成界面都能存，存在独立的 8 个槽位，不占原版存档栏）。true=开，false=关，改后重启生效", defaultValue: true);
 		AnytimeSaveKey = new ConfigElement<KeyCode>("AnytimeSaveKey", "随时存档：保存到当前槽位的热键", KeyCode.F5);
 		AnytimeLoadKey = new ConfigElement<KeyCode>("AnytimeLoadKey", "随时存档：读取当前槽位的热键", KeyCode.F7);

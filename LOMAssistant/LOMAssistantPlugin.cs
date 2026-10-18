@@ -12,7 +12,6 @@ using LOMAssistant.Features.AnytimeSave;
 using LOMAssistant.Features.Dice;
 using LOMAssistant.Features.Extras;
 using LOMAssistant.Features.Library;
-using LOMAssistant.Features.Save;
 using Mortal.Story;
 using UnityEngine;
 
@@ -34,8 +33,6 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 		FileLogger.Init(Path.GetDirectoryName(base.Info.Location));
 		DicePlugin.Instance = base.gameObject.AddComponent<DicePlugin>();
 		ConfigManager.Init();
-		SaveManager.Init();
-		SaveManager.OnLoadComplete += SavePatches.RestoreMusicOnLoadComplete;
 		LogInfo("活侠传拓展已加载。");
 		FileLogger.Log("活侠传拓展已加载。");
 		Diagnostics.LogStartup(base.Info);
@@ -51,18 +48,6 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 		if (ConfigManager.EnableDebugPanel.Value && Input.GetKeyDown(ConfigManager.DebugPanelKey.Value))
 		{
 			DebugPanelFeature.ToggleTestPanel();
-		}
-		if (ConfigManager.EnableSaveSystem.Value && SaveManager.Instance != null)
-		{
-			SaveManager.Instance.Update();
-		}
-	}
-
-	private void LateUpdate()
-	{
-		if (ConfigManager.EnableSaveSystem.Value && SaveManager.Instance != null)
-		{
-			SaveManager.Instance.LateUpdate();
 		}
 	}
 
@@ -179,54 +164,10 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			LogInfo("自动存档历史补丁已应用。");
 			TryPatchAll(typeof(ShopAllItemsPatch));
 			LogInfo(ConfigManager.EnableShopAllItems.Value ? "四师兄商店补丁已应用（售卖全部物品：开）。" : "四师兄商店补丁已应用（售卖全部物品：关）。");
-			if (ConfigManager.EnableAnytimeSave.Value && ConfigManager.EnableSaveSystem.Value)
-			{
-				LogWarning("随时存档和旧版增强存档（EnableSaveSystem）不能同时开，已停用随时存档。");
-			}
-			else if (ConfigManager.EnableAnytimeSave.Value && AnytimeSave.Install(base.gameObject))
+			if (ConfigManager.EnableAnytimeSave.Value && AnytimeSave.Install(base.gameObject))
 			{
 				TryPatchAll(typeof(AnytimeSavePatches));
 				LogInfo("随时存档补丁已应用。");
-			}
-			if (!ConfigManager.EnableSaveSystem.Value)
-			{
-				return;
-			}
-			TryPatchAll(typeof(SavePatches));
-			LogInfo("增强存档补丁已应用。");
-			try
-			{
-				Type type = AccessTools.TypeByName("AkSoundEngine");
-				if (type != null)
-				{
-					MethodInfo methodInfo = AccessTools.Method(type, "PostEvent", new Type[2]
-					{
-						typeof(string),
-						typeof(GameObject)
-					});
-					if (methodInfo != null)
-					{
-						HarmonyMethod prefix = new HarmonyMethod(typeof(SavePatches), "AkSoundEngine_PostEvent_Prefix");
-						_harmony.Patch(methodInfo, prefix);
-						FileLogger.Log("[Init] AkSoundEngine.PostEvent(string, GameObject) patch APPLIED");
-						LogInfo("Wwise 音频屏蔽补丁已应用。");
-					}
-					else
-					{
-						FileLogger.LogError("[Init] AkSoundEngine.PostEvent method NOT FOUND");
-						LogError("AkSoundEngine.PostEvent 方法未找到，音频屏蔽无法工作！");
-					}
-				}
-				else
-				{
-					FileLogger.LogError("[Init] AkSoundEngine type NOT FOUND (Wwise assembly not loaded?)");
-					LogError("AkSoundEngine 类型未找到，Wwise 音频屏蔽不可用。");
-				}
-			}
-			catch (Exception ex)
-			{
-				FileLogger.LogError("[Init] Failed to patch AkSoundEngine.PostEvent: " + ex);
-				LogError("Wwise 音频屏蔽补丁应用失败: " + ex.Message);
 			}
 		}
 		catch (Exception ex2)
