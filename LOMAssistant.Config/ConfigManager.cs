@@ -55,6 +55,14 @@ public static class ConfigManager
 
 	public static ConfigElement<bool> ShowBranchChecks;
 
+	public static ConfigElement<float> BranchPanelX;
+
+	public static ConfigElement<float> BranchPanelY;
+
+	public static ConfigElement<float> BranchPanelAutoHide;
+
+	public static ConfigElement<float> PopupOpacity;
+
 	public static ConfigElement<int> SaveSlotCount;
 
 	public static ConfigElement<int> AutoSaveHistory;
@@ -153,6 +161,10 @@ public static class ConfigManager
 		ActionMode = new ConfigElement<int>("ActionMode", "养成行动点：0=正常，1=不消耗（扣到剩 1 点后不再扣，可一直行动；用「空过」结束本旬），2=每旬只有 1 点。可在游戏内面板切换", 0);
 		ShowFlagChanges = new ConfigElement<bool>("ShowFlagChanges", "剧情改动旗标时在屏幕上提示（可能剧透）。true=开，false=关。可在游戏内面板切换", defaultValue: false);
 		ShowBranchChecks = new ConfigElement<bool>("ShowBranchChecks", "剧情走到分支判断时在屏幕上列出各分支条件（满足为绿、不满足为红，可能剧透）。true=开，false=关。可在游戏内面板切换", defaultValue: false);
+		BranchPanelX = new ConfigElement<float>("BranchPanelX", "剧情分支小窗的位置（占屏幕宽度的比例，-1=默认左侧）。拖动小窗会自动保存", -1f);
+		BranchPanelY = new ConfigElement<float>("BranchPanelY", "剧情分支小窗的位置（占屏幕高度的比例，-1=默认）。拖动小窗会自动保存", -1f);
+		BranchPanelAutoHide = new ConfigElement<float>("BranchPanelAutoHide", "剧情分支小窗多少秒没有新判断就自动收起（0=不自动收起）", 15f);
+		PopupOpacity = new ConfigElement<float>("PopupOpacity", "剧情分支小窗的背景不透明度（0=完全透明，1=不透明），改后重启游戏生效", 0.5f);
 		SaveSlotCount = new ConfigElement<int>("SaveSlotCount", "手动存档栏位数量（原版 20，小于 20 时按 20）", 100);
 		AutoSaveHistory = new ConfigElement<int>("AutoSaveHistory", "每类自动存档（养成/剧情/战斗）额外保留的旧档数量，0=不保留", 5);
 		EnableShopAllItems = new ConfigElement<bool>("EnableShopAllItems", "四师兄商店售卖全部物品（书籍、杂物、特殊物品；不卖《证类本草》，提前买会导致六月后山事件出 bug）。true=开，false=关，改后重启生效", defaultValue: false);

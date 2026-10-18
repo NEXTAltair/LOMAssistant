@@ -4,18 +4,33 @@ using HarmonyLib;
 using LOMAssistant.Config;
 using Mortal.Core;
 using Mortal.Story;
+using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace LOMAssistant.Features.Extras;
 
 /// <summary>
 /// 剧情分支条件提示（F8 开关，默认关）：剧情走到分支判断（SwitchResultData.Execute）时，
-/// 在屏幕上列出这个判断的全部分支条件（第一条写走了第几个，下面每个分支一条），
-/// 满足的绿色、不满足的红色。条件文字用信息窗口同一套格式（需 X → 当前 Y）。
-/// 按次数判断的分支不提示；同一判断 2 秒内重复执行只显示一次。
+/// 在屏幕左侧的小窗里列出这一轮判断的全部分支条件，满足的绿色、不满足的红色，实际走的那个分支整行高亮。
+/// 「一轮」：几秒内接连发生的判断算同一轮，按发生顺序排列；隔了一段时间再有新判断，就清掉上一轮只显示新的
+/// （旧的记录在骰子大师的历史记录里也能看）。一段时间没有新判断会自动收起（配置 BranchPanelAutoHide）。
+/// 小窗可以拖动（位置记在配置里），也可以关掉，下次有新判断时再出现。
+/// 条件文字用信息窗口同一套格式（需 X → 当前 Y）。按次数判断的分支不提示；同一判断 2 秒内重复执行只记一次。
 /// </summary>
 public static class BranchNotifyPatch
 {
-	private const int FontSize = 26;
+	internal class Entry
+	{
+		public string Title;
+		public List<string> Lines = new List<string>();
+		public int Taken; // 0 起算的行号，-1 表示都不满足
+	}
+
+	private const float GroupGap = 3f; // 距上一次判断超过这么多秒，就算新的一轮
+	private const int MaxEntries = 20;
+	internal static readonly List<Entry> Entries = new List<Entry>();
+	internal static int Revision;
+	internal static float LastEntryTime;
 
 	private static string _lastName;
 	private static float _lastTime;
@@ -30,8 +45,7 @@ public static class BranchNotifyPatch
 		}
 		try
 		{
-			StoryMainUI ui = StoryMainUI.Instance;
-			if (ui == null || !ui.isActiveAndEnabled)
+			if (StoryMainUI.Instance == null || !StoryMainUI.Instance.isActiveAndEnabled)
 			{
 				return;
 			}
@@ -46,12 +60,12 @@ public static class BranchNotifyPatch
 				return;
 			}
 			string name = __instance.name ?? "";
-			if (name == _lastName && UnityEngine.Time.unscaledTime - _lastTime < 2f)
+			if (name == _lastName && Time.unscaledTime - _lastTime < 2f)
 			{
 				return;
 			}
 			_lastName = name;
-			_lastTime = UnityEngine.Time.unscaledTime;
+			_lastTime = Time.unscaledTime;
 
 			string note = tr.Field("_devNote").GetValue<string>() ?? "";
 			int newline = note.IndexOf('\n');
@@ -60,11 +74,10 @@ public static class BranchNotifyPatch
 				note = note.Substring(0, newline);
 			}
 			note = TextConverter.ToSimplified(note.Trim());
-
-			// 第一行写明走了哪个分支，下面每个分支一行；字号缩小，长条件也不被截断
 			string label = note.Length > 0 ? name + " " + note : name;
 			string result = __result <= items.Count ? (items.Count > 1 ? "走第 " + __result + " 个" : "满足") : "都不满足";
-			var lines = new List<string> { "【分支】" + label + " · " + result };
+
+			var entry = new Entry { Title = label + " · " + result, Taken = __result <= items.Count ? __result - 1 : -1 };
 			for (int i = 0; i < items.Count; i++)
 			{
 				string conditions = DataHelper.ExtractConditions(items[i], out bool _);
@@ -72,18 +85,162 @@ public static class BranchNotifyPatch
 				{
 					conditions = "无条件";
 				}
-				lines.Add((items.Count > 1 ? (i + 1) + ". " : "") + conditions);
+				entry.Lines.Add((items.Count > 1 ? (i + 1) + ". " : "") + conditions);
 			}
-			// 游戏的飘字框只有一行高，多行塞进一条会被裁掉，所以每行单独一条
-			foreach (string line in lines)
+			if (Time.unscaledTime - LastEntryTime > GroupGap)
 			{
-				ui.DisplayMessageText("<size=" + FontSize + ">" + line + "</size>");
+				Entries.Clear();
 			}
+			Entries.Add(entry);
+			if (Entries.Count > MaxEntries)
+			{
+				Entries.RemoveAt(0);
+			}
+			LastEntryTime = Time.unscaledTime;
+			Revision++;
+			BranchPanel.Show();
 			FileLogger.Log($"分支：{label} 共 {items.Count} 个，结果 {__result}");
 		}
 		catch (Exception e)
 		{
 			FileLogger.LogWarning("分支条件提示失败: " + e.Message);
 		}
+	}
+}
+
+/// <summary>分支条件小窗（IMGUI）。只在剧情场景显示。</summary>
+public class BranchPanel : MonoBehaviour
+{
+	private const int WindowId = 0x42524E43; // "BRNC"
+
+	private static BranchPanel _instance;
+
+	private bool _visible;
+	private int _drawnRevision = -1;
+	private Rect _rect;
+	private bool _placed;
+	private float _scale = -1f;
+	private GUIStyle _window;
+	private GUIStyle _title;
+	private GUIStyle _line;
+	private GUIStyle _taken;
+	private GUIStyle _close;
+	private Texture2D _bg;
+	private Texture2D _takenBg;
+	private float _opacity = -1f;
+
+	public static void Show()
+	{
+		if (_instance == null)
+		{
+			_instance = LOMAssistantPlugin.Instance.gameObject.AddComponent<BranchPanel>();
+			SceneManager.sceneLoaded += (scene, mode) => BranchNotifyPatch.Entries.Clear();
+		}
+		_instance._visible = true;
+	}
+
+	private void OnGUI()
+	{
+		float autoHide = ConfigManager.BranchPanelAutoHide.Value;
+		if (autoHide > 0f && Time.unscaledTime - BranchNotifyPatch.LastEntryTime > autoHide)
+		{
+			return; // 一段时间没有新判断，自动收起
+		}
+		if (!_visible || !ConfigManager.ShowBranchChecks.Value || BranchNotifyPatch.Entries.Count == 0
+			|| StoryMainUI.Instance == null || !StoryMainUI.Instance.isActiveAndEnabled)
+		{
+			return;
+		}
+		float scale = Mathf.Min(Screen.width / 1920f, Screen.height / 1080f);
+		if (!Mathf.Approximately(scale, _scale) || !Mathf.Approximately(ConfigManager.PopupOpacity.Value, _opacity))
+		{
+			BuildStyles(scale);
+		}
+		if (!_placed)
+		{
+			float x = ConfigManager.BranchPanelX.Value;
+			float y = ConfigManager.BranchPanelY.Value;
+			_rect = new Rect(x >= 0f ? x * Screen.width : 20f * _scale, y >= 0f ? y * Screen.height : Screen.height * 0.18f, 620f * _scale, 10f);
+			_placed = true;
+		}
+		// 内容变了就按新内容重算高度
+		if (_drawnRevision != BranchNotifyPatch.Revision && Event.current.type == EventType.Layout)
+		{
+			_drawnRevision = BranchNotifyPatch.Revision;
+			_rect.height = 10f;
+		}
+		Rect before = _rect;
+		_rect = GUILayout.Window(WindowId, _rect, Draw, "", _window);
+		_rect.x = Mathf.Clamp(_rect.x, 0f, Screen.width - 40f);
+		_rect.y = Mathf.Clamp(_rect.y, 0f, Screen.height - 40f);
+		// 拖动结束（松开鼠标）时记下位置
+		_moved |= before.x != _rect.x || before.y != _rect.y;
+		if (_moved && Event.current.rawType == EventType.MouseUp)
+		{
+			SavePosition();
+		}
+	}
+
+	private bool _moved;
+
+	private void SavePosition()
+	{
+		_moved = false;
+		ConfigManager.BranchPanelX.Value = _rect.x / Screen.width;
+		ConfigManager.BranchPanelY.Value = _rect.y / Screen.height;
+		ConfigManager.SetConfigValue(ConfigManager.BranchPanelX, ConfigManager.BranchPanelX.Value);
+		ConfigManager.SetConfigValue(ConfigManager.BranchPanelY, ConfigManager.BranchPanelY.Value);
+	}
+
+	private void Draw(int id)
+	{
+		GUILayout.BeginHorizontal();
+		GUILayout.Label("剧情分支", _title);
+		GUILayout.FlexibleSpace();
+		if (GUILayout.Button("×", _close, GUILayout.Width(32f * _scale)))
+		{
+			_visible = false;
+		}
+		GUILayout.EndHorizontal();
+		foreach (BranchNotifyPatch.Entry entry in BranchNotifyPatch.Entries)
+		{
+			GUILayout.Space(4f * _scale);
+			GUILayout.Label(entry.Title, _title);
+			for (int i = 0; i < entry.Lines.Count; i++)
+			{
+				GUILayout.Label(entry.Lines[i], i == entry.Taken ? _taken : _line);
+			}
+		}
+		GUI.DragWindow();
+	}
+
+	private void BuildStyles(float scale)
+	{
+		_scale = scale;
+		int fontSize = Mathf.Max(11, (int)(19f * scale));
+		// 背景不透明度可在配置 PopupOpacity 里改；走的那一行的高亮跟着按比例变化，始终看得出来
+		_opacity = ConfigManager.PopupOpacity.Value;
+		float alpha = Mathf.Clamp01(_opacity);
+		_bg = Solid(new Color(0.06f, 0.05f, 0.04f, alpha));
+		_takenBg = Solid(new Color(0.85f, 0.78f, 0.55f, Mathf.Max(0.15f, alpha * 0.4f)));
+		_window = new GUIStyle(GUI.skin.box);
+		_window.normal.background = _bg;
+		_window.padding = new RectOffset((int)(12f * scale), (int)(12f * scale), (int)(8f * scale), (int)(10f * scale));
+		_title = new GUIStyle(GUI.skin.label) { fontSize = fontSize, fontStyle = FontStyle.Bold, richText = true, wordWrap = true };
+		_title.normal.textColor = new Color(0.95f, 0.92f, 0.85f);
+		_line = new GUIStyle(GUI.skin.label) { fontSize = fontSize, richText = true, wordWrap = true };
+		_line.padding = new RectOffset((int)(14f * scale), 4, 2, 2);
+		_line.normal.textColor = new Color(0.85f, 0.82f, 0.76f);
+		_taken = new GUIStyle(_line);
+		_taken.normal.background = _takenBg;
+		_close = new GUIStyle(GUI.skin.button) { fontSize = fontSize };
+	}
+
+	private static Texture2D Solid(Color color)
+	{
+		var texture = new Texture2D(1, 1) { hideFlags = HideFlags.HideAndDontSave };
+		texture.SetPixel(0, 0, color);
+		texture.Apply();
+		return texture;
 	}
 }
