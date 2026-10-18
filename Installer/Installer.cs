@@ -225,7 +225,7 @@ internal class InstallerForm : Form
 		}
 		if (installed != null && !target.StartsWith("正在") && target.StartsWith(Short(installed) + "（"))
 		{
-			target = Short(installed) + "（已是最新，可重新安装）";
+			target = Short(installed) + "（已是最新）";
 		}
 		_versions.Text = "已安装：" + (_game == null ? "-" : installed != null ? Short(installed) : "未安装") + "　　将安装：" + target;
 	}
@@ -352,15 +352,18 @@ internal class InstallerForm : Form
 	// Steam 在注册表里存的路径是全小写（d:/steam），这里换成磁盘上的实际大小写，只为显示好看
 	private static string RealCase(string path)
 	{
+		// 从盘符开始逐级往下找实际名字（不能往上递归：「C:」会被当成 C 盘的当前目录，导致无限递归）
 		try
 		{
-			var dir = new DirectoryInfo(Path.GetFullPath(path).TrimEnd('\\'));
-			if (dir.Parent == null)
+			string full = Path.GetFullPath(path);
+			string root = Path.GetPathRoot(full);
+			string current = root.ToUpperInvariant();
+			foreach (string part in full.Substring(root.Length).Split(new[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries))
 			{
-				return dir.FullName.ToUpperInvariant();
+				string[] match = Directory.GetDirectories(current, part);
+				current = Path.Combine(current, match.Length > 0 ? Path.GetFileName(match[0]) : part);
 			}
-			DirectoryInfo[] match = dir.Parent.GetDirectories(dir.Name);
-			return Path.Combine(RealCase(dir.Parent.FullName), match.Length > 0 ? match[0].Name : dir.Name);
+			return current;
 		}
 		catch
 		{
@@ -523,6 +526,20 @@ internal class InstallerForm : Form
 			{
 				Thread.Sleep(250);
 			}
+			// 已经是最新版（且加载器在）就不再下载、覆盖，只处理勾选的冲突 Mod
+			Version installed = DllVersion(Path.Combine(_game, ModDll));
+			Version newest = BundledVersion();
+			if (_latest != null && (newest == null || _latest > newest))
+			{
+				newest = _latest;
+			}
+			if (installed != null && newest != null && File.Exists(Path.Combine(_game, "winhttp.dll"))
+				&& (Short(installed) == Short(newest) || installed > newest))
+			{
+				DisablePlugins(disable);
+				Finish(true, "已经是最新版本 " + Short(installed) + "，不需要重新安装。" + (disable.Count > 0 ? "\n\n勾选的 Mod 已移到「BepInEx\\已停用的Mod」。" : ""));
+				return;
+			}
 			string source = ChooseSource();
 			if (source == null)
 			{
@@ -625,6 +642,10 @@ internal class InstallerForm : Form
 			}
 			Directory.CreateDirectory(target);
 			string dest = Path.Combine(target, Path.GetFileName(item));
+			for (int n = 2; File.Exists(dest) || Directory.Exists(dest); n++)
+			{
+				dest = Path.Combine(target, Path.GetFileNameWithoutExtension(item) + "_" + n + Path.GetExtension(item));
+			}
 			if (Directory.Exists(item))
 			{
 				Directory.Move(item, dest);
