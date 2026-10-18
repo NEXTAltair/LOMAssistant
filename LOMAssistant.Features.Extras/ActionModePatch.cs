@@ -104,6 +104,47 @@ public static class ActionModePatch
 		}
 	}
 
+	private static readonly System.Reflection.MethodInfo GetMainCheckData = AccessTools.Method(typeof(MissionManagerData), "GetMainCheckData");
+
+	// 每旬 1 点时，旬初的唐门会议之类的事件会用掉唯一的行动点。行动点归零后游戏先进入下一旬、再检查任务，
+	// 只在这一旬触发的主线（例如 3 年 3 月上旬的 M4001_01）就永远错过了，后面的主线全部卡住。
+	// 所以检查任务前，如果本旬还有该触发的主线，就补 1 点，不进入下一旬。
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(MissionManagerData), "UpdateCheckMissions")]
+	public static void UpdateCheckMissions_Prefix(MissionManagerData __instance) => KeepRoundForMain(__instance);
+
+	// 养成界面加载时会直接推进时间（FreeManager.Awake），也要拦
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(PlayerStatManagerData), "UpdateGameTime")]
+	public static void UpdateGameTime_Prefix() => KeepRoundForMain(MissionManagerData.Instance);
+
+	private static void KeepRoundForMain(MissionManagerData missions)
+	{
+		if (Mode != OnePerRound || missions == null)
+		{
+			return;
+		}
+		PlayerStatManagerData stats = PlayerStatManagerData.Instance;
+		if (stats == null || stats.CurrentActionCount > 0)
+		{
+			return;
+		}
+		try
+		{
+			var main = GetMainCheckData.Invoke(missions, null) as MissionCheckData;
+			if (main != null && main.Check(stats))
+			{
+				stats.Stats.Set(GameStatType.行動次數, 1);
+				GameTime t = stats.GameTime;
+				FileLogger.Log($"行动点模式（每旬1点）：{t.Year}年{t.Month}月{t.Stage} 主线 {main.Key} 还没触发，补 1 点，不进入下一旬。");
+			}
+		}
+		catch (System.Exception e)
+		{
+			FileLogger.LogWarning("行动点模式：检查本旬主线失败: " + e.Message);
+		}
+	}
+
 	/// <summary>「不消耗」模式下空过：用掉本旬剩下的全部行动点，进入下一旬。</summary>
 	internal static IEnumerator SpendAll(FreeManager free)
 	{
