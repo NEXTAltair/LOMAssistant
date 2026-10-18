@@ -52,6 +52,15 @@ public class DicePlugin : MonoBehaviour
 
 	private float lastScaleFactor;
 
+	// 屏幕缩放（按 1920x1080 等比）× 玩家拖右下角调的缩放（配置 TabPanelScale）
+	private float screenScaleFactor = 1f;
+
+	private bool isResizing;
+
+	private Vector2 resizeStartMouse;
+
+	private float resizeStartScale;
+
 	public static DicePlugin Instance { get; set; }
 
 	private void Awake()
@@ -59,9 +68,13 @@ public class DicePlugin : MonoBehaviour
 		Instance = this;
 		float num = Screen.width;
 		float num2 = Screen.height;
-		scaleFactor = Mathf.Min(num / 1920f, num2 / 1080f);
-		logWindowRect = new Rect(20f * scaleFactor, 20f * scaleFactor, 750f * scaleFactor, 750f * scaleFactor);
+		screenScaleFactor = Mathf.Min(num / 1920f, num2 / 1080f);
+		scaleFactor = screenScaleFactor * UserScale;
+		logWindowRect = new Rect(20f * screenScaleFactor, 20f * screenScaleFactor, 750f * scaleFactor, 750f * scaleFactor);
 	}
+
+	// Awake 时配置还没初始化（插件先挂组件、后读配置），这时按 1 算
+	private static float UserScale => ConfigManager.TabPanelScale == null ? 1f : Mathf.Clamp(ConfigManager.TabPanelScale.Value, 0.5f, 2f);
 
 	private void SetGUI()
 	{
@@ -127,8 +140,44 @@ public class DicePlugin : MonoBehaviour
 		}
 		if (showLogWindow)
 		{
+			UpdateResize();
 			logWindowRect = GUILayout.Window(1, logWindowRect, DrawLogWindow, "活侠传拓展");
+			InputGuard.Report("Tab", logWindowRect);
 		}
+	}
+
+	// 拖动右下角缩放：窗口、文字、按钮一起变，松开鼠标时保存
+	private void UpdateResize()
+	{
+		if (!isResizing)
+		{
+			return;
+		}
+		if (!Input.GetMouseButton(0))
+		{
+			isResizing = false;
+			ConfigManager.SetConfigValue(ConfigManager.TabPanelScale, ConfigManager.TabPanelScale.Value);
+			return;
+		}
+		Vector2 mouse = Input.mousePosition;
+		float dx = mouse.x - resizeStartMouse.x;
+		float dy = resizeStartMouse.y - mouse.y;
+		float delta = Mathf.Abs(dx) >= Mathf.Abs(dy) ? dx : dy;
+		float scale = Mathf.Clamp(resizeStartScale + delta / (750f * screenScaleFactor), 0.5f, 2f);
+		if (!Mathf.Approximately(scale, ConfigManager.TabPanelScale.Value))
+		{
+			ConfigManager.TabPanelScale.Value = scale;
+			ApplyScale();
+		}
+	}
+
+	private void ApplyScale()
+	{
+		scaleFactor = screenScaleFactor * UserScale;
+		logWindowRect.width = 750f * scaleFactor;
+		logWindowRect.height = 750f * scaleFactor;
+		lastScaleFactor = scaleFactor;
+		SetGUI();
 	}
 
 	public void AddOptionEntry(string key, string description = "")
@@ -184,6 +233,17 @@ public class DicePlugin : MonoBehaviour
 			break;
 		}
 		GUILayout.EndScrollView();
+		float size = 24f * scaleFactor;
+		Rect handle = new Rect(logWindowRect.width - size, logWindowRect.height - size, size, size);
+		GUI.Box(handle, "◢");
+		Event current = Event.current;
+		if (current.type == EventType.MouseDown && current.button == 0 && handle.Contains(current.mousePosition))
+		{
+			isResizing = true;
+			resizeStartMouse = Input.mousePosition;
+			resizeStartScale = UserScale;
+			current.Use();
+		}
 		GUI.DragWindow();
 	}
 
@@ -302,8 +362,9 @@ public class DicePlugin : MonoBehaviour
 		{
 			lastScreenWidth = width;
 			lastScreenHeight = height;
-			scaleFactor = Mathf.Min((float)width / 1920f, (float)height / 1080f);
-			logWindowRect = new Rect(20f * scaleFactor, 20f * scaleFactor, 750f * scaleFactor, 750f * scaleFactor);
+			screenScaleFactor = Mathf.Min((float)width / 1920f, (float)height / 1080f);
+			scaleFactor = screenScaleFactor * UserScale;
+			logWindowRect = new Rect(20f * screenScaleFactor, 20f * screenScaleFactor, 750f * scaleFactor, 750f * scaleFactor);
 			if (scaleFactor != lastScaleFactor)
 			{
 				lastScaleFactor = scaleFactor;
