@@ -171,6 +171,7 @@ public class BranchPanel : MonoBehaviour
 		}
 		Rect before = _rect;
 		_rect = GUILayout.Window(WindowId, _rect, Draw, "", _window);
+		InputGuard.Report("Branch", _rect);
 		_rect.x = Mathf.Clamp(_rect.x, 0f, Screen.width - 40f);
 		_rect.y = Mathf.Clamp(_rect.y, 0f, Screen.height - 40f);
 		// 拖动结束（松开鼠标）时记下位置

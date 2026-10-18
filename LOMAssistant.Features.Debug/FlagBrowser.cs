@@ -167,6 +167,7 @@ public class FlagBrowser : MonoBehaviour
 		float h = (_applied != null ? 320f : 210f) * _scale;
 		float pad = 24f * _scale;
 		Rect rect = new Rect(panel.xMax - w - pad, panel.yMax - h - pad, w, h);
+		InputGuard.Report("F9Search", rect);
 		GUILayout.BeginArea(rect, _box);
 		GUILayout.Label("旗标搜索", _title);
 		GUI.SetNextControlName("LOMAssistant_FlagSearch");

@@ -74,6 +74,7 @@ public class ModPanel : MonoBehaviour
 			_windowRect.height = 10f;
 		}
 		_windowRect = GUILayout.Window(WindowId, _windowRect, DrawWindow, "活侠传拓展", _window);
+		InputGuard.Report("F8", _windowRect);
 	}
 
 	private void DrawWindow(int id)

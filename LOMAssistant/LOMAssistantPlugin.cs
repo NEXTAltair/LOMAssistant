@@ -154,6 +154,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			if (base.gameObject.GetComponent<ModPanel>() == null)
 			{
 				base.gameObject.AddComponent<ModPanel>();
+				InputGuard.Ensure();
 			}
 			LogInfo("修炼/锻造/炼丹修改补丁已应用。");
 			TryPatchAll(typeof(DuelCheatPatch));
@@ -170,6 +171,9 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			TryPatchAll(typeof(BranchNotifyPatch));
 			TryPatchAll(typeof(LoadClickGuard));
 			TryPatchAll(typeof(SettingsDiagnosticsButton));
+			TryPatchAll(typeof(InputGuardActionGate));
+			TryPatchAll(typeof(InputGuardDialogGate));
+			TryPatchAll(typeof(InputGuardNavigationGate));
 			LogInfo("行动点模式补丁已应用（当前：" + ActionModePatch.Label(ActionModePatch.Mode) + "）。");
 			LogInfo("自动存档历史补丁已应用。");
 			TryPatchAll(typeof(ShopAllItemsPatch));
