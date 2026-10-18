@@ -14,7 +14,7 @@ namespace LOMAssistant.Features.Extras;
 /// 空过：在养成（唐门地图）界面的 ESC 菜单加一个“空过”按钮。
 /// 消耗 1 次行动但不执行任何场所脚本，然后走与剧情结束回到地图相同的流程
 /// （LuaManager.ChangeScene("Free")）：检查任务、行动次数归零时自动进入下一旬。
-/// 在外行动时有几处剧情里的自由行动菜单（见 ActionMenuScripts），剧情 ESC 菜单里也有“空过”，
+/// 留学地图和在外行动时的几处自由行动菜单（见 ActionMenuScripts），剧情 ESC 菜单里也有“空过”，
 /// 只在这几个菜单里显示：消耗行动后重新载入剧情场景，和做完一项活动回到菜单的流程相同。
 /// </summary>
 public static class SkipActionPatch
@@ -207,6 +207,9 @@ public static class SkipActionPatch
 		"ch3_6_1_break_start_01",
 		"S2503_break_start_01",
 		"ch6_4_3_break_start_01",
+		// 留学地图（每项活动「行动次数 -1」，做完经 section_0X_free_start_01 重新载入本菜单）
+		"section_01_free_start_02",
+		"section_02_free_start_02",
 	};
 
 	private static void OnStorySkipClick()
