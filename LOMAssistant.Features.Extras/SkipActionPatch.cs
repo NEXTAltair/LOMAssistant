@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using HarmonyLib;
 using Mortal.Core;
 using Mortal.Free;
@@ -13,8 +14,8 @@ namespace LOMAssistant.Features.Extras;
 /// 空过：在养成（唐门地图）界面的 ESC 菜单加一个“空过”按钮。
 /// 消耗 1 次行动但不执行任何场所脚本，然后走与剧情结束回到地图相同的流程
 /// （LuaManager.ChangeScene("Free")）：检查任务、行动次数归零时自动进入下一旬。
-/// 留学、在外行动时是剧情里的自由行动菜单（脚本名带 break_start），剧情 ESC 菜单里也有“空过”，
-/// 只在这类菜单所在的脚本里显示：消耗行动后重新载入剧情场景，和做完一项活动回到菜单的流程相同。
+/// 在外行动时有几处剧情里的自由行动菜单（见 ActionMenuScripts），剧情 ESC 菜单里也有“空过”，
+/// 只在这几个菜单里显示：消耗行动后重新载入剧情场景，和做完一项活动回到菜单的流程相同。
 /// </summary>
 public static class SkipActionPatch
 {
@@ -194,9 +195,19 @@ public static class SkipActionPatch
 	private static bool InBreakMenu()
 	{
 		string script = PlayerStatManagerData.Instance != null ? PlayerStatManagerData.Instance.CurrentStoryScript : null;
-		return !string.IsNullOrEmpty(script) && script.IndexOf("break_start", StringComparison.OrdinalIgnoreCase) >= 0
+		return !string.IsNullOrEmpty(script) && ActionMenuScripts.Contains(script)
 			&& PlayerStatManagerData.Instance.CurrentActionCount > 0;
 	}
+
+	// 剧情里会消耗行动次数的自由行动菜单（按剧本数据查出：选项里有「行动次数 -1」并回到本菜单）。
+	// 其余 break_start 菜单只是闲谈，行动次数是从养成带过来的，在那里空过会把游戏时间往后推，导致剧情被跳过、提前。
+	private static readonly HashSet<string> ActionMenuScripts = new HashSet<string>(StringComparer.OrdinalIgnoreCase)
+	{
+		"ch2_4_3_break_start_01",
+		"ch3_6_1_break_start_01",
+		"S2503_break_start_01",
+		"ch6_4_3_break_start_01",
+	};
 
 	private static void OnStorySkipClick()
 	{
