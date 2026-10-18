@@ -14,5 +14,5 @@ for n in mscorlib System System.Core System.Drawing System.Windows.Forms System.
 done
 mkdir -p bin
 "$DOTNET" "$CSC" -nologo -noconfig -nostdlib+ -target:winexe -platform:anycpu -langversion:12 -optimize+ -deterministic \
-	-win32manifest:app.manifest -out:"bin/活侠传拓展安装器.exe" "${refs[@]}" Installer.cs
+	-win32manifest:app.manifest -out:"bin/活侠传拓展安装器.exe" "${refs[@]}" *.cs
 echo "Built Installer/bin/活侠传拓展安装器.exe"

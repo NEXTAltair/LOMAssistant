@@ -38,6 +38,10 @@ internal static class Program
 			{
 				game = args[i + 1];
 			}
+			else if (args[i] == "--diag")
+			{
+				InstallerForm.DiagLogArg = args[i + 1]; // 测试用：导出诊断后把路径写到这个文件并退出
+			}
 			else if (args[i] == "--auto")
 			{
 				autoLog = args[i + 1]; // 测试用：自动安装，把日志写到这个文件后退出
@@ -58,6 +62,7 @@ internal class InstallerForm : Form
 	{
 		new[] { "ScriptTrainer", "多功能 Mod（Jim97）" },
 		new[] { "ControlMyDestiny", "知天命" },
+		new[] { "ZhaoHuoSystem", "赵活系统" },
 		new[] { "DiceMaster", "骰子大师" },
 		new[] { "骰子", "骰子大师" },
 		new[] { "LOMAssistant", "活侠传助手 / 本 Mod 的旧版" },
@@ -79,6 +84,7 @@ internal class InstallerForm : Form
 	private readonly CheckedListBox _plugins = new CheckedListBox { Dock = DockStyle.Fill, CheckOnClick = true, IntegralHeight = false, BorderStyle = BorderStyle.FixedSingle, Height = 84 };
 	private readonly TextBox _log = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, BorderStyle = BorderStyle.None };
 	private readonly Button _install = new Button { Text = "一键安装 / 更新", Dock = DockStyle.Fill, Height = 46, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+	private readonly Button _export = new Button { Text = "导出诊断（Mod 不生效时用，打包日志发给作者）", Dock = DockStyle.Fill, Height = 34, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 	private readonly Button _browse = new Button { Text = "选择…", AutoSize = true, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 	private readonly List<string> _pluginPaths = new List<string>();
 
@@ -88,6 +94,8 @@ internal class InstallerForm : Form
 	private bool _onlineDone;
 
 	private readonly string _autoLog;
+	internal static string DiagLogArg;
+	private readonly string _diagLog = DiagLogArg;
 
 	public InstallerForm(string game, string autoLog)
 	{
@@ -124,6 +132,7 @@ internal class InstallerForm : Form
 			_plugins,
 			new Panel { Height = 12, Dock = DockStyle.Fill },
 			_install,
+			_export,
 			Heading("日志"),
 			logCard,
 		};
@@ -153,6 +162,10 @@ internal class InstallerForm : Form
 		_install.FlatAppearance.BorderSize = 0;
 		_install.FlatAppearance.MouseOverBackColor = AccentHover;
 		_install.FlatAppearance.MouseDownBackColor = Ink;
+		_export.BackColor = Card;
+		_export.ForeColor = Ink;
+		_export.Margin = new Padding(0, 6, 0, 0);
+		_export.FlatAppearance.BorderColor = Color.FromArgb(200, 190, 175);
 		_browse.BackColor = Card;
 		_browse.FlatAppearance.BorderColor = Color.FromArgb(200, 190, 175);
 		_browse.Margin = new Padding(8, 3, 0, 3);
@@ -164,6 +177,7 @@ internal class InstallerForm : Form
 		ActiveControl = _install;
 		_browse.Click += delegate { BrowseGame(); };
 		_install.Click += delegate { StartInstall(); };
+		_export.Click += delegate { ExportDiagnostics(); };
 
 		Log("活侠传拓展 安装器");
 		SetGame(game ?? FindGame());
@@ -175,6 +189,10 @@ internal class InstallerForm : Form
 		if (_autoLog != null)
 		{
 			Shown += delegate { StartInstall(); };
+		}
+		else if (_diagLog != null)
+		{
+			Shown += delegate { ExportDiagnostics(); };
 		}
 	}
 
@@ -437,6 +455,36 @@ internal class InstallerForm : Form
 			}));
 		}) { IsBackground = true };
 		thread.Start();
+	}
+
+	// ---------------- 导出诊断 ----------------
+
+	private void ExportDiagnostics()
+	{
+		try
+		{
+			string path = Diagnostics.Export(_game, _log.Text);
+			Log("已导出诊断：" + path);
+			try
+			{
+				Clipboard.SetText(path);
+			}
+			catch
+			{
+			}
+			if (_diagLog != null)
+			{
+				File.WriteAllText(_diagLog, path, Encoding.UTF8);
+				Close();
+				return;
+			}
+			MessageBox.Show(this, "已导出到桌面：\n" + Path.GetFileName(path) + "\n\n路径已复制。反馈问题时把这个压缩包发给作者（QQ 群 496887060）。", "导出诊断", MessageBoxButtons.OK, MessageBoxIcon.Information);
+		}
+		catch (Exception e)
+		{
+			Log("导出诊断失败：" + e.Message);
+			MessageBox.Show(this, "导出失败：" + e.Message, "导出诊断", MessageBoxButtons.OK, MessageBoxIcon.Error);
+		}
 	}
 
 	// ---------------- 安装 ----------------

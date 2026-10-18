@@ -1,0 +1,115 @@
+using System;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Reflection;
+using System.Text;
+using BepInEx;
+using UnityEngine;
+
+namespace LOMAssistant;
+
+/// <summary>
+/// 导出诊断：把排查问题需要的文件打成一个压缩包放到桌面，路径复制到剪贴板。
+/// 包含：本 Mod 最近 3 个日志、BepInEx 日志、游戏日志（Player.log）、本 Mod 配置、plugins 插件清单和版本信息。
+/// 不包含存档。
+/// </summary>
+public static class DiagnosticsExport
+{
+	public static string Export()
+	{
+		string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+		if (string.IsNullOrEmpty(desktop) || !Directory.Exists(desktop))
+		{
+			desktop = Paths.GameRootPath;
+		}
+		string zipPath = Path.Combine(desktop, "活侠传拓展诊断_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".zip");
+		using (FileStream stream = File.Create(zipPath))
+		using (var zip = new ZipArchive(stream, ZipArchiveMode.Create))
+		{
+			AddText(zip, "说明.txt", Summary());
+			string logs = Path.Combine(Paths.PluginPath, "LOMAssistant", "logs");
+			if (Directory.Exists(logs))
+			{
+				foreach (string log in Directory.GetFiles(logs, "*.log").OrderByDescending(File.GetLastWriteTimeUtc).Take(3))
+				{
+					AddFile(zip, log, "Mod日志/" + Path.GetFileName(log));
+				}
+			}
+			AddFile(zip, Path.Combine(Paths.BepInExRootPath, "LogOutput.log"), "BepInEx/LogOutput.log");
+			AddFile(zip, Path.Combine(Paths.ConfigPath, "LOMAssistant.cfg"), "BepInEx/LOMAssistant.cfg");
+			AddFile(zip, Path.Combine(Application.persistentDataPath, "Player.log"), "游戏日志/Player.log");
+			AddFile(zip, Path.Combine(Application.persistentDataPath, "Player-prev.log"), "游戏日志/Player-prev.log");
+		}
+		FileLogger.Log("导出诊断：" + zipPath);
+		try
+		{
+			GUIUtility.systemCopyBuffer = zipPath;
+		}
+		catch
+		{
+		}
+		return zipPath;
+	}
+
+	private static string Summary()
+	{
+		var sb = new StringBuilder();
+		sb.AppendLine("活侠传拓展 诊断信息  " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+		sb.AppendLine("Mod 版本：" + Assembly.GetExecutingAssembly().GetName().Version);
+		sb.AppendLine("游戏版本：" + Application.version + "，Unity " + Application.unityVersion);
+		sb.AppendLine("系统：" + Environment.OSVersion + (Environment.Is64BitOperatingSystem ? "，64 位" : "，32 位"));
+		sb.AppendLine("游戏目录：" + Paths.GameRootPath);
+		sb.AppendLine();
+		sb.AppendLine("BepInEx\\plugins 里的插件：");
+		try
+		{
+			foreach (string dll in Directory.GetFiles(Paths.PluginPath, "*.dll", SearchOption.AllDirectories))
+			{
+				string version = "";
+				try
+				{
+					version = AssemblyName.GetAssemblyName(dll).Version.ToString();
+				}
+				catch
+				{
+				}
+				sb.AppendLine("  " + dll.Substring(Paths.PluginPath.Length).TrimStart('\\', '/') + "  " + version);
+			}
+		}
+		catch (Exception e)
+		{
+			sb.AppendLine("  （读取失败：" + e.Message + "）");
+		}
+		return sb.ToString();
+	}
+
+	private static void AddText(ZipArchive zip, string name, string text)
+	{
+		using (var writer = new StreamWriter(zip.CreateEntry(name).Open(), new UTF8Encoding(true)))
+		{
+			writer.Write(text);
+		}
+	}
+
+	// 日志文件可能正被游戏写着，用共享读取的方式复制
+	private static void AddFile(ZipArchive zip, string path, string name)
+	{
+		try
+		{
+			if (!File.Exists(path))
+			{
+				return;
+			}
+			using (var input = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+			using (Stream output = zip.CreateEntry(name).Open())
+			{
+				input.CopyTo(output);
+			}
+		}
+		catch (Exception e)
+		{
+			AddText(zip, name + ".读取失败.txt", e.Message);
+		}
+	}
+}

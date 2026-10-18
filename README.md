@@ -20,7 +20,7 @@
 2. 把压缩包里的所有内容解压到这个目录，提示同名文件时选择覆盖。
 3. 正常启动游戏即可。
 
-之前装过旧版 BepInEx 或原版助手的，同样直接覆盖即可。**请先删除 `BepInEx\plugins` 里的旧版骰子大师、多功能 Mod 等同类 Mod**，它们和本 Mod 改的是同一批游戏代码，会导致 Tab 窗口空白等问题。检测到冲突时，游戏启动几秒后会自动弹出 F8 面板，用红字提示是哪个 Mod。卸载：删除游戏目录下的 `winhttp.dll`。
+之前装过旧版 BepInEx 或原版助手的，同样直接覆盖即可。**请先删除 `BepInEx\plugins` 里的旧版骰子大师、多功能 Mod、赵活系统等同类 Mod**，它们和本 Mod 改的是同一批游戏代码，会导致 Tab 窗口空白等问题。检测到冲突时，游戏启动几秒后会自动弹出 F8 面板，用红字提示是哪个 Mod。卸载：删除游戏目录下的 `winhttp.dll`。
 
 ## 来源声明
 
@@ -32,6 +32,7 @@
     - [多功能 Mod](https://mod.3dmgame.com/mod/210629)：Jim97
     - [任意位置存档](https://mod.3dmgame.com/mod/210679)：NothingNullNull
 - 修炼、锻造、炼丹相关功能参考了风灵月影《活侠传》修改器的功能思路（未使用其代码）。
+- 剧情分支小窗参考了 [赵活系统](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 许可）的功能思路（代码为本项目自行实现）。赵活系统和本 Mod 改的是同一批游戏代码，请不要同时安装。
 - 存档备注在存档栏下方单独显示的做法，移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 许可）及其[汉化版](https://github.com/shiluodeqiou/LOM_SaveSlotExpander-zh)（shiluodeqiou）。
 - 下载包中附带的 [BepInEx](https://github.com/BepInEx/BepInEx)、[UnityDoorstop](https://github.com/NeighTools/UnityDoorstop)、[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) 为各自作者的开源项目，按其原许可证分发。
 
@@ -73,6 +74,8 @@
 - **自动存档历史**：养成、剧情、战斗三类自动存档各额外保留 5 个旧档（配置 `AutoSaveHistory`）。读档界面每张自动存档卡片右侧的 ▲/▼ 可以切换到较新/更早的旧档，再点卡片读取。
 - **四师兄售卖全部物品**（默认关闭，配置 `EnableShopAllItems = true` 打开）：来自 Jim97 多功能 Mod，活侠传助手整合时去掉了。商店里加入所有没拥有的书籍、杂物、特殊物品；不卖《证类本草》（提前买会导致六月后山事件出 bug）。加进去的商品不写进存档，关掉后商店恢复原样。
 - **F9 旗标搜索**：F9 面板底部有搜索栏，按旗标名或中文备注搜（如「孟仙谣」「H040」「神兵帖」），结果分页显示在右侧旗标列，可直接加减。原版只能看到固定的 51 面，游戏里实际有一千多面。「全部」列出所有旗标，「原版」恢复原来的 51 行。**乱改旗标可能让剧情出错，改之前先存档。**
+- **导出诊断**：游戏 ESC 菜单 →「环境设定」里有「导出诊断」按钮，一键把日志、配置、插件列表打包到桌面（不含存档），反馈问题时发这个压缩包。Mod 装了不生效、游戏里看不到按钮时，用安装器里的「导出诊断」，它还会检查 winhttp.dll 是不是 64 位、BepInEx 是否完整。
+- **剧情分支小窗的透明度**：配置 `PopupOpacity`（0=完全透明，1=不透明，默认 0.5）。
 - **增强存档（随时存档）默认关闭**：原版的这个功能在新版游戏中会导致读档回到上个事件、出现奇怪背景音。仍可在配置中用 `EnableSaveSystem` 打开。
 
 ### 养成行动点模式（谨慎使用）
