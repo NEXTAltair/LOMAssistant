@@ -16,14 +16,24 @@ public static class SaveSlotPatch
 	public static void SaveGamePanel_Awake_Prefix(SaveGamePanel __instance)
 	{
 		Apply(Traverse.Create(__instance).Field("_slotCount"));
+		_awaking = __instance;
 	}
+
+	[HarmonyFinalizer]
+	[HarmonyPatch(typeof(SaveGamePanel), "Awake")]
+	public static void SaveGamePanel_Awake_Finalizer() => _awaking = null;
 
 	[HarmonyPrefix]
 	[HarmonyPatch(typeof(LoadGamePanel), "Awake")]
 	public static void LoadGamePanel_Awake_Prefix(LoadGamePanel __instance)
 	{
 		Apply(Traverse.Create(__instance).Field("_slotCount"));
+		_awaking = __instance;
 	}
+
+	[HarmonyFinalizer]
+	[HarmonyPatch(typeof(LoadGamePanel), "Awake")]
+	public static void LoadGamePanel_Awake_Finalizer() => _awaking = null;
 
 	// ---- 延迟建栏位 ----
 	// 游戏每次加载场景都会在 Awake 里把存档、读档面板的所有栏位实例化一遍（100 个栏位每块面板约 0.15 秒，
@@ -33,6 +43,9 @@ public static class SaveSlotPatch
 	private static readonly HashSet<object> Pending = new HashSet<object>();
 
 	private static bool _building;
+
+	// 正在执行 Awake 的面板（_saveSlots 是序列化字段，场景加载时就不是 null，不能拿它判断是不是第一次建）
+	private static object _awaking;
 
 	[HarmonyPrefix]
 	[HarmonyPatch(typeof(SaveGamePanel), "CreateSlot")]
@@ -72,8 +85,8 @@ public static class SaveSlotPatch
 		{
 			return true;
 		}
-		// 只推迟 Awake 里的第一次；之后（比如 Ensure 里）照常建
-		if (Traverse.Create(panel).Field("_saveSlots").GetValue() == null && !Pending.Contains(panel))
+		// 只推迟 Awake 里的那次；之后（比如 Ensure 里）照常建
+		if (ReferenceEquals(_awaking, panel) && !Pending.Contains(panel))
 		{
 			Pending.RemoveWhere(p => p == null || p.Equals(null));
 			Pending.Add(panel);
