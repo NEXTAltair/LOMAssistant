@@ -27,6 +27,7 @@ internal static class OptionInfoPatch
 	[HarmonyPatch(typeof(LuaEnvironment), "LoadLuaFunction")]
 	public static void LuaEnvironment_LoadLuaFunction_Prefix(string luaString, string friendlyName)
 	{
+		var timer = System.Diagnostics.Stopwatch.StartNew();
 		try
 		{
 			if (friendlyName == "tmp.LuaScript")
@@ -73,6 +74,7 @@ internal static class OptionInfoPatch
 		{
 			DicePlugin.LogError("LoadLuaFunction Prefix 解析失败，已跳过以保证对话加载: " + ex);
 		}
+		LuaLoadTiming.ParseMs += timer.ElapsedMilliseconds;
 	}
 
 	[HarmonyPostfix]

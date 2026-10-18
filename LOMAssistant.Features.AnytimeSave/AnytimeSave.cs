@@ -578,7 +578,10 @@ public static class AnytimeSavePatches
 	[HarmonyPatch(typeof(LuaEnvironment), "LoadLuaFunction")]
 	public static void LoadLuaFunction_Prefix(LuaEnvironment __instance, ref string luaString, string friendlyName)
 	{
-		if (AnytimeSave.Instance != null) luaString = AnytimeSave.Instance.PrepareScript(__instance, luaString, friendlyName);
+		if (AnytimeSave.Instance == null) return;
+		var timer = System.Diagnostics.Stopwatch.StartNew();
+		luaString = AnytimeSave.Instance.PrepareScript(__instance, luaString, friendlyName);
+		LuaLoadTiming.AnytimeMs += timer.ElapsedMilliseconds;
 	}
 
 	[HarmonyPrefix]
