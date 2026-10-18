@@ -22,7 +22,7 @@ public class DicePlugin : MonoBehaviour
 
 	private Rect logWindowRect = new Rect(20f, 20f, 750f, 750f);
 
-	private bool showLogWindow = true;
+	private bool showLogWindow;
 
 	private float baseFontSize = 14f;
 
