@@ -184,6 +184,12 @@ public static class Diagnostics
 			return;
 		}
 		string first = (stackTrace ?? "").Split('\n').FirstOrDefault(l => l.Trim().Length > 0) ?? "";
+		// Lua 报错会把整段剧本源码附在消息里（几千行），只留前几行
+		string[] lines = (condition ?? "").Split('\n');
+		if (lines.Length > 8)
+		{
+			condition = string.Join("\n", lines.Take(8)) + $"\n…（后面还有 {lines.Length - 8} 行，已省略）";
+		}
 		FileLogger.LogWarning($"[游戏报错 {_errorCount}] {condition} {first.Trim()}");
 		if (_errorCount == MaxLoggedErrors)
 		{
