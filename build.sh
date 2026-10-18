@@ -14,13 +14,16 @@ C="$GAME/BepInEx/core"
 P="$GAME/BepInEx/plugins/LOMAssistant"
 
 refs=()
-for d in "$M"/*.dll "$C/BepInEx.Core.dll" "$C/BepInEx.Unity.Mono.dll" "$C/0Harmony.dll" "$P/Newtonsoft.Json.dll"; do
+for d in "$M"/*.dll "$C/BepInEx.Core.dll" "$C/BepInEx.Unity.Mono.dll" "$C/0Harmony.dll" "$C/Mono.Cecil.dll" "$P/Newtonsoft.Json.dll"; do
 	refs+=("-r:$d")
 done
 
 mkdir -p bin
 "$DOTNET" "$CSC" -nologo -noconfig -nostdlib+ -target:library -langversion:12 -optimize+ -deterministic \
-	-nowarn:CS1701,CS1702 -out:bin/LOMAssistant.dll "${refs[@]}" $(find . -name '*.cs' -not -path './bin/*' -not -path './Installer/*')
+	-nowarn:CS1701,CS1702 -out:bin/LOMAssistant.dll "${refs[@]}" \
+	-resource:LOMAssistant.Features.AnytimeSave/Replay.lua,LOMAssistant.AnytimeSave.Replay.lua \
+	-resource:LOMAssistant.Features.AnytimeSave/contract.tsv.gz,LOMAssistant.AnytimeSave.contract.tsv.gz \
+	$(find . -name '*.cs' -not -path './bin/*' -not -path './Installer/*' -not -path './tools/*')
 
 cp bin/LOMAssistant.dll "$P/LOMAssistant.dll"
 echo "Installed to $P/LOMAssistant.dll"

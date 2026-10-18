@@ -32,6 +32,7 @@
     - [多功能 Mod](https://mod.3dmgame.com/mod/210629)：Jim97
     - [任意位置存档](https://mod.3dmgame.com/mod/210679)：NothingNullNull
 - 修炼、锻造、炼丹相关功能参考了风灵月影《活侠传》修改器的功能思路（未使用其代码）。
+- 随时存档移植自 mahosalieri85-a11y 的 MortalAnytimeSave（[issue #2](https://github.com/kevinnie2003/LOMAssistant/issues/2)）。
 - 剧情分支小窗、选项提示增强、输入隔离参考了 [赵活系统](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 许可）的功能思路。
 - 存档备注在存档栏下方单独显示的做法，移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 许可）及其[汉化版](https://github.com/shiluodeqiou/LOM_SaveSlotExpander-zh)（shiluodeqiou）。
 - 下载包中附带的 [BepInEx](https://github.com/BepInEx/BepInEx)、[UnityDoorstop](https://github.com/NeighTools/UnityDoorstop)、[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) 为各自作者的开源项目，按其原许可证分发。
@@ -78,6 +79,7 @@
 - **输入隔离**：鼠标在 F8 面板、剧情分支小窗、F9 旗标搜索栏上点击时，不会穿透到游戏（推进对话、点到下面的按钮）；在 Mod 的输入框里打字时，不会触发游戏快捷键。
 - **导出诊断**：游戏 ESC 菜单 →「环境设定」里有「导出诊断」按钮，一键把日志、配置、插件列表打包到桌面（不含存档），反馈问题时发这个压缩包。Mod 装了不生效、游戏里看不到按钮时，用安装器里的「导出诊断」，它还会检查 winhttp.dll 是不是 64 位、BepInEx 是否完整。
 - **剧情分支小窗的透明度**：配置 `PopupOpacity`（0=完全透明，1=不透明，默认 0.5）。
+- **随时存档**：剧情的台词、选项、掷骰时和养成界面都能存档，存在独立的 8 个槽位，不占原版存档栏。F6 打开面板选槽位，F5 保存、F7 读取（配置 `AnytimeSaveKey` / `AnytimeLoadKey` / `AnytimePanelKey`）。读档时会快进重演这段剧情到存档的那一句。游戏更新改动了存读档相关代码时会自动停用，等 Mod 适配；不能在战斗中存。
 - **增强存档（随时存档）默认关闭**：原版的这个功能在新版游戏中会导致读档回到上个事件、出现奇怪背景音。仍可在配置中用 `EnableSaveSystem` 打开。
 
 ### 养成行动点模式（谨慎使用）

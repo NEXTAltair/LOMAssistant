@@ -89,8 +89,14 @@ public static class DiceManualSelectionPatch
 
 	[HarmonyPrefix]
 	[HarmonyPatch(typeof(DiceMenuDialog), "Roll")]
-	public static bool Roll_Prefix(DiceMenuDialog __instance, ref IEnumerator __result)
+	public static bool Roll_Prefix(DiceMenuDialog __instance, ref IEnumerator __result, bool __runOriginal)
 	{
+		if (!__runOriginal)
+		{
+			// 随时存档读档时已经换成了恢复结果的协程
+			RollHasStarted = true;
+			return false;
+		}
 		Traverse traverse = Traverse.Create(__instance);
 		if (IsClicked)
 		{

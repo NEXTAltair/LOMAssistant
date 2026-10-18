@@ -1,0 +1,592 @@
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
+using System.Linq;
+using System.Reflection;
+using System.Security.Cryptography;
+using System.Text;
+using System.Text.RegularExpressions;
+using Fungus;
+using HarmonyLib;
+using LOMAssistant.Features.Dice;
+using MoonSharp.Interpreter;
+using Mortal.Core;
+using Mortal.Story;
+using Newtonsoft.Json;
+using UnityEngine;
+using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
+using UObject = UnityEngine.Object;
+
+namespace LOMAssistant.Features.AnytimeSave;
+
+[Serializable] public class Entry { public string kind, label, type, value; }
+[Serializable] public class ScriptStamp { public string name, hash; }
+[Serializable] public class DiceAddition { public string name, status; public int value, sign; }
+[Serializable] public class DiceValue { public int random, result; public string header; public List<DiceAddition> additions = new List<DiceAddition>(); }
+[Serializable] public class DiceState { public bool valid, resultReady, useFate; public int random, selection, count, min, max, rangeIndex, defaultMax; }
+[Serializable] public class FreeRng { public int next, nextp; public int[] seed; }
+[Serializable]
+public class SaveFile
+{
+	public int format = 2;
+	public string compatibilityId;
+	public string version, coreHash, storyHash, savedAt, scene, rootScript, currentScript, nativeSlot, gameJson, randomJson, preview;
+	public int target;
+	public List<Entry> trace = new List<Entry>();
+	public List<ScriptStamp> scripts = new List<ScriptStamp>();
+	public DiceState dice;
+	public FreeRng freeRng;
+}
+[Serializable] public class Envelope { public string sha256, payload; }
+
+/// <summary>
+/// 随时存档：在剧情台词、选项、掷骰和自由行动界面存到独立槽位（存档目录下的 AnytimeSave\Slot_XX.json），不占原版存档栏。
+/// 移植自 mahosalieri85-a11y 的 MortalAnytimeSave（issue #2）。原理：
+/// 存档 = 原版存档数据快照 + 本段剧情的执行记录（每句台词、选项、查询结果）。
+/// 读档时经标题界面清掉旧剧情，从记录的剧情入口重新执行，按记录跳过已完成的台词和选项、跳过数据修改，
+/// 走到存档时那一句再套一次快照，交还给玩家。不序列化 Lua 协程。
+/// 游戏更新改动了存读档相关的方法时（见 contract.tsv.gz）自动停用，不会冒险继续。
+/// </summary>
+public partial class AnytimeSave : MonoBehaviour
+{
+	public static AnytimeSave Instance;
+	public static bool Replaying, Faulted, Restoring;
+
+	public static string SaveRoot
+	{
+		get
+		{
+			if (SaveSystem.Instance == null) throw new InvalidOperationException("存档系统尚未初始化");
+			var file = (string)AccessTools.Method(typeof(SaveSystem), "GetSaveDataFile").Invoke(SaveSystem.Instance, new object[] { "universe" });
+			return Path.GetDirectoryName(Path.GetFullPath(file));
+		}
+	}
+	internal static string StoreRoot => Path.Combine(SaveRoot, "AnytimeSave");
+
+	private static readonly MethodInfo ApplyData = AccessTools.Method(typeof(SaveSystem), "ExecuteLoadGameData");
+	private static readonly HashSet<string> Queries = new HashSet<string> {
+		"checkpointmanager.Switch", "checkpointmanager.Condition", "checkpointmanager.Position", "checkpointmanager.Dice",
+		"luamanager.GetStatData", "luamanager.GetFlagData", "luamanager.GetTempScript", "luamanager.GetCurrentTravelScript", "luamanager.GetStoryText", "math.random" };
+	private static readonly HashSet<string> Mutators = new HashSet<string> {
+		"luamanager.SetGameTime", "luamanager.SetGameDayEnvironment", "luamanager.NextMonth", "luamanager.NextRound",
+		"luamanager.SetCurrentTravelScript", "luamanager.SetTempScript", "luamanager.SetMissionTime", "luamanager.SetTitlePartner",
+		"luamanager.SetPlayerBattleSkill", "luamanager.ResetBattleSkill", "luamanager.SetBattleSkillActive", "luamanager.PrologueSave",
+		"luamanager.AutoSave", "luamanager.AutoFreeSave", "shoppanel.NewShop" };
+	private static readonly Regex Token = new Regex(@"(?<str>""(?:\\.|[^""\\])*""|'(?:\\.|[^'\\])*')|(?<comment>--[^\r\n]*)|(?<name>\b[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*)", RegexOptions.Compiled);
+
+	private List<Entry> trace = new List<Entry>();
+	private List<ScriptStamp> stamps = new List<ScriptStamp>();
+	private string rootScript, scriptPrefix, coreHash, storyHash, message = "";
+	private int active = -1, cursor, target, replyIndex = -1, slot = 1;
+	private bool panel, busy, installed, pendingLoad;
+	private string compatibilityFailure;
+	private float messageUntil, replayStarted;
+	private float panelTimeScale = 1;
+	private readonly List<InputAction> pausedActions = new List<InputAction>();
+	private SaveFile loading;
+	private Script currentInterpreter;
+	private DiceState pendingDice;
+
+	/// <summary>挂到插件对象上。返回 false 表示游戏版本未核验，功能停用（面板仍可打开看原因）。</summary>
+	public static bool Install(GameObject host)
+	{
+		var self = host.GetComponent<AnytimeSave>() ?? host.AddComponent<AnytimeSave>();
+		return self.installed;
+	}
+
+	private void Awake()
+	{
+		compatibilityFailure = CheckCompatibility();
+		if (compatibilityFailure != null)
+		{
+			LOMAssistantPlugin.LogError(compatibilityFailure);
+			FileLogger.LogError("[随时存档] " + compatibilityFailure);
+			return;
+		}
+		Instance = this;
+		// 游戏裁剪过的 Mono 没有 Reflection.Emit，让 Json.NET 改用反射
+		typeof(JsonConvert).Assembly.GetType("Newtonsoft.Json.Serialization.JsonTypeReflector")
+			.GetField("_dynamicCodeGeneration", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, (bool?)false);
+		scriptPrefix = ReadResource("Replay.lua");
+		SceneManager.activeSceneChanged += SceneChanged;
+		installed = true;
+		FileLogger.Log("[随时存档] 已启用。");
+	}
+
+	internal static string ReadResource(string name)
+	{
+		using (var stream = typeof(AnytimeSave).Assembly.GetManifestResourceStream("LOMAssistant.AnytimeSave." + name))
+		{
+			if (stream == null) throw new FileNotFoundException("缺少内置资源 " + name);
+			Stream source = name.EndsWith(".gz") ? new GZipStream(stream, CompressionMode.Decompress) : stream;
+			using (var reader = new StreamReader(source, Encoding.UTF8)) return reader.ReadToEnd().Replace("\r\n", "\n");
+		}
+	}
+
+	private static string Hash(string s) { using (var sha = SHA256.Create()) return BitConverter.ToString(sha.ComputeHash(Encoding.UTF8.GetBytes(s))).Replace("-", ""); }
+	private static string HashFile(string p) { using (var sha = SHA256.Create()) using (var f = File.OpenRead(p)) return BitConverter.ToString(sha.ComputeHash(f)).Replace("-", ""); }
+
+	private void SceneChanged(Scene previous, Scene next)
+	{
+		active = -1; busy = false;
+		if (next.name != "Story" && !Restoring) { trace.Clear(); stamps.Clear(); rootScript = null; }
+	}
+
+	internal void Notice(string s, float seconds = 8)
+	{
+		message = s; messageUntil = Time.realtimeSinceStartup + seconds;
+		FileLogger.Log("[随时存档] " + s);
+	}
+
+	internal void Fail(string s)
+	{
+		Faulted = true; Replaying = false; Restoring = false; pendingLoad = false; active = -1;
+		Time.timeScale = 0; panel = true; Notice("恢复已停止：" + s + "。请从标题界面重新读档。", 9999);
+		LOMAssistantPlugin.LogError("随时存档：" + s);
+	}
+
+	private void Apply(SaveFile data, bool atTarget)
+	{
+		var game = JsonUtility.FromJson<GameSave>(data.gameJson);
+		ApplyData.Invoke(SaveSystem.Instance, new object[] { game });
+		if (!string.IsNullOrEmpty(data.nativeSlot)) SaveSystem.Instance.SetSlot(data.nativeSlot);
+		PlayerStatManagerData.Instance.SetStoryScript(atTarget || data.scene == "Free" ? data.currentScript : data.rootScript);
+		if (atTarget) PlayerStatManagerData.Instance.SetStartScript(game.StartStoryScript);
+		UnityEngine.Random.state = JsonUtility.FromJson<UnityEngine.Random.State>(data.randomJson);
+	}
+
+	internal string PrepareScript(LuaEnvironment env, string code, string name)
+	{
+		if (!name.EndsWith(".LuaScript", StringComparison.Ordinal) || name == "tmp.LuaScript") return code;
+		string hash = Hash(code);
+		string shortName = name.Substring(0, name.Length - 10);
+		if (env.Interpreter != currentInterpreter)
+		{
+			currentInterpreter = env.Interpreter;
+			if (!Restoring) { trace.Clear(); stamps.Clear(); rootScript = null; active = -1; Faulted = false; }
+		}
+		if (string.IsNullOrEmpty(rootScript)) rootScript = shortName;
+		var stamp = stamps.Find(x => x.name == name);
+		if (Replaying)
+		{
+			var expected = loading.scripts.Find(x => x.name == name);
+			if (expected == null || expected.hash != hash) { Fail("剧情脚本版本不匹配：" + name); throw new InvalidDataException(message); }
+		}
+		if (stamp == null) stamps.Add(new ScriptStamp { name = name, hash = hash });
+		Bind(env.Interpreter);
+		return scriptPrefix + "\n" + Transform(code);
+	}
+
+	/// <summary>给剧情脚本套上记录/回放包装：台词、选项、掷骰、查询改成 ams_* 调用，数据修改在回放时跳过。</summary>
+	public static string Transform(string code)
+	{
+		var output = new StringBuilder();
+		foreach (string line in code.Replace("\r\n", "\n").Split('\n'))
+		{
+			string trimmed = line.TrimStart();
+			bool mutate = trimmed.StartsWith("statmodifymanager.") && !trimmed.StartsWith("statmodifymanager.Get");
+			mutate |= trimmed.StartsWith("runwait(statmodifymanager.");
+			mutate |= Mutators.Any(n => trimmed.StartsWith(n + "("));
+			bool panelCall = Regex.IsMatch(trimmed, @"^runwait\((?:\w*panel|intropanel)\.Open\(");
+			string transformed = Token.Replace(line, delegate (Match m)
+			{
+				if (!m.Groups["name"].Success) return m.Value;
+				string n = m.Value;
+				int end = m.Index + m.Length, k = end;
+				while (k < line.Length && char.IsWhiteSpace(line[k])) k++;
+				if (n == "dicemenudialog.ResultSelection") return "ams_query('dice.ResultSelection', function() return dicemenudialog.ResultSelection end)";
+				if (k >= line.Length || line[k] != '(') return n;
+				if (Queries.Contains(n)) return "__Q__" + n;
+				if (n == "say") return "ams_say";
+				if (n == "choose") return "ams_choose";
+				if (n == "choosetimer") return "ams_choosetimer";
+				if (n == "wait") return "ams_wait";
+				if (n == "runwait" && trimmed.StartsWith("runwait(dicemenudialog.ExecuteRoll(")) return "ams_roll";
+				if (n == "runwait" && panelCall) return "ams_panel";
+				return n;
+			});
+			transformed = Regex.Replace(transformed, @"__Q__([\w.]+)\s*\(\s*", delegate (Match m)
+			{
+				string n = m.Groups[1].Value;
+				bool empty = m.Index + m.Length < transformed.Length && transformed[m.Index + m.Length] == ')';
+				return "ams_query('" + n + "', " + n + (empty ? "" : ", ");
+			});
+			if (mutate) transformed = "if not __ams_replaying() then " + transformed + " end";
+			output.AppendLine(transformed);
+		}
+		return output.ToString();
+	}
+
+	private void Bind(Script script)
+	{
+		script.Globals["__ams_replaying"] = DynValue.NewCallback((c, a) => DynValue.NewBoolean(Replaying));
+		script.Globals["__ams_busy"] = DynValue.NewCallback((c, a) => { busy = a[0].Boolean; return DynValue.Nil; });
+		script.Globals["__ams_begin"] = DynValue.NewCallback((c, a) => DynValue.NewBoolean(Begin(a[0].String, a[1].String)));
+		script.Globals["__ams_end"] = DynValue.NewCallback((c, a) => { End(a[0]); return DynValue.Nil; });
+		script.Globals["__ams_reply"] = DynValue.NewCallback((c, a) => Decode(trace[replyIndex]));
+		script.Globals["__ams_query"] = DynValue.NewCallback((c, a) =>
+		{
+			string name = a[0].String;
+			if (Faulted) throw new ScriptRuntimeException("Anytime Save restore stopped");
+			if (Replaying) return Decode(Consume("query", name));
+			var args = new DynValue[Math.Max(0, a.Count - 2)];
+			for (int i = 0; i < args.Length; i++) args[i] = a[i + 2];
+			DynValue v = script.Call(a[1], args);
+			Entry entry = Encode(v); entry.kind = "query"; entry.label = name; trace.Add(entry);
+			return v;
+		});
+	}
+
+	private Entry Consume(string kind, string label)
+	{
+		if (cursor >= trace.Count || trace[cursor].kind != kind || trace[cursor].label != label)
+		{ Fail("执行记录不一致，位置 " + cursor + " (" + kind + ")"); throw new ScriptRuntimeException(message); }
+		return trace[cursor++];
+	}
+
+	private bool Begin(string kind, string label)
+	{
+		if (Faulted) throw new ScriptRuntimeException("Anytime Save restore stopped");
+		if (Replaying)
+		{
+			int index = cursor;
+			Consume(kind, label); replyIndex = index;
+			if (index != target) return true;
+			Apply(loading, true);
+			pendingDice = loading.dice;
+			Replaying = false; Restoring = false; Time.timeScale = 1;
+			active = index;
+			Notice("已读取随时存档 " + slot);
+			return false;
+		}
+		active = trace.Count;
+		trace.Add(new Entry { kind = kind, label = label, type = "nil" });
+		return false;
+	}
+
+	private void End(DynValue value)
+	{
+		if (Replaying) return;
+		if (active >= 0 && active < trace.Count)
+		{
+			var e = Encode(value); trace[active].type = e.type; trace[active].value = e.value;
+		}
+		active = -1;
+	}
+
+	private static Entry Encode(DynValue v)
+	{
+		var e = new Entry();
+		if (v == null || v.IsNil() || v.Type == DataType.Void) e.type = "nil";
+		else if (v.Type == DataType.Number) { e.type = "number"; e.value = v.Number.ToString("R", System.Globalization.CultureInfo.InvariantCulture); }
+		else if (v.Type == DataType.Boolean) { e.type = "bool"; e.value = v.Boolean ? "1" : "0"; }
+		else if (v.Type == DataType.String) { e.type = "string"; e.value = v.String; }
+		else if (v.Type == DataType.UserData && v.UserData.Object is DiceCheckResult d)
+		{
+			var dto = new DiceValue { random = d.Random, result = d.Result, header = d.Header };
+			foreach (var a in d.Additions) dto.additions.Add(new DiceAddition { name = a.Name, status = a.Status, value = a.Value, sign = a.Sign });
+			e.type = "dice"; e.value = JsonConvert.SerializeObject(dto);
+		}
+		else throw new InvalidDataException("Unsupported query value: " + v.Type);
+		return e;
+	}
+
+	private static DynValue Decode(Entry e)
+	{
+		switch (e.type)
+		{
+			case "number": return DynValue.NewNumber(double.Parse(e.value, System.Globalization.CultureInfo.InvariantCulture));
+			case "bool": return DynValue.NewBoolean(e.value == "1");
+			case "string": return DynValue.NewString(e.value);
+			case "dice":
+				var dto = JsonConvert.DeserializeObject<DiceValue>(e.value);
+				var d = new DiceCheckResult(dto.random) { Result = dto.result, Header = dto.header };
+				foreach (var a in dto.additions) d.Additions.Add(new DiceCheckAddition { Name = a.name, Status = a.status, Value = a.value, Sign = a.sign });
+				return UserData.Create(d);
+			default: return DynValue.Nil;
+		}
+	}
+
+	private static string SceneName => SceneManager.GetActiveScene().name;
+
+	private bool CanSave(out string reason)
+	{
+		reason = null;
+		if (!installed) reason = compatibilityFailure ?? "随时存档尚未初始化";
+		else if (Faulted || Replaying || Restoring || pendingLoad) reason = "正在恢复或已发生错误";
+		else if (SceneController.Instance == null || SceneController.Instance.IsPrepare || SceneController.Instance.IsLoading) reason = "场景正在切换";
+		else if (SceneName == "Story")
+		{
+			if (active < 0 || busy) reason = "请在台词、选项或掷骰时保存";
+			else if (trace[active].kind == "roll")
+			{
+				var dice = UObject.FindObjectOfType<DiceMenuDialog>();
+				if (dice == null || (!ActiveField(dice, "_continueButton") && !ActiveField(dice, "_startButton"))) reason = "骰子正在转动，请等结果显示";
+				else if (!ActiveField(dice, "_continueButton") && ((bool)Field(dice, "_pressStartButton") || DiceManualSelectionPatch.IsClicked)) reason = "掷骰正在处理，请等结果显示";
+			}
+		}
+		else if (SceneName == "Free")
+		{
+			var f = Mortal.Free.FreeManager.Instance;
+			if (f == null || f.IsProcessing || !f.EnableHotKey) reason = "自由行动正在处理，请回到行动界面";
+		}
+		else reason = "只能在剧情和养成界面保存";
+		return reason == null;
+	}
+
+	public void SaveSlot()
+	{
+		if (!CanSave(out string reason)) { Notice("暂不能保存：" + reason); return; }
+		try
+		{
+			var data = new SaveFile
+			{
+				version = Application.version, coreHash = coreHash, storyHash = storyHash, compatibilityId = compatibilityId,
+				savedAt = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"), scene = SceneName,
+				rootScript = rootScript, currentScript = PlayerStatManagerData.Instance.CurrentStoryScript,
+				nativeSlot = SaveSystem.Instance.CurrentSlot,
+				gameJson = SaveSystem.Instance.GetCurrentSaveData(), randomJson = JsonUtility.ToJson(UnityEngine.Random.state),
+				target = active, preview = Preview(),
+				dice = CaptureDice(),
+				freeRng = SceneName == "Free" ? CaptureFreeRng() : null,
+				trace = SceneName == "Story" ? trace.Take(active + 1).ToList() : new List<Entry>(),
+				scripts = new List<ScriptStamp>(stamps)
+			};
+			string payload = JsonConvert.SerializeObject(data);
+			string text = JsonConvert.SerializeObject(new Envelope { payload = payload, sha256 = Hash(payload) });
+			Directory.CreateDirectory(StoreRoot);
+			string path = SlotPath(slot), tmp = path + ".tmp", bak = path + ".bak";
+			using (var f = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None))
+			{ byte[] bytes = Encoding.UTF8.GetBytes(text); f.Write(bytes, 0, bytes.Length); f.Flush(true); }
+			ReadSave(tmp);
+			if (File.Exists(path)) File.Replace(tmp, path, bak); else File.Move(tmp, path);
+			ReadSave(path);
+			Notice("已保存到随时存档 " + slot);
+		}
+		catch (Exception ex) { Notice("保存失败，旧存档仍保留：" + ex.Message); LOMAssistantPlugin.LogError("随时存档保存失败: " + ex); }
+	}
+
+	private static string SlotPath(int n) => Path.Combine(StoreRoot, "Slot_" + n.ToString("00") + ".json");
+
+	private string Preview()
+	{
+		if (SceneName != "Story" || active < 0) return "养成";
+		var e = trace[active];
+		if (e.kind == "roll") { var d = CaptureDice(); return d.resultReady ? "掷骰结果：" + d.count + "（待确认）" : "掷骰前"; }
+		if (e.kind == "choose" || e.kind == "timer") return ChoicePreview(e.label);
+		return Regex.Replace(e.label ?? "", @"<[^>]+>|\{[^}]+\}", "");
+	}
+
+	private static string ChoicePreview(string label)
+	{
+		// 选项文字在 Story/ 下；只读文本，不用 LuaManager.GetStoryText（它会改已读记录）
+		var texts = Regex.Matches(label ?? "", @"O_[A-Za-z0-9_]+").Cast<Match>().Take(3)
+			.Select(m => TextConverter.ToSimplified(LocalizationManager.Instance.LocaleResolver.GetStoryText(m.Value)));
+		return "选项：" + string.Join(" / ", texts.ToArray());
+	}
+
+	private SaveFile ReadSave(string path)
+	{
+		var env = JsonConvert.DeserializeObject<Envelope>(File.ReadAllText(path, Encoding.UTF8));
+		if (env == null || env.payload == null || Hash(env.payload) != env.sha256) throw new InvalidDataException("存档校验失败");
+		var d = JsonConvert.DeserializeObject<SaveFile>(env.payload);
+		ValidateSaveCompatibility(d);
+		if (d.scene != "Story" && d.scene != "Free") throw new InvalidDataException("不支持的存档场景");
+		if (d.scene == "Story" && (d.target < 0 || d.target >= d.trace.Count || string.IsNullOrEmpty(d.rootScript))) throw new InvalidDataException("剧情恢复信息不完整");
+		return d;
+	}
+
+	public void LoadSlot()
+	{
+		if (!installed) { Notice(compatibilityFailure ?? "随时存档尚未初始化"); return; }
+		if (Replaying || Restoring || pendingLoad) { Notice("正在恢复，请稍候"); return; }
+		if (SceneController.Instance == null || SceneController.Instance.IsPrepare || SceneController.Instance.IsLoading) { Notice("场景切换中，暂不能读取"); return; }
+		if (SceneName != "Story" && SceneName != "Free" && SceneName != "Title") { Notice("请在标题、剧情或养成界面读取"); return; }
+		try { loading = ReadSave(SlotPath(slot)); }
+		catch (Exception ex) { Notice("无法读取：" + ex.Message); return; }
+		SetPanel(false); pendingLoad = true; StartCoroutine(LoadRoutine());
+	}
+
+	private IEnumerator LoadRoutine()
+	{
+		// 先停掉旧剧情再动数据；经标题界面换一个全新的 Lua 环境
+		Faulted = false; Restoring = true; Replaying = false; Time.timeScale = 1;
+		DiceManualSelectionPatch.IsClicked = false;
+		foreach (var env in UObject.FindObjectsOfType<LuaEnvironment>()) env.StopAllCoroutines();
+		SceneController.Instance.LoadTitle();
+		float start = Time.realtimeSinceStartup;
+		while (SceneName != "Title" || SceneController.Instance.IsPrepare || SceneController.Instance.IsLoading)
+		{ if (Time.realtimeSinceStartup - start > 30) { Fail("标题场景加载超时"); yield break; } yield return null; }
+		yield return null;
+		Apply(loading, false);
+		trace = new List<Entry>(loading.trace); stamps = new List<ScriptStamp>(loading.scripts);
+		rootScript = loading.rootScript; target = loading.target; cursor = 0; active = -1;
+		Replaying = loading.scene == "Story";
+		replayStarted = Time.realtimeSinceStartup;
+		SceneController.Instance.LoadNewScene(loading.scene);
+		pendingLoad = false;
+		if (loading.scene == "Free")
+		{
+			while (SceneName != "Free" || SceneController.Instance.IsLoading || SceneController.Instance.IsPrepare) yield return null;
+			start = Time.realtimeSinceStartup;
+			while (Mortal.Free.FreeManager.Instance == null || Mortal.Free.FreeManager.Instance.IsProcessing || !Mortal.Free.FreeManager.Instance.EnableHotKey)
+			{ if (Time.realtimeSinceStartup - start > 30) { Fail("养成界面初始化超时"); yield break; } yield return null; }
+			// 养成界面初始化会消耗随机数，原生读档还会留下上一段剧情的入口；等地图交还操作后再恢复
+			var savedGame = JsonUtility.FromJson<GameSave>(loading.gameJson);
+			PlayerStatManagerData.Instance.SetStartScript(savedGame.StartStoryScript);
+			RestoreFreeRng(loading.freeRng);
+			UnityEngine.Random.state = JsonUtility.FromJson<UnityEngine.Random.State>(loading.randomJson);
+			Restoring = false; Notice("已读取随时存档 " + slot);
+		}
+	}
+
+	private void Update()
+	{
+		if (Replaying)
+		{
+			Time.timeScale = 30;
+			if (Time.realtimeSinceStartup - replayStarted > 180) Fail("恢复超时");
+		}
+		UpdateHotkeys();
+	}
+
+	private void SetPanel(bool value)
+	{
+		if (panel == value) return;
+		panel = value;
+		if (value)
+		{
+			panelTimeScale = Time.timeScale;
+			pausedActions.Clear();
+			foreach (var asset in Resources.FindObjectsOfTypeAll<InputActionAsset>())
+				foreach (var map in asset.actionMaps)
+					foreach (var action in map.actions) if (action.enabled) pausedActions.Add(action);
+			foreach (var action in pausedActions) action.Disable();
+			Time.timeScale = 0;
+		}
+		else
+		{
+			foreach (var action in pausedActions) action.Enable();
+			pausedActions.Clear(); Time.timeScale = panelTimeScale;
+		}
+	}
+
+	private static object Field(object o, string n) => AccessTools.Field(o.GetType(), n).GetValue(o);
+	private static void SetField(object o, string n, object v) => AccessTools.Field(o.GetType(), n).SetValue(o, v);
+	private static bool ActiveField(object o, string n)
+	{
+		var v = Field(o, n);
+		return v is Component c ? c.gameObject.activeInHierarchy : v is GameObject g && g.activeInHierarchy;
+	}
+
+	private DiceState CaptureDice()
+	{
+		var d = UObject.FindObjectOfType<DiceMenuDialog>();
+		if (d == null) return new DiceState();
+		return new DiceState
+		{
+			valid = true, resultReady = ActiveField(d, "_continueButton"), useFate = (bool)Field(d, "_useFatePoint"),
+			random = (int)Field(d, "_currentRandomValue"), selection = (int)Field(d, "_resultSelection"), count = (int)Field(d, "_resultCount"),
+			min = (int)Field(d, "_diceMin"), max = (int)Field(d, "_diceMax"), defaultMax = (int)Field(d, "_defaultDiceMax"), rangeIndex = (int)Field(d, "_currentDiceRangeIndex")
+		};
+	}
+
+	private FreeRng CaptureFreeRng()
+	{
+		var r = (System.Random)Field(Mortal.Free.FreeManager.Instance, "_rand");
+		return new FreeRng { next = (int)Field(r, "inext"), nextp = (int)Field(r, "inextp"), seed = (int[])((int[])Field(r, "SeedArray")).Clone() };
+	}
+
+	private void RestoreFreeRng(FreeRng data)
+	{
+		if (data == null) return;
+		if (data.seed == null || data.seed.Length != 56) throw new InvalidDataException("养成随机状态无效");
+		var r = new System.Random(0);
+		SetField(r, "inext", data.next); SetField(r, "inextp", data.nextp); SetField(r, "SeedArray", (int[])data.seed.Clone());
+		SetField(Mortal.Free.FreeManager.Instance, "_rand", r);
+	}
+
+	/// <summary>读档回到「骰子结果已出、等待确认」时，替换 Roll 协程直接摆出保存的结果，不重新掷。</summary>
+	internal static bool RestoreRoll(DiceMenuDialog d, ref IEnumerator result)
+	{
+		var p = Instance;
+		if (p == null || p.pendingDice == null || !p.pendingDice.valid || !p.pendingDice.resultReady) return true;
+		var snap = p.pendingDice; p.pendingDice = null;
+		result = p.RestoredRoll(d, snap); return false;
+	}
+
+	internal static bool AutoStartRestoredDice(ref bool result)
+	{
+		if (Instance != null && Instance.pendingDice != null && Instance.pendingDice.valid && Instance.pendingDice.resultReady)
+		{ result = true; return false; }
+		return true;
+	}
+
+	private IEnumerator RestoredRoll(DiceMenuDialog d, DiceState s)
+	{
+		SetField(d, "_currentRandomValue", s.random); SetField(d, "_resultSelection", s.selection); SetField(d, "_resultCount", s.count);
+		SetField(d, "_diceMin", s.min); SetField(d, "_diceMax", s.max); SetField(d, "_defaultDiceMax", s.defaultMax); SetField(d, "_currentDiceRangeIndex", s.rangeIndex);
+		SetField(d, "_useFatePoint", s.useFate);
+		AccessTools.Method(typeof(DiceMenuDialog), "UpdateDiceText").Invoke(d, new object[] { s.min, s.max });
+		AccessTools.Method(typeof(DiceMenuDialog), "UpdateFatePointItem").Invoke(d, null);
+		yield return (IEnumerator)AccessTools.Method(typeof(DiceMenuDialog), "StartSpin").Invoke(d, new object[] { 0f });
+		((GameObject)Field(d, "_continuePanel")).SetActive(true);
+		((Component)Field(d, "_continueButton")).gameObject.SetActive(true);
+	}
+}
+
+/// <summary>随时存档用到的游戏补丁。只在功能启用且版本核验通过时应用。</summary>
+public static class AnytimeSavePatches
+{
+	// 回放可能走到一个选项菜单，但菜单从没激活过、按钮缓存还是空的；原版这里会空引用，导致状态页其它分页关不掉
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(CustomMenuDialog), "InteractableCacheButton")]
+	public static bool InteractableCacheButton_Prefix(CustomMenuDialog __instance, bool interactable)
+	{
+		var buttons = __instance.CachedButtons;
+		if (buttons == null) return false;
+		foreach (var button in buttons)
+			if (button != null) button.enabled = interactable;
+		return false;
+	}
+
+	// 回放和恢复中不写原版存档、不删档、不解成就
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(SaveSystem), "ExecuteSaveData")]
+	public static bool ExecuteSaveData_Prefix() => AllowWrite();
+
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(SaveSystem), "ExecuteSaveJsonData")]
+	public static bool ExecuteSaveJsonData_Prefix() => AllowWrite();
+
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(SaveSystem), "SetAchivement")]
+	public static bool SetAchivement_Prefix() => AllowWrite();
+
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(SaveSystem), "DeleteSaveData")]
+	public static bool DeleteSaveData_Prefix() => AllowWrite();
+
+	private static bool AllowWrite() => !AnytimeSave.Replaying && !AnytimeSave.Restoring && !AnytimeSave.Faulted;
+
+	// 排在本 Mod 其它 LoadLuaFunction 补丁之后，让信息窗口、选项提示解析的还是原始剧本
+	[HarmonyPrefix]
+	[HarmonyPriority(Priority.Last)]
+	[HarmonyPatch(typeof(LuaEnvironment), "LoadLuaFunction")]
+	public static void LoadLuaFunction_Prefix(LuaEnvironment __instance, ref string luaString, string friendlyName)
+	{
+		if (AnytimeSave.Instance != null) luaString = AnytimeSave.Instance.PrepareScript(__instance, luaString, friendlyName);
+	}
+
+	[HarmonyPrefix]
+	[HarmonyPriority(Priority.First)]
+	[HarmonyPatch(typeof(DiceMenuDialog), "Roll")]
+	public static bool Roll_Prefix(DiceMenuDialog __instance, ref IEnumerator __result) => AnytimeSave.RestoreRoll(__instance, ref __result);
+
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(DiceMenuDialog), "GetPressInput")]
+	public static bool GetPressInput_Prefix(ref bool __result) => AnytimeSave.AutoStartRestoredDice(ref __result);
+}

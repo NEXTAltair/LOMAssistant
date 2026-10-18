@@ -75,6 +75,14 @@ public static class ConfigManager
 
 	public static ConfigElement<bool> EnableSaveSystem;
 
+	public static ConfigElement<bool> EnableAnytimeSave;
+
+	public static ConfigElement<KeyCode> AnytimeSaveKey;
+
+	public static ConfigElement<KeyCode> AnytimeLoadKey;
+
+	public static ConfigElement<KeyCode> AnytimePanelKey;
+
 	public static ConfigElement<bool> LogToFile;
 
 	private static ConfigFile Config => LOMAssistantPlugin.Instance.Config;
@@ -171,6 +179,10 @@ public static class ConfigManager
 		EnableDebugPanel = new ConfigElement<bool>("EnableDebugPanel", "是否启用游戏内置测试面板。true=开，false=关，改后重启生效", defaultValue: true);
 		DebugPanelKey = new ConfigElement<KeyCode>("DebugPanelKey", "打开游戏内置测试面板的热键，如 F9 / P 等", KeyCode.F9);
 		EnableSaveSystem = new ConfigElement<bool>("EnableSaveSystem", "是否启用增强存档系统（随时存档/读档）。true=开，false=关，改后重启生效", defaultValue: false);
+		EnableAnytimeSave = new ConfigElement<bool>("EnableAnytimeSave", "是否启用随时存档（剧情台词、选项、掷骰和养成界面都能存，存在独立的 8 个槽位，不占原版存档栏）。true=开，false=关，改后重启生效", defaultValue: true);
+		AnytimeSaveKey = new ConfigElement<KeyCode>("AnytimeSaveKey", "随时存档：保存到当前槽位的热键", KeyCode.F5);
+		AnytimeLoadKey = new ConfigElement<KeyCode>("AnytimeLoadKey", "随时存档：读取当前槽位的热键", KeyCode.F7);
+		AnytimePanelKey = new ConfigElement<KeyCode>("AnytimePanelKey", "随时存档面板（选槽位、存、读）的热键", KeyCode.F6);
 		LogToFile = new ConfigElement<bool>("LogToFile", "是否写入独立日志文件。日志位置：BepInEx\\plugins\\LOMAssistant\\logs\\", defaultValue: true);
 	}
 }

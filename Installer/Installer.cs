@@ -64,6 +64,7 @@ internal class InstallerForm : Form
 		new[] { "ControlMyDestiny", "知天命" },
 		new[] { "ZhaoHuoSystem", "赵活系统" },
 		new[] { "DiceMaster", "骰子大师" },
+		new[] { "MortalAnytimeSave", "随时存档（独立版，本 Mod 已内置）" },
 		new[] { "骰子", "骰子大师" },
 		new[] { "LOMAssistant", "活侠传助手 / 本 Mod 的旧版" },
 		new[] { "活侠传助手", "活侠传助手" },

@@ -8,6 +8,7 @@ using HarmonyLib;
 using LOMAssistant.Config;
 using LOMAssistant.Features.Combat;
 using LOMAssistant.Features.Debug;
+using LOMAssistant.Features.AnytimeSave;
 using LOMAssistant.Features.Dice;
 using LOMAssistant.Features.Extras;
 using LOMAssistant.Features.Library;
@@ -178,6 +179,15 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			LogInfo("自动存档历史补丁已应用。");
 			TryPatchAll(typeof(ShopAllItemsPatch));
 			LogInfo(ConfigManager.EnableShopAllItems.Value ? "四师兄商店补丁已应用（售卖全部物品：开）。" : "四师兄商店补丁已应用（售卖全部物品：关）。");
+			if (ConfigManager.EnableAnytimeSave.Value && ConfigManager.EnableSaveSystem.Value)
+			{
+				LogWarning("随时存档和旧版增强存档（EnableSaveSystem）不能同时开，已停用随时存档。");
+			}
+			else if (ConfigManager.EnableAnytimeSave.Value && AnytimeSave.Install(base.gameObject))
+			{
+				TryPatchAll(typeof(AnytimeSavePatches));
+				LogInfo("随时存档补丁已应用。");
+			}
 			if (!ConfigManager.EnableSaveSystem.Value)
 			{
 				return;
