@@ -111,6 +111,53 @@ public static class DataHelper
 		return true;
 	}
 
+	/// <summary>分支判断第 branch 支的条件文字（0 = 以上都不满足），找不到时返回空。</summary>
+	public static string SwitchBranchCondition(string checkpoint, int branch)
+	{
+		CheckPointManager instance = CheckPointManager.Instance;
+		if (instance == null)
+		{
+			return string.Empty;
+		}
+		foreach (SwitchResultConfig config in instance.GetFieldValue<SwitchResultConfig[]>("_switchList"))
+		{
+			SwitchResultData data = config.GetData(checkpoint);
+			if (data == null)
+			{
+				continue;
+			}
+			List<ConditionResultItem> items = data.GetFieldValue<List<ConditionResultItem>>("_items");
+			if (branch == 0 || branch > items.Count)
+			{
+				return "以上条件都不满足";
+			}
+			return ExtractConditions(items[branch - 1], out var _);
+		}
+		return string.Empty;
+	}
+
+	/// <summary>Condition 检查点的条件文字（多组之间是「或」），找不到时返回空。</summary>
+	public static string ParseConditionCheckpoint(string checkpoint)
+	{
+		CheckPointManager instance = CheckPointManager.Instance;
+		ConditionResultConfig config = instance != null ? instance.GetFieldValue<ConditionResultConfig>("_condition") : null;
+		ConditionResultData data = config != null && config.List != null ? config.List.Find(x => x != null && x.name == checkpoint) : null;
+		if (data == null)
+		{
+			return string.Empty;
+		}
+		var parts = new List<string>();
+		foreach (ConditionResultItem item in data.GetFieldValue<List<ConditionResultItem>>("_items"))
+		{
+			string text = ExtractConditions(item, out var _);
+			if (!string.IsNullOrEmpty(text))
+			{
+				parts.Add(text);
+			}
+		}
+		return string.Join(" 或 ", parts.ToArray());
+	}
+
 	public static string ParseSwitchCheckpoint(string checkpoint)
 	{
 		CheckPointManager instance = CheckPointManager.Instance;

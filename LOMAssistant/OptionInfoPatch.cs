@@ -39,6 +39,7 @@ internal static class OptionInfoPatch
 			{
 				DicePlugin.Instance.AddOptionEntry(item.Key, LuaParser.Description(item.Value));
 			}
+			LuaParser.Instance.ExtractLockedOptions(luaString);
 			foreach (string item2 in LuaParser.Instance.ExtractSwitchCheckFromLua(friendlyName, luaString))
 			{
 				string description = DataHelper.ParseSwitchCheckpoint(item2);
@@ -84,9 +85,39 @@ internal static class OptionInfoPatch
 		}
 		try
 		{
+			// 被锁的选项（「解锁条件：？？？」「银两不足」这类）：写出真正的解锁条件和当前值，以及解锁后的效果
+			if (LuaParser.Instance.LockedOptions.TryGetValue(key, out var locked))
+			{
+				string condition = Regex.Replace(DataHelper.ParseConditionCheckpoint(locked.Condition), "<.*?>", string.Empty);
+				string effects = locked.Unlocked != null && LuaParser.Instance.OptionResult.TryGetValue(locked.Unlocked, out var unlockedActions)
+					? Regex.Replace(TextConverter.ToSimplified(LuaParser.Description(unlockedActions)), "<.*?>", string.Empty)
+					: "";
+				if (!condition.IsNullOrWhiteSpace())
+				{
+					__result = __result + "\n<size=16>(需 " + condition + (effects.IsNullOrWhiteSpace() ? "" : "；解锁后：" + effects) + ")</size>";
+				}
+				return;
+			}
+			// 满足某个分支条件就直接接一段剧情：写成「若 条件：触发剧情」
+			string jumps = "";
+			if (LuaParser.Instance.OptionJumps.TryGetValue(key, out var jumpList))
+			{
+				foreach (var jump in jumpList)
+				{
+					string condition = Regex.Replace(DataHelper.SwitchBranchCondition(jump.Switch, jump.Branch), "<.*?>", string.Empty);
+					if (!condition.IsNullOrWhiteSpace())
+					{
+						jumps += (jumps.Length > 0 ? "；" : "") + "若 " + condition + "：触发剧情";
+					}
+				}
+			}
 			if (LuaParser.Instance.OptionResult.TryGetValue(key, out var value))
 			{
 				string text = TextConverter.ToSimplified(LuaParser.Description(value));
+				if (jumps.Length > 0)
+				{
+					text = text.IsNullOrWhiteSpace() ? jumps : text + " | " + jumps;
+				}
 				if (!text.IsNullOrWhiteSpace())
 				{
 					string text2 = Regex.Replace(text, "<.*?>", string.Empty);

@@ -25,6 +25,103 @@ public class LuaParser
 
 	public Dictionary<string, List<Action>> OptionResult;
 
+	// 被锁的选项：脚本里写成「条件 and "正常选项" or "~锁住时显示的文字"」
+	private static readonly Regex lockedOptionRegex = new Regex("(\\w+)\\s+and\\s+\"([^\"]*)\"\\s+or\\s+\"~(O_\\w+)\"");
+
+	private static readonly Regex optionKeyRegex = new Regex("O_\\w+");
+
+	/// <summary>锁住时显示的文字的 key → (解锁条件名, 解锁后的选项 key)。每次载入剧本时重建。</summary>
+	public readonly Dictionary<string, (string Condition, string Unlocked)> LockedOptions = new Dictionary<string, (string, string)>();
+
+	/// <summary>选项 key → 这个选项里「满足某个分支判断才跳到另一段剧情」的位置（分支判断名, 第几支，0 表示 else）。</summary>
+	public readonly Dictionary<string, List<(string Switch, int Branch)>> OptionJumps = new Dictionary<string, List<(string, int)>>();
+
+	private static readonly Regex switchAssignRegex = new Regex("^local\\s+(\\w+)\\s*=\\s*checkpointmanager\\.Switch\\(\"([^\"]+)\"\\)");
+
+	private static readonly Regex branchRegex = new Regex("^(if|elseif)\\s+(\\w+)\\s*==\\s*(\\d+)\\s+then");
+
+	// 逐行跟踪 if/elseif/else/end，找出写在某个分支判断里的「跳到下一段剧本」
+	private static List<(string, int)> FindConditionalJumps(string block)
+	{
+		var result = new List<(string, int)>();
+		var switches = new Dictionary<string, string>();
+		var stack = new List<(string Var, int Branch)>(); // Var 为 null 表示不是分支判断的块（普通 if / for 等）
+		foreach (string raw in block.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.None))
+		{
+			string line = raw.Trim();
+			if (line.StartsWith("--"))
+			{
+				continue;
+			}
+			Match assign = switchAssignRegex.Match(line);
+			if (assign.Success)
+			{
+				switches[assign.Groups[1].Value] = assign.Groups[2].Value;
+				continue;
+			}
+			Match branch = branchRegex.Match(line);
+			if (branch.Success && switches.ContainsKey(branch.Groups[2].Value))
+			{
+				int n = int.Parse(branch.Groups[3].Value);
+				if (branch.Groups[1].Value == "if")
+				{
+					stack.Add((branch.Groups[2].Value, n));
+				}
+				else if (stack.Count > 0)
+				{
+					stack[stack.Count - 1] = (stack[stack.Count - 1].Var, n);
+				}
+				continue;
+			}
+			if (line.StartsWith("if ") || line.StartsWith("for ") || line.StartsWith("while ") || line.Contains("function("))
+			{
+				stack.Add((null, 0));
+			}
+			else if (line == "else" && stack.Count > 0 && stack[stack.Count - 1].Var != null)
+			{
+				stack[stack.Count - 1] = (stack[stack.Count - 1].Var, 0);
+			}
+			else if (line == "end" || line.StartsWith("end)") || line.StartsWith("end "))
+			{
+				if (stack.Count > 0)
+				{
+					stack.RemoveAt(stack.Count - 1);
+				}
+			}
+			else if (line.Contains("luamanager.SetNextScript"))
+			{
+				for (int i = stack.Count - 1; i >= 0; i--)
+				{
+					if (stack[i].Var != null)
+					{
+						var hit = (switches[stack[i].Var], stack[i].Branch);
+						if (!result.Contains(hit))
+						{
+							result.Add(hit);
+						}
+						break;
+					}
+				}
+			}
+		}
+		return result;
+	}
+
+	public void ExtractLockedOptions(string luaScript)
+	{
+		// 对话里也会零碎执行一些小段 Lua，那些不含选项菜单，不能把当前剧本的记录清掉
+		if (luaScript == null || !luaScript.Contains("setmenudialog"))
+		{
+			return;
+		}
+		LockedOptions.Clear();
+		foreach (Match m in lockedOptionRegex.Matches(luaScript ?? ""))
+		{
+			Match unlocked = optionKeyRegex.Match(m.Groups[2].Value);
+			LockedOptions[m.Groups[3].Value] = (m.Groups[1].Value, unlocked.Success ? unlocked.Value : null);
+		}
+	}
+
 	private Dictionary<string, List<Action>> luaModification;
 
 	private Dictionary<string, List<string>> luaOptions;
@@ -47,6 +144,7 @@ public class LuaParser
 	public void ClearCache()
 	{
 		OptionResult.Clear();
+		OptionJumps.Clear();
 		luaOptions.Clear();
 		luaModification.Clear();
 		luaSwitchCheck.Clear();
@@ -95,6 +193,7 @@ public class LuaParser
 			AddActionsToList(blockContent, battleScenesRegex, ActionType.BattleScene, list);
 			dictionary[value2] = list;
 			OptionResult[value2] = list;
+			OptionJumps[value2] = FindConditionalJumps(blockContent);
 		}
 		return dictionary;
 	}
