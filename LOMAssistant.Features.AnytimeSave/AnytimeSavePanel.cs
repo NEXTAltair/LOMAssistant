@@ -26,6 +26,7 @@ public partial class AnytimeSave
 		else if (!installed) return;
 		else if (Input.GetKeyDown(ConfigManager.AnytimeSaveKey.Value)) SaveSlot();
 		else if (Input.GetKeyDown(ConfigManager.AnytimeLoadKey.Value)) LoadSlot();
+		else if (Input.GetKeyDown(ConfigManager.AnytimeRollbackKey.Value)) Rollback();
 	}
 
 	private static bool TextInputFocused()
@@ -121,6 +122,8 @@ public partial class AnytimeSave
 		if (GUILayout.Button("保存（" + ConfigManager.AnytimeSaveKey.Value + "）", _button)) { SaveSlot(); nextDetailRefresh = 0; }
 		GUI.enabled = !Replaying && !Restoring && File.Exists(path);
 		if (GUILayout.Button("读取（" + ConfigManager.AnytimeLoadKey.Value + "）", _button)) LoadSlot();
+		GUI.enabled = !Replaying && !Restoring && RollbackCount > 0;
+		if (GUILayout.Button("回退到判定前（" + ConfigManager.AnytimeRollbackKey.Value + "）", _button)) Rollback();
 		GUI.enabled = true;
 		if (Faulted && GUILayout.Button("返回标题", _button))
 		{ Faulted = false; SetPanel(false); Time.timeScale = 1; Mortal.Core.SceneController.Instance.LoadTitle(); }

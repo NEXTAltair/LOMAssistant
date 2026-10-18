@@ -132,7 +132,7 @@ public partial class AnytimeSave : MonoBehaviour
 	private void SceneChanged(Scene previous, Scene next)
 	{
 		active = -1; busy = false;
-		if (next.name != "Story" && !Restoring) { trace.Clear(); stamps.Clear(); rootScript = null; }
+		if (next.name != "Story" && !Restoring) { trace.Clear(); stamps.Clear(); rootScript = null; ClearRollback(); }
 	}
 
 	internal void Notice(string s, float seconds = 8)
@@ -166,7 +166,7 @@ public partial class AnytimeSave : MonoBehaviour
 		if (env.Interpreter != currentInterpreter)
 		{
 			currentInterpreter = env.Interpreter;
-			if (!Restoring) { trace.Clear(); stamps.Clear(); rootScript = null; active = -1; Faulted = false; }
+			if (!Restoring) { trace.Clear(); stamps.Clear(); rootScript = null; active = -1; Faulted = false; ClearRollback(); }
 		}
 		if (string.IsNullOrEmpty(rootScript)) rootScript = shortName;
 		var stamp = stamps.Find(x => x.name == name);
@@ -214,7 +214,7 @@ public partial class AnytimeSave : MonoBehaviour
 				bool empty = m.Index + m.Length < transformed.Length && transformed[m.Index + m.Length] == ')';
 				return "ams_query('" + n + "', " + n + (empty ? "" : ", ");
 			});
-			if (mutate) transformed = "if not __ams_replaying() then " + transformed + " end";
+			if (mutate) transformed = "if not __ams_replaying() then __ams_mutate() " + transformed + " end";
 			output.AppendLine(transformed);
 		}
 		return output.ToString();
@@ -223,6 +223,7 @@ public partial class AnytimeSave : MonoBehaviour
 	private void Bind(Script script)
 	{
 		script.Globals["__ams_replaying"] = DynValue.NewCallback((c, a) => DynValue.NewBoolean(Replaying));
+		script.Globals["__ams_mutate"] = DynValue.NewCallback((c, a) => { OnMutate(); return DynValue.Nil; });
 		script.Globals["__ams_busy"] = DynValue.NewCallback((c, a) => { busy = a[0].Boolean; return DynValue.Nil; });
 		script.Globals["__ams_begin"] = DynValue.NewCallback((c, a) => DynValue.NewBoolean(Begin(a[0].String, a[1].String)));
 		script.Globals["__ams_end"] = DynValue.NewCallback((c, a) => { End(a[0]); return DynValue.Nil; });
@@ -232,6 +233,7 @@ public partial class AnytimeSave : MonoBehaviour
 			string name = a[0].String;
 			if (Faulted) throw new ScriptRuntimeException("Anytime Save restore stopped");
 			if (Replaying) return Decode(Consume("query", name));
+			OnJudgment(name);
 			var args = new DynValue[Math.Max(0, a.Count - 2)];
 			for (int i = 0; i < args.Length; i++) args[i] = a[i + 2];
 			DynValue v = script.Call(a[1], args);
@@ -259,10 +261,13 @@ public partial class AnytimeSave : MonoBehaviour
 			pendingDice = loading.dice;
 			Replaying = false; Restoring = false; Time.timeScale = 1;
 			active = index;
-			Notice("已读取随时存档 " + slot);
+			// 恢复到的这句就是新的「最近一句」，之后的判定以它为回退点
+			OnInteraction(index, kind);
+			Notice(restoreLabel);
 			return false;
 		}
 		active = trace.Count;
+		OnInteraction(active, kind);
 		trace.Add(new Entry { kind = kind, label = label, type = "nil" });
 		return false;
 	}
@@ -405,8 +410,17 @@ public partial class AnytimeSave : MonoBehaviour
 		if (Replaying || Restoring || pendingLoad) { Notice("正在恢复，请稍候"); return; }
 		if (SceneController.Instance == null || SceneController.Instance.IsPrepare || SceneController.Instance.IsLoading) { Notice("场景切换中，暂不能读取"); return; }
 		if (SceneName != "Story" && SceneName != "Free" && SceneName != "Title") { Notice("请在标题、剧情或养成界面读取"); return; }
-		try { loading = ReadSave(SlotPath(slot)); }
+		SaveFile data;
+		try { data = ReadSave(SlotPath(slot)); }
 		catch (Exception ex) { Notice("无法读取：" + ex.Message); return; }
+		ClearRollback();
+		restoreLabel = "已读取随时存档 " + slot;
+		LoadFrom(data);
+	}
+
+	private void LoadFrom(SaveFile data)
+	{
+		loading = data;
 		SetPanel(false); pendingLoad = true; StartCoroutine(LoadRoutine());
 	}
 
@@ -439,7 +453,7 @@ public partial class AnytimeSave : MonoBehaviour
 			PlayerStatManagerData.Instance.SetStartScript(savedGame.StartStoryScript);
 			RestoreFreeRng(loading.freeRng);
 			UnityEngine.Random.state = JsonUtility.FromJson<UnityEngine.Random.State>(loading.randomJson);
-			Restoring = false; Notice("已读取随时存档 " + slot);
+			Restoring = false; Notice(restoreLabel);
 		}
 	}
 

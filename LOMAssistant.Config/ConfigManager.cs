@@ -83,6 +83,8 @@ public static class ConfigManager
 
 	public static ConfigElement<KeyCode> AnytimePanelKey;
 
+	public static ConfigElement<KeyCode> AnytimeRollbackKey;
+
 	public static ConfigElement<bool> LogToFile;
 
 	private static ConfigFile Config => LOMAssistantPlugin.Instance.Config;
@@ -183,6 +185,7 @@ public static class ConfigManager
 		AnytimeSaveKey = new ConfigElement<KeyCode>("AnytimeSaveKey", "随时存档：保存到当前槽位的热键", KeyCode.F5);
 		AnytimeLoadKey = new ConfigElement<KeyCode>("AnytimeLoadKey", "随时存档：读取当前槽位的热键", KeyCode.F7);
 		AnytimePanelKey = new ConfigElement<KeyCode>("AnytimePanelKey", "随时存档面板（选槽位、存、读）的热键", KeyCode.F6);
+		AnytimeRollbackKey = new ConfigElement<KeyCode>("AnytimeRollbackKey", "回退到剧情判定前一句的热键（只在内存里保留最近几个判定点，切场景后清空）", KeyCode.F4);
 		LogToFile = new ConfigElement<bool>("LogToFile", "是否写入独立日志文件。日志位置：BepInEx\\plugins\\LOMAssistant\\logs\\", defaultValue: true);
 	}
 }
