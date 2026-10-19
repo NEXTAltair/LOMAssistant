@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Text;
+using Mortal.Core;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -41,6 +42,12 @@ internal static class MenuButtonHelper
 			{
 				Object.DestroyImmediate(mb);
 			}
+		}
+		// 模板按钮（如「继续游戏」）上的 InputButton 把手柄键（返回键 B）绑到按钮上；复制后它指向的是复制出来的按钮，
+		// 按 B 关菜单时会连带点一下我们的按钮（存完档按 B 返回就空过了一回合）。复制出来的按钮不要任何按键绑定。
+		foreach (InputButton ib in clone.GetComponentsInChildren<InputButton>(includeInactive: true))
+		{
+			Object.DestroyImmediate(ib);
 		}
 		foreach (Text t in clone.GetComponentsInChildren<Text>(includeInactive: true))
 		{
