@@ -60,9 +60,10 @@
   <img src="media/branch-panel.webp" width="480" alt="剧情分支小窗：满足为绿，不满足为红">
 
 - **回想里的判定记录**：剧情经过的判定点、触发条件和当前值会记进回想（对话记录）里，可以翻回去看。
+- **随机事件自选**（F8 开启，默认关）：工作、闲逛这类随机事件，剧情走到抽事件那一步时先停下，列出这次满足条件的事件和各自概率、会带来的变化，选一个就触发它，也可以选「随机」按原本概率抽。只有一个能触发时不停。可以用鼠标点，也可以用方向键、数字键、回车或手柄十字键加确认键。
 - **地点事件提示**：养成地图上鼠标停在建筑上，主角会提示那里有没有能触发的事件。
 - **旗标变化提示**（F8 开启，默认关，可能剧透）：剧情改动旗标时在屏幕上提示，如「【旗标】神兵帖进度 1 → 2」。
-- **Tab 信息窗口**：当前这段剧情里所有选项及结果、所有判定点（条件和当前值，满足为绿、不满足为红）、地点随机事件（概率、条件和结果）和可触发的任务。事件和任务旁有「设置事件」，可以指定下次触发哪一个：工作事件在下次工作时触发，剧情事件在切换场景时触发。进游戏默认收起，拖右下角可缩放。
+- **Tab 信息窗口**：当前这段剧情里所有选项及结果、所有判定点（条件和当前值，满足为绿、不满足为红）、地点随机事件（概率、条件和结果）和可触发的任务。事件和任务旁有「设置事件」，可以指定下次触发哪一个（事件只能指定满足条件的）。进游戏默认收起，拖右下角可缩放。
 
   <img src="media/tab-window.webp" width="420" alt="Tab 信息窗口">
 
@@ -149,7 +150,7 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 
 - **[活侠传助手](https://mod.3dmgame.com/mod/256420)**：爱死（3DM：wowowo4567）。本项目的基础，源码由其发布的插件反编译而来后再修改。它又整合自 [骰子大师](https://mod.3dmgame.com/mod/210536)（Gmhaxx）、[多功能 Mod](https://mod.3dmgame.com/mod/210629)（Jim97）、[任意位置存档](https://mod.3dmgame.com/mod/210679)（NothingNullNull）。
 - **随时存档**：移植自 mahosalieri85-a11y 的 MortalAnytimeSave（[issue #2](https://github.com/kevinnie2003/LOMAssistant/issues/2)）。
-- **剧情分支小窗、选项提示、输入隔离**：参考 [赵活系统](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 许可）的功能思路。
+- **剧情分支小窗、选项提示、输入隔离、随机事件自选**：参考 [赵活系统](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 许可）的功能思路。
 - **存档备注显示**：移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 许可）及其[汉化版](https://github.com/shiluodeqiou/LOM_SaveSlotExpander-zh)（shiluodeqiou）。
 - **修炼、锻造、炼丹**：参考风灵月影《活侠传》修改器的功能思路（未使用其代码）。
 - 下载包附带的 [BepInEx](https://github.com/BepInEx/BepInEx)、[UnityDoorstop](https://github.com/NeighTools/UnityDoorstop)、[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) 按各自的许可证分发。

@@ -175,6 +175,17 @@ public class PositionEventCache
 		};
 	}
 
+	/// <summary>事件一定会带来的变化（不含条件分支），一行。</summary>
+	public string GetCertainEffects(PositionEventData eventData)
+	{
+		if (!scriptPrefixCache.TryGetValue(eventData, out var prefix))
+		{
+			return "";
+		}
+		List<LOMAssistant.LuaParse.Action> actions = LuaParser.Instance.ExtractActionsFromLua(prefix + "_" + eventData.ResultType);
+		return TextConverter.ToSimplified(LuaParser.Description(actions.Where((LOMAssistant.LuaParse.Action a) => !a.IsConditional).ToList()));
+	}
+
 	private string GenerateStaticDesc(PositionEventData eventData)
 	{
 		StringBuilder stringBuilder = new StringBuilder();

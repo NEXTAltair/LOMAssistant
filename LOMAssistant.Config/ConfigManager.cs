@@ -57,6 +57,8 @@ public static class ConfigManager
 
 	public static ConfigElement<bool> ShowBranchChecks;
 
+	public static ConfigElement<bool> EnableEventPicker;
+
 	public static ConfigElement<float> BranchPanelX;
 
 	public static ConfigElement<float> BranchPanelY;
@@ -171,6 +173,7 @@ public static class ConfigManager
 		GameSpeed = new ConfigElement<float>("GameSpeed", "游戏倍速（在游戏原本速度上再乘以该值；1=原速）。可在游戏内面板切换", 1f);
 		ActionMode = new ConfigElement<int>("ActionMode", "养成行动点：0=正常，1=不消耗（扣到剩 1 点后不再扣，可一直行动；用「空过」结束本旬），2=每旬只有 1 点。可在游戏内面板切换", 0);
 		ShowFlagChanges = new ConfigElement<bool>("ShowFlagChanges", "剧情改动旗标时在屏幕上提示（可能剧透）。true=开，false=关。可在游戏内面板切换", defaultValue: false);
+		EnableEventPicker = new ConfigElement<bool>("EnableEventPicker", "随机事件自选：剧情走到随机事件（工作、闲逛等）时先停下，列出满足条件的事件选一个，也可以选随机。true=开，false=关。可在游戏内面板切换", defaultValue: false);
 		ShowBranchChecks = new ConfigElement<bool>("ShowBranchChecks", "剧情走到分支判断时在屏幕上列出各分支条件（满足为绿、不满足为红，可能剧透）。true=开，false=关。可在游戏内面板切换", defaultValue: false);
 		BranchPanelX = new ConfigElement<float>("BranchPanelX", "剧情分支小窗的位置（占屏幕宽度的比例，-1=默认左侧）。拖动小窗会自动保存", -1f);
 		BranchPanelY = new ConfigElement<float>("BranchPanelY", "剧情分支小窗的位置（占屏幕高度的比例，-1=默认）。拖动小窗会自动保存", -1f);

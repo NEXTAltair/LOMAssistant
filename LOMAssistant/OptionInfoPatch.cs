@@ -193,17 +193,6 @@ internal static class OptionInfoPatch
 	}
 
 	[HarmonyPostfix]
-	[HarmonyPatch(typeof(PositionEventData), "GetRate")]
-	public static void PositionEventData_GetRate_Postfix(PositionEventData __instance, ref int __result)
-	{
-		if (TargetEvent == __instance)
-		{
-			__result = 99999;
-			TargetEvent = null;
-		}
-	}
-
-	[HarmonyPostfix]
 	[HarmonyPatch(typeof(MissionCheckData), "Check")]
 	public static void MissionCheckData_Postfix(MissionCheckData __instance, ref bool __result)
 	{

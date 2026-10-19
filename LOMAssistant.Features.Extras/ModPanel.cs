@@ -96,6 +96,7 @@ public class ModPanel : MonoBehaviour
 		Toggle(ConfigManager.CheatDuelNoDamage, "决斗中造成伤害为0");
 		Toggle(ConfigManager.ShowFlagChanges, "剧情旗标变化提示");
 		Toggle(ConfigManager.ShowBranchChecks, "剧情分支条件提示");
+		Toggle(ConfigManager.EnableEventPicker, "随机事件自选");
 		DrawSpeed();
 		DrawActionMode();
 

@@ -156,6 +156,8 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			TryPatchAll(typeof(FlagNotifyPatch));
 			TryPatchAll(typeof(LuaLoadTiming));
 			TryPatchAll(typeof(BranchNotifyPatch));
+			TryPatchAll(typeof(EventPickerPatch));
+			EventPicker.Ensure(base.gameObject);
 			TryPatchAll(typeof(LoadClickGuard));
 			TryPatchAll(typeof(SettingsDiagnosticsButton));
 			TryPatchAll(typeof(InputGuardActionGate));
