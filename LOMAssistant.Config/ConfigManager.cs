@@ -182,7 +182,7 @@ public static class ConfigManager
 		ActionMode = new ConfigElement<int>("ActionMode", "养成行动点：0=正常，1=不消耗（扣到剩 1 点后不再扣，可一直行动；用「空过」结束本旬），2=每旬只有 1 点。可在游戏内面板切换", 0);
 		ShowFlagChanges = new ConfigElement<bool>("ShowFlagChanges", "剧情改动旗标时在屏幕上提示（可能剧透）。true=开，false=关。可在游戏内面板切换", defaultValue: false);
 		EnableEventPicker = new ConfigElement<bool>("EnableEventPicker", "随机事件自选：剧情走到随机事件（工作、闲逛等）时先停下，列出满足条件的事件选一个，也可以选随机。true=开，false=关。可在游戏内面板切换", defaultValue: false);
-		EnableFastDuelRounds = new ConfigElement<bool>("EnableFastDuelRounds", "决斗回合之间的等待缩短：身上状态（buff）多时回合间不再干等几秒，效果和结算不变。true=开，false=关。可在游戏内面板切换", defaultValue: true);
+		EnableFastDuelRounds = new ConfigElement<bool>("EnableFastDuelRounds", "决斗回合之间的等待缩短：身上状态（buff）多时回合间不再干等几秒，效果和结算不变。默认开；只有怀疑它导致问题时才关。true=开，false=关", defaultValue: true);
 		EnableOneClickUnlock = new ConfigElement<bool>("EnableOneClickUnlock", "被锁住的选项旁显示「一键设置」：把没满足的解锁条件（属性、好感、旗标）改到满足，选项当场解锁。true=开，false=关。可在游戏内面板切换", defaultValue: true);
 		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "剧情里按鼠标右键隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次右键恢复。true=开，false=关。可在游戏内面板切换", defaultValue: true);
 		HideUIKey = new ConfigElement<KeyCode>("HideUIKey", "隐藏界面看 CG 的热键（和右键效果一样），None=不绑定", KeyCode.None);

@@ -99,7 +99,6 @@ public class ModPanel : MonoBehaviour
 		Toggle(ConfigManager.CheatFreeUpgradeMoney, "锻造、炼丹不消耗银两");
 		Toggle(ConfigManager.CheatDuelInvincible, "决斗中无敌");
 		Toggle(ConfigManager.CheatDuelNoDamage, "决斗中造成伤害为0");
-		Toggle(ConfigManager.EnableFastDuelRounds, "决斗回合间等待缩短");
 		Toggle(ConfigManager.ShowFlagChanges, "剧情旗标变化提示");
 		Toggle(ConfigManager.ShowBranchChecks, "剧情分支条件提示");
 		Toggle(ConfigManager.EnableEventPicker, "随机事件自选");
