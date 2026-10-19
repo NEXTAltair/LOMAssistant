@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using BepInEx;
 using UnityEngine;
 
@@ -30,7 +31,8 @@ public partial class AnytimeSave
 			if (differences.Count != 0)
 			{
 				foreach (string difference in differences) FileLogger.LogError("[随时存档] 游戏改动：" + difference);
-				return "游戏更新改动了存读档相关的 " + differences.Count + " 处代码，随时存档已停用，等 Mod 适配新版本。已有的随时存档没有改动。";
+				string files = string.Join("、", differences.Select(d => d.Substring(0, Math.Max(0, d.IndexOf('|')))).Distinct().ToArray());
+				return "存读档相关的游戏代码有冲突（" + files + "），随时存档已停用。请检查是否装了会修改游戏文件的其它 Mod，或者游戏最近有大更新、Mod 还没适配。已有的随时存档没有改动。";
 			}
 			// 和原版 MortalAnytimeSave 的算法一致，同一份契约下两边的存档互通
 			compatibilityId = Hash("ams-format-2-replay-1\n" + contract + "\n" + Hash(ReadResource("Replay.lua")));
