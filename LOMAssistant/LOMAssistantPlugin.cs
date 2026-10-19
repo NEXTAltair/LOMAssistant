@@ -31,7 +31,6 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 		Instance = this;
 		LogSource = base.Logger;
 		FileLogger.Init(Path.GetDirectoryName(base.Info.Location));
-		DicePlugin.Instance = base.gameObject.AddComponent<DicePlugin>();
 		ConfigManager.Init();
 		LogInfo("活侠传拓展已加载。");
 		FileLogger.Log("活侠传拓展已加载。");

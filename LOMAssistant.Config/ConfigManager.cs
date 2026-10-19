@@ -15,10 +15,6 @@ public static class ConfigManager
 
 	public static ConfigElement<bool> EnableOptionResultDisplay;
 
-	public static ConfigElement<KeyCode> LogMenuToggleKey;
-
-	public static ConfigElement<float> TabPanelScale;
-
 	public static ConfigElement<bool> EnableManualDiceSelection;
 
 	public static ConfigElement<bool> EnableLibraryDisplay;
@@ -169,10 +165,8 @@ public static class ConfigManager
 
 	private static void CreateConfigElements()
 	{
-		EnableOptionInfo = new ConfigElement<bool>("EnableOptionInfo", "是否启用信息窗口（选项/开关/事件/任务）。true=开，false=关，改后重启生效", defaultValue: true);
+		EnableOptionInfo = new ConfigElement<bool>("EnableOptionInfo", "是否启用选项提示（选项结果、解锁条件）、地点事件提示和回想里的判定记录。true=开，false=关，改后重启生效", defaultValue: true);
 		EnableOptionResultDisplay = new ConfigElement<bool>("EnableOptionResultDisplay", "是否启用对话选项结果直接显示。true=开，false=关，改后重启生效", defaultValue: true);
-		LogMenuToggleKey = new ConfigElement<KeyCode>("LogMenuToggleKey", "信息窗口开关热键，如 Tab / F12 / P 等", KeyCode.Tab);
-		TabPanelScale = new ConfigElement<float>("TabPanelScale", "信息窗口（Tab）的缩放（0.5～2，1=默认大小）。拖动窗口右下角会自动保存", 1f);
 		EnableManualDiceSelection = new ConfigElement<bool>("EnableManualDiceSelection", "是否启用骰子手动选择（点击线路直接选中）。true=开，false=关，改后重启生效", defaultValue: true);
 		EnableLibraryDisplay = new ConfigElement<bool>("EnableLibraryDisplay", "是否启用讲经堂解锁显示。true=开，false=关，改后重启生效", defaultValue: true);
 		EnableCombatAssist = new ConfigElement<bool>("EnableCombatAssist", "是否启用战斗辅助（ESC界面增加直接获胜按钮）。true=开，false=关，改后重启生效", defaultValue: true);

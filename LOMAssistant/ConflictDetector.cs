@@ -9,7 +9,7 @@ namespace LOMAssistant;
 
 /// <summary>
 /// 检测和其他 Mod 的冲突：等所有 Mod 都加载完，看本 Mod 改过的游戏方法有没有被别的 Mod 也改了
-/// （例如旧版骰子大师、多功能 Mod 会让 Tab 窗口空白）。不靠文件名猜，只报真正撞到的。
+/// （例如旧版骰子大师、多功能 Mod 会让选项提示失效）。不靠文件名猜，只报真正撞到的。
 /// 结果写进日志，并显示在 F8 面板顶部。
 /// </summary>
 public static class ConflictDetector
@@ -62,7 +62,7 @@ public static class ConflictDetector
 			{
 				string name = pluginNames.TryGetValue(clash.Key, out string n) ? n : clash.Key;
 				string methods = string.Join("、", clash.Value.Distinct().ToArray());
-				string message = $"检测到冲突的 Mod：{name}（{clash.Key}），和本 Mod 同时修改了 {clash.Value.Distinct().Count()} 处游戏代码：{methods}。可能导致 Tab 窗口空白、骰子或选项显示异常。请删除旧版骰子大师、多功能 Mod、活侠传助手等同类 Mod 后重新覆盖安装。";
+				string message = $"检测到冲突的 Mod：{name}（{clash.Key}），和本 Mod 同时修改了 {clash.Value.Distinct().Count()} 处游戏代码：{methods}。可能导致骰子或选项显示异常。请删除旧版骰子大师、多功能 Mod、活侠传助手等同类 Mod 后重新覆盖安装。";
 				LOMAssistantPlugin.LogWarning(message);
 				FileLogger.LogWarning("[冲突检测] " + message);
 				Warnings.Add($"{name} 与本 Mod 冲突（{clash.Value.Distinct().Count()} 处），请删除后重新覆盖安装");

@@ -19,10 +19,6 @@ internal static class OptionInfoPatch
 
 	private static PositionController _positionCtrl = null;
 
-	public static PositionEventData TargetEvent = null;
-
-	public static MissionCheckData TargetMission = null;
-
 	[HarmonyPrefix]
 	[HarmonyPatch(typeof(LuaEnvironment), "LoadLuaFunction")]
 	public static void LuaEnvironment_LoadLuaFunction_Prefix(string luaString, string friendlyName)
@@ -34,7 +30,6 @@ internal static class OptionInfoPatch
 			{
 				return;
 			}
-			DicePlugin.Instance.ClearLogEntries();
 			// 剧本内容不会变：解析结果按内容缓存，同一个剧本再次载入（地点菜单等会反复载入）不用重新解析
 			string key = friendlyName + "#" + (luaString ?? "").Length + "#" + (luaString ?? "").GetHashCode();
 			long lap = 0;
@@ -45,44 +40,11 @@ internal static class OptionInfoPatch
 				laps += name + " " + (now - lap) + "，";
 				lap = now;
 			}
-			foreach (KeyValuePair<string, List<LOMAssistant.LuaParse.Action>> item in LuaParser.Instance.ExtractOptionActionsFromLua(key, luaString))
-			{
-				DicePlugin.Instance.AddOptionEntry(item.Key, LuaParser.Description(item.Value));
-			}
+			// 选项结果、锁住选项：解析结果存在 LuaParser 里，显示选项文字时取用
+			LuaParser.Instance.ExtractOptionActionsFromLua(key, luaString);
 			Lap("选项");
 			LuaParser.Instance.ExtractLockedOptions(key, luaString);
 			Lap("锁住选项");
-			foreach (string item2 in LuaParser.Instance.ExtractSwitchCheckFromLua(key, luaString))
-			{
-				string description = DataHelper.ParseSwitchCheckpoint(item2);
-				DicePlugin.Instance.AddSwitchEntry(item2, description);
-			}
-			Lap("分支");
-			TargetEvent = null;
-			List<string> list = LuaParser.Instance.ExtractPositionWorkFromLua(key, luaString);
-			if (list.Count > 0)
-			{
-				DicePlugin.Instance.ClearEventEntries();
-				foreach (string item3 in list)
-				{
-					foreach (PositionEventData item4 in PositionEventCache.Instance.GetPositionEventsSortedByRate(item3))
-					{
-						string positionEventName = PositionEventCache.Instance.GetPositionEventName(item4);
-						string positionEventDesc = PositionEventCache.Instance.GetPositionEventDesc(item4);
-						DicePlugin.Instance.AddEventEntry(item4, positionEventName, positionEventDesc);
-					}
-				}
-			}
-			else if (!friendlyName.StartsWith("tmp.") && !friendlyName.StartsWith("Flowchart.Say.ExecuteLua"))
-			{
-				DicePlugin.Instance.ClearEventEntries();
-			}
-			Lap("事件");
-			foreach (KeyValuePair<MissionCheckData, (string, string)> mission in DataHelper.GetMissions())
-			{
-				DicePlugin.Instance.AddMissionEntry(mission.Key, mission.Value.Item1, mission.Value.Item2);
-			}
-			Lap("任务");
 			if (timer.ElapsedMilliseconds >= 50)
 			{
 				FileLogger.Log($"[性能] 解析剧本 {friendlyName}：{laps.TrimEnd('，')}（毫秒）");
@@ -208,17 +170,6 @@ internal static class OptionInfoPatch
 	{
 		List<ConditionResultItem> fieldValue = __instance.GetFieldValue<List<ConditionResultItem>>("_items");
 		LogCheckpoint("触发剧情分支检查点:", fieldValue);
-	}
-
-	[HarmonyPostfix]
-	[HarmonyPatch(typeof(MissionCheckData), "Check")]
-	public static void MissionCheckData_Postfix(MissionCheckData __instance, ref bool __result)
-	{
-		if (TargetMission == __instance)
-		{
-			__result = true;
-			TargetMission = null;
-		}
 	}
 
 	private static void HandleDialogChange(PositionController instance, bool addSuffix, string suffix = "")

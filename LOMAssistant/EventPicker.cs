@@ -108,11 +108,6 @@ public class EventPicker : MonoBehaviour
 			{
 				return false;
 			}
-			// 信息窗口里已经点过「设置事件」，就不再问
-			if (OptionInfoPatch.TargetEvent != null && PositionEventCache.Instance.GetPositionEvents(pool).Contains(OptionInfoPatch.TargetEvent))
-			{
-				return false;
-			}
 			Choices.Clear();
 			foreach (PositionEventData data in PositionEventCache.Instance.GetPositionEvents(pool))
 			{
@@ -154,16 +149,12 @@ public class EventPicker : MonoBehaviour
 	internal static bool TryPick(PositionResultData pool, out string result)
 	{
 		result = null;
-		PositionEventData pick = Pending ?? OptionInfoPatch.TargetEvent;
+		PositionEventData pick = Pending;
 		if (pick == null || !pool.List.Contains(pick))
 		{
 			return false;
 		}
 		Pending = null;
-		if (pick == OptionInfoPatch.TargetEvent)
-		{
-			OptionInfoPatch.TargetEvent = null;
-		}
 		if (pick.GetRate() <= 0)
 		{
 			FileLogger.LogWarning("[事件自选] 选中的事件现在不满足条件，按原本随机：" + DataHelper.GetEventName(pick));
