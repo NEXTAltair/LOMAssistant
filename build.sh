@@ -23,6 +23,7 @@ mkdir -p bin
 	-nowarn:CS1701,CS1702 -out:bin/LOMAssistant.dll "${refs[@]}" \
 	-resource:LOMAssistant.Features.AnytimeSave/Replay.lua,LOMAssistant.AnytimeSave.Replay.lua \
 	-resource:LOMAssistant.Features.AnytimeSave/contract.tsv.gz,LOMAssistant.AnytimeSave.contract.tsv.gz \
+	-resource:LOMAssistant/conditions.json.gz,LOMAssistant.conditions.json.gz \
 	$(find . -name '*.cs' -not -path './bin/*' -not -path './Installer/*' -not -path './tools/*')
 
 cp bin/LOMAssistant.dll "$P/LOMAssistant.dll"

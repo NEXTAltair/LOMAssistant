@@ -61,6 +61,10 @@ public static class ConfigManager
 
 	public static ConfigElement<bool> EnableOneClickUnlock;
 
+	public static ConfigElement<bool> EnableStoryReview;
+
+	public static ConfigElement<KeyCode> StoryReviewKey;
+
 	public static ConfigElement<bool> EnableRightClickHideUI;
 
 	public static ConfigElement<KeyCode> HideUIKey;
@@ -192,6 +196,8 @@ public static class ConfigManager
 		EnableOneClickUnlock = new ConfigElement<bool>("EnableOneClickUnlock", "被锁住的选项旁显示「一键设置」：把没满足的解锁条件（属性、好感、旗标）改到满足，选项当场解锁。true=开，false=关。可在游戏内面板切换", defaultValue: true);
 		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "剧情里按鼠标右键隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次右键恢复。true=开，false=关。可在游戏内面板切换", defaultValue: true);
 		HideUIKey = new ConfigElement<KeyCode>("HideUIKey", "隐藏界面看 CG 的热键（和右键效果一样），None=不绑定", KeyCode.None);
+		EnableStoryReview = new ConfigElement<bool>("EnableStoryReview", "剧情回顾：走到大节点（任务、事件的开头，以及会改变剧情走向的选项）时，在存档文件夹里收录这一段开头的进度（LOMStory_ 开头，跟着 Steam 云同步），以后可以从这里重玩。true=开，false=关", defaultValue: true);
+		StoryReviewKey = new ConfigElement<KeyCode>("StoryReviewKey", "剧情回顾面板（收录节点、剧情树、路线图）的热键", KeyCode.F3);
 		ShowBranchChecks = new ConfigElement<bool>("ShowBranchChecks", "剧情走到分支判断时在屏幕上列出各分支条件（满足为绿、不满足为红，可能剧透）。true=开，false=关。可在游戏内面板切换", defaultValue: false);
 		BranchPanelX = new ConfigElement<float>("BranchPanelX", "剧情分支小窗的位置（占屏幕宽度的比例，-1=默认左侧）。拖动小窗会自动保存", -1f);
 		BranchPanelY = new ConfigElement<float>("BranchPanelY", "剧情分支小窗的位置（占屏幕高度的比例，-1=默认）。拖动小窗会自动保存", -1f);

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using BepInEx;
 using Mortal.Core;
@@ -111,15 +112,74 @@ public static class DataHelper
 		return true;
 	}
 
+	private static SwitchResultConfig[] _switchConfigs;
+	private static ConditionResultConfig _conditionConfig;
+
+	/// <summary>
+	/// 分支判断表。挂在剧情场景的 CheckPointManager 上，离开剧情场景（养成地图）就拿不到；
+	/// 拿到过就记住，没拿到过就在已载入的资源里找。
+	/// </summary>
+	private static SwitchResultConfig[] SwitchConfigs()
+	{
+		CheckPointManager instance = CheckPointManager.Instance;
+		if (instance != null)
+		{
+			_switchConfigs = instance.GetFieldValue<SwitchResultConfig[]>("_switchList");
+		}
+		else if (_switchConfigs == null || _switchConfigs.Length == 0)
+		{
+			_switchConfigs = Resources.FindObjectsOfTypeAll<SwitchResultConfig>();
+		}
+		return _switchConfigs ?? new SwitchResultConfig[0];
+	}
+
+	/// <summary>剧情场景一建好就把两张表记住，之后在养成地图上也能写出条件。</summary>
+	public static void RememberCheckpoints(CheckPointManager instance)
+	{
+		if (instance == null)
+		{
+			return;
+		}
+		_switchConfigs = instance.GetFieldValue<SwitchResultConfig[]>("_switchList");
+		_conditionConfig = instance.GetFieldValue<ConditionResultConfig>("_condition");
+		ConditionBook.Write(_switchConfigs, _conditionConfig);
+	}
+
+	/// <summary>条件写成文字，不带当前值（「小梅好感 需>=35」），给离开剧情场景后用。</summary>
+	public static string ConditionTemplate(ConditionResultItem condition)
+	{
+		var list = new List<string>();
+		foreach (StatCompareItem item in condition.GetFieldValue<List<StatCompareItem>>("_items"))
+		{
+			StatGroupVariable left = item.GetFieldValue<StatGroupVariable>("_value1");
+			StatGroupVariable right = item.GetFieldValue<StatGroupVariable>("_value2");
+			string op = GetCompareOperator(item.GetFieldValue<StatCompareType>("_compareOp"));
+			string rhs = right != null && right.name.Contains("常") ? right.GetResult().ToString() : FormatConditionValName(right);
+			list.Add(FormatConditionValName(left) + " 需" + op + rhs);
+		}
+		return string.Join(" " + GetLogicOperator(condition.GetFieldValue<LogicOperatorType>("_logicOp")) + " ", list.ToArray());
+	}
+
+	/// <summary>条件检查表，取法同 SwitchConfigs。</summary>
+	private static ConditionResultConfig ConditionConfig()
+	{
+		CheckPointManager instance = CheckPointManager.Instance;
+		if (instance != null)
+		{
+			_conditionConfig = instance.GetFieldValue<ConditionResultConfig>("_condition");
+		}
+		else if (_conditionConfig == null)
+		{
+			ConditionResultConfig[] found = Resources.FindObjectsOfTypeAll<ConditionResultConfig>();
+			_conditionConfig = found.Length > 0 ? found[0] : null;
+		}
+		return _conditionConfig;
+	}
+
 	/// <summary>分支判断第 branch 支的条件文字（0 = 以上都不满足），找不到时返回空。</summary>
 	public static string SwitchBranchCondition(string checkpoint, int branch)
 	{
-		CheckPointManager instance = CheckPointManager.Instance;
-		if (instance == null)
-		{
-			return string.Empty;
-		}
-		foreach (SwitchResultConfig config in instance.GetFieldValue<SwitchResultConfig[]>("_switchList"))
+		foreach (SwitchResultConfig config in SwitchConfigs())
 		{
 			SwitchResultData data = config.GetData(checkpoint);
 			if (data == null)
@@ -133,18 +193,22 @@ public static class DataHelper
 			}
 			return ExtractConditions(items[branch - 1], out var _);
 		}
+		// 不在剧情场景、表拿不到：用进剧情时记下的条件文字（不带当前值）
+		if (ConditionBook.Switches.TryGetValue(checkpoint ?? "", out List<string> arms))
+		{
+			return branch == 0 || branch > arms.Count ? "以上条件都不满足" : arms[branch - 1];
+		}
 		return string.Empty;
 	}
 
 	/// <summary>Condition 检查点的条件文字（多组之间是「或」），找不到时返回空。</summary>
 	public static string ParseConditionCheckpoint(string checkpoint)
 	{
-		CheckPointManager instance = CheckPointManager.Instance;
-		ConditionResultConfig config = instance != null ? instance.GetFieldValue<ConditionResultConfig>("_condition") : null;
+		ConditionResultConfig config = ConditionConfig();
 		ConditionResultData data = config != null && config.List != null ? config.List.Find(x => x != null && x.name == checkpoint) : null;
 		if (data == null)
 		{
-			return string.Empty;
+			return ConditionBook.Conditions.TryGetValue(checkpoint ?? "", out string known) ? known : string.Empty;
 		}
 		var parts = new List<string>();
 		foreach (ConditionResultItem item in data.GetFieldValue<List<ConditionResultItem>>("_items"))
@@ -160,13 +224,8 @@ public static class DataHelper
 
 	public static string ParseSwitchCheckpoint(string checkpoint)
 	{
-		CheckPointManager instance = CheckPointManager.Instance;
-		if (instance == null)
-		{
-			return string.Empty;
-		}
 		StringBuilder stringBuilder = new StringBuilder();
-		SwitchResultConfig[] fieldValue = instance.GetFieldValue<SwitchResultConfig[]>("_switchList");
+		SwitchResultConfig[] fieldValue = SwitchConfigs();
 		SwitchResultData switchResultData = null;
 		for (int i = 0; i < fieldValue.Length; i++)
 		{
@@ -443,5 +502,107 @@ public static class DataHelper
 			return TextConverter.ToSimplified(text);
 		}
 		return string.Empty;
+	}
+}
+
+/// <summary>
+/// 条件文字本：游戏的条件表只挂在剧情场景上，养成地图上拿不到。进剧情场景时把所有分支判断、条件检查写成文字
+/// （不带当前值）存到 Mod 文件夹，之后在地图上打开剧情回顾也能看懂条件。游戏版本变了就重写。
+/// </summary>
+public static class ConditionBook
+{
+	public static Dictionary<string, List<string>> Switches = new Dictionary<string, List<string>>();
+	public static Dictionary<string, string> Conditions = new Dictionary<string, string>();
+	/// <summary>决斗输了会死的关卡 → 生死簿条目（剧本里 ChangeScene("Combat", 关卡) 的关卡名）。只来自 Mod 自带的数据。</summary>
+	public static Dictionary<string, string> CombatDeaths = new Dictionary<string, string>();
+	private static bool _written;
+	private static string File => System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(ConditionBook).Assembly.Location) ?? ".", "StoryReview", "conditions.json");
+
+	private sealed class Book
+	{
+		public string Version = "";
+		public Dictionary<string, List<string>> Switches = new Dictionary<string, List<string>>();
+		public Dictionary<string, string> Conditions = new Dictionary<string, string>();
+		public Dictionary<string, string> CombatDeaths = new Dictionary<string, string>();
+	}
+
+	static ConditionBook()
+	{
+		try
+		{
+			if (System.IO.File.Exists(File))
+			{
+				Book book = Newtonsoft.Json.JsonConvert.DeserializeObject<Book>(System.IO.File.ReadAllText(File, Encoding.UTF8));
+				if (book != null && book.Version == Application.version)
+				{
+					Switches = book.Switches ?? Switches;
+					Conditions = book.Conditions ?? Conditions;
+					_written = true;
+				}
+			}
+			// Mod 自带的一份（tools/make-conditions.py 从解包数据生成）：决斗死亡表总是用它；还没进过剧情场景时条件也先用它
+			using (var stream = typeof(ConditionBook).Assembly.GetManifestResourceStream("LOMAssistant.conditions.json.gz"))
+			using (var zip = new System.IO.Compression.GZipStream(stream, System.IO.Compression.CompressionMode.Decompress))
+			using (var reader = new System.IO.StreamReader(zip, Encoding.UTF8))
+			{
+				Book builtin = Newtonsoft.Json.JsonConvert.DeserializeObject<Book>(reader.ReadToEnd());
+				CombatDeaths = builtin?.CombatDeaths ?? CombatDeaths;
+				if (Switches.Count == 0)
+				{
+					Switches = builtin?.Switches ?? Switches;
+					Conditions = builtin?.Conditions ?? Conditions;
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			FileLogger.LogWarning("[条件文字] 读取失败: " + ex.Message);
+		}
+	}
+
+	public static void Write(SwitchResultConfig[] switches, ConditionResultConfig conditions)
+	{
+		if (_written || switches == null)
+		{
+			return;
+		}
+		_written = true;
+		try
+		{
+			var book = new Book { Version = Application.version };
+			foreach (SwitchResultConfig config in switches)
+			{
+				foreach (SwitchResultData data in config?.GetFieldValue<List<SwitchResultData>>("_list") ?? new List<SwitchResultData>())
+				{
+					if (data == null || book.Switches.ContainsKey(data.name))
+					{
+						continue;
+					}
+					book.Switches[data.name] = (data.GetFieldValue<List<ConditionResultItem>>("_items") ?? new List<ConditionResultItem>())
+						.Select(item => item == null ? "" : DataHelper.ConditionTemplate(item)).ToList();
+				}
+			}
+			if (conditions != null && conditions.List != null)
+			{
+				foreach (ConditionResultData data in conditions.List)
+				{
+					if (data == null || book.Conditions.ContainsKey(data.name))
+					{
+						continue;
+					}
+					book.Conditions[data.name] = string.Join(" 或 ", (data.GetFieldValue<List<ConditionResultItem>>("_items") ?? new List<ConditionResultItem>())
+						.Where(item => item != null).Select(DataHelper.ConditionTemplate).ToArray());
+				}
+			}
+			Switches = book.Switches;
+			Conditions = book.Conditions;
+			System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(File));
+			System.IO.File.WriteAllText(File, Newtonsoft.Json.JsonConvert.SerializeObject(book), new UTF8Encoding(false));
+			FileLogger.Log($"[条件文字] 已记下 {Switches.Count} 个分支判断、{Conditions.Count} 个条件检查");
+		}
+		catch (Exception ex)
+		{
+			FileLogger.LogWarning("[条件文字] 生成失败: " + ex.Message);
+		}
 	}
 }
