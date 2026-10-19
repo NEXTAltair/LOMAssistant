@@ -26,6 +26,8 @@ public class ModPanel : MonoBehaviour
 	private GUIStyle _window;
 	private GUIStyle _warning;
 
+	private GUIStyle _title;
+
 	private PinballManager _boundPinball;
 	private string _totalInput = "";
 	private string _multiplierInput = "";
@@ -73,13 +75,14 @@ public class ModPanel : MonoBehaviour
 			_lastSections = sections;
 			_windowRect.height = 10f;
 		}
-		_windowRect = GUILayout.Window(WindowId, _windowRect, DrawWindow, "活侠传拓展", _window);
+		_windowRect = GUILayout.Window(WindowId, _windowRect, DrawWindow, "", _window);
 		InputGuard.Report("F8", _windowRect);
 	}
 
 	private void DrawWindow(int id)
 	{
-		GUILayout.Space(8f * _scale);
+		// 不用窗口自带标题：它会压住第一行
+		GUILayout.Label("活侠传拓展", _title);
 		foreach (string warning in ConflictDetector.Warnings)
 		{
 			GUILayout.Label("【注意】" + warning, _warning);
@@ -312,6 +315,7 @@ public class ModPanel : MonoBehaviour
 		_window = new GUIStyle(GUI.skin.window) { fontSize = fontSize };
 		_warning = new GUIStyle(_label) { fontStyle = FontStyle.Bold };
 		_warning.normal.textColor = new Color(1f, 0.45f, 0.35f);
-		_window.padding.top = (int)(30f * scale);
+		_window.padding.top = (int)(8f * scale);
+		_title = new GUIStyle(_label) { fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
 	}
 }
