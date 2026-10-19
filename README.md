@@ -141,6 +141,7 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 | `LOMAssistant.Features.*` | 各功能（`Extras` 是本项目新增的，`AnytimeSave` 是随时存档） |
 | `Installer/` | 一键安装器 |
 | `tools/anytime-contract/` | 游戏更新后重新生成随时存档的兼容契约 |
+| `tools/bepinex-patch/` | 给打包的 BepInEx 打补丁：修复游戏装在中文路径下 BepInEx 启动失败 |
 
 ## 致谢
 
