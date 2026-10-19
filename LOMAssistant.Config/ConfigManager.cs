@@ -77,6 +77,12 @@ public static class ConfigManager
 
 	public static ConfigElement<int> SaveSlotCount;
 
+	public static ConfigElement<bool> EnableFlowSpeedup;
+
+	public static ConfigElement<int> StatChangePause;
+
+	public static ConfigElement<bool> FastFreeTransition;
+
 	public static ConfigElement<int> AutoSaveHistory;
 
 	public static ConfigElement<bool> EnableShopAllItems;
@@ -191,6 +197,9 @@ public static class ConfigManager
 		BranchPanelY = new ConfigElement<float>("BranchPanelY", "剧情分支小窗的位置（占屏幕高度的比例，-1=默认）。拖动小窗会自动保存", -1f);
 		BranchPanelAutoHide = new ConfigElement<float>("BranchPanelAutoHide", "剧情分支小窗多少秒没有新判断就自动收起（0=不自动收起）", 15f);
 		PopupOpacity = new ConfigElement<float>("PopupOpacity", "剧情分支小窗的背景不透明度（0=完全透明，1=不透明），改后重启游戏生效", 0.5f);
+		EnableFlowSpeedup = new ConfigElement<bool>("EnableFlowSpeedup", "流程提速：切场景不再写多余的全局存档副本、读档时旗标查表、回想关着时不重排、快进时指令不空等、没显示的数值变化不停顿。默认开；只有怀疑它导致问题时才关。true=开，false=关", defaultValue: true);
+		StatChangePause = new ConfigElement<int>("StatPauseMode", "剧情里数值变化显示后停多久：0=原版 0.5 秒，1=0.2 秒（默认），2=不停", 1);
+		FastFreeTransition = new ConfigElement<bool>("FastFreeActions", "养成地图上行动后的等待和转场加快 3 倍。true=开（默认），false=关", defaultValue: true);
 		SaveSlotCount = new ConfigElement<int>("SaveSlotCount", "手动存档栏位数量（原版 20，小于 20 时按 20）", 100);
 		AutoSaveHistory = new ConfigElement<int>("AutoSaveHistory", "每类自动存档（养成/剧情/战斗）额外保留的旧档数量，0=不保留", 5);
 		EnableShopAllItems = new ConfigElement<bool>("EnableShopAllItems", "四师兄商店售卖全部物品（书籍、杂物、特殊物品；不卖《证类本草》，提前买会导致六月后山事件出 bug）。true=开，false=关，改后重启生效", defaultValue: false);
