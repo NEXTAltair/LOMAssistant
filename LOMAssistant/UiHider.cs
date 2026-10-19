@@ -34,6 +34,13 @@ public class UiHider : MonoBehaviour
 		}
 	}
 
+	/// <summary>回想（对话记录）开着的时候右键不隐藏界面。</summary>
+	private static bool LogOpen()
+	{
+		Mortal.Story.StoryManager story = Mortal.Story.StoryManager.Instance;
+		return story != null && story.GetFieldValue<bool>("_logOpen");
+	}
+
 	private static bool InStory()
 	{
 		return SceneManager.GetActiveScene().name == "Story";
@@ -43,7 +50,7 @@ public class UiHider : MonoBehaviour
 	public static bool ClaimsRightClick(InputControl control)
 	{
 		return _instance != null && !Active && ConfigManager.EnableRightClickHideUI.Value && InStory()
-			&& control != null && Mouse.current != null && control == Mouse.current.rightButton && !EventPicker.IsWaiting;
+			&& control != null && Mouse.current != null && control == Mouse.current.rightButton && !EventPicker.IsWaiting && !LogOpen();
 	}
 
 	private void Update()
@@ -66,7 +73,7 @@ public class UiHider : MonoBehaviour
 			}
 			return;
 		}
-		if (!InStory() || EventPicker.IsWaiting || TextInputFocused())
+		if (!InStory() || EventPicker.IsWaiting || TextInputFocused() || LogOpen())
 		{
 			return;
 		}
