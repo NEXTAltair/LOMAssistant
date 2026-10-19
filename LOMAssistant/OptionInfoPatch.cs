@@ -61,10 +61,6 @@ internal static class OptionInfoPatch
 	[HarmonyPatch(typeof(LeanLocalizationResolver), "GetStoryText")]
 	public static void LeanLocalizationResolver_GetStoryText_Postfix(string key, ref string __result)
 	{
-		if (!ConfigManager.EnableOptionResultDisplay.Value)
-		{
-			return;
-		}
 		try
 		{
 			// 被锁的选项（「解锁条件：？？？」「银两不足」这类）：写出真正的解锁条件和当前值，以及解锁后的效果

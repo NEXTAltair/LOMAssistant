@@ -28,12 +28,7 @@ public static class FlowSpeedup
 
 	public static float StatPauseSeconds(float original)
 	{
-		switch (ConfigManager.StatChangePause.Value)
-		{
-			case 1: return Mathf.Min(original, 0.2f);
-			case 2: return 0f;
-			default: return original;
-		}
+		return On ? Mathf.Min(original, 0.2f) : original;
 	}
 
 	// ---------- 全局存档不写 JSON 副本 ----------
@@ -248,7 +243,7 @@ public static class FlowSpeedup
 	/// <summary>养成地图上正在执行行动（行动后的等待、转场）时，时间额外加快的倍数；GameSpeed 每帧乘上它。</summary>
 	public static float FreeBoost()
 	{
-		if (!ConfigManager.FastFreeTransition.Value)
+		if (!On)
 		{
 			return 1f;
 		}
