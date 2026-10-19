@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
@@ -39,6 +39,11 @@ internal static class Diagnostics
 				AddFile(zip, Path.Combine(game, @"BepInEx\LogOutput.log"), "BepInEx/LogOutput.log");
 				AddFile(zip, Path.Combine(game, @"BepInEx\config\LOMAssistant.cfg"), "BepInEx/LOMAssistant.cfg");
 				AddFile(zip, Path.Combine(game, "doorstop_config.ini"), "游戏目录/doorstop_config.ini");
+				// BepInEx 预加载失败时会在游戏目录写 preloader_*.log
+				foreach (string log in Directory.GetFiles(game, "preloader_*.log").OrderByDescending(File.GetLastWriteTimeUtc).Take(2))
+				{
+					AddFile(zip, log, "游戏目录/" + Path.GetFileName(log));
+				}
 			}
 			AddFile(zip, Path.Combine(GameData, "Player.log"), "游戏日志/Player.log");
 			AddFile(zip, Path.Combine(GameData, "Player-prev.log"), "游戏日志/Player-prev.log");
@@ -80,6 +85,24 @@ internal static class Diagnostics
 		else
 		{
 			sb.AppendLine("  （没有 plugins 文件夹）");
+		}
+		sb.AppendLine();
+		sb.AppendLine(@"BepInEx\patchers 里的文件（本 Mod 不需要，有的话是别的 Mod 留下的）：");
+		string patchers = Path.Combine(game, @"BepInEx\patchers");
+		string[] patcherFiles = Directory.Exists(patchers) ? Directory.GetFiles(patchers, "*", SearchOption.AllDirectories) : new string[0];
+		foreach (string file in patcherFiles)
+		{
+			sb.AppendLine("  " + file.Substring(patchers.Length + 1));
+		}
+		if (patcherFiles.Length == 0)
+		{
+			sb.AppendLine("  （无）");
+		}
+		string[] preloaderLogs = Directory.GetFiles(game, "preloader_*.log");
+		if (preloaderLogs.Length > 0)
+		{
+			sb.AppendLine();
+			sb.AppendLine("游戏目录里有 " + preloaderLogs.Length + " 个 preloader_*.log：BepInEx 预加载失败过，最新的已打包。");
 		}
 		string disabled = Path.Combine(game, @"BepInEx\已停用的Mod");
 		if (Directory.Exists(disabled))

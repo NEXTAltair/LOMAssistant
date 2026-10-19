@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -393,6 +393,11 @@ internal class InstallerForm : Form
 		{
 			CollectPlugins(plugins);
 		}
+		string patchers = _game != null ? Path.Combine(_game, @"BepInEx\patchers") : null;
+		if (patchers != null && Directory.Exists(patchers))
+		{
+			CollectPatchers(patchers);
+		}
 		_plugins.Visible = _pluginPaths.Count > 0;
 		_pluginsNone.Visible = _pluginPaths.Count == 0;
 	}
@@ -418,6 +423,17 @@ internal class InstallerForm : Form
 			}
 			_pluginPaths.Add(dll);
 			_plugins.Items.Add(rel + (known != null ? "　【已知冲突：" + known + "】" : ""), known != null);
+		}
+	}
+
+	// 本 Mod 不用预加载补丁，patchers 里的 DLL 都是别的 Mod 留下的。有它们时 BepInEx 预加载阶段会去加载，
+	// 在部分电脑上直接失败（Could not run preloader），整个 BepInEx 都起不来，所以默认停用
+	private void CollectPatchers(string patchers)
+	{
+		foreach (string dll in Directory.GetFiles(patchers, "*.dll", SearchOption.AllDirectories))
+		{
+			_pluginPaths.Add(dll);
+			_plugins.Items.Add(@"patchers\" + dll.Substring(patchers.Length + 1) + "　【预加载补丁：本 Mod 不需要，可能导致 BepInEx 启动失败】", true);
 		}
 	}
 
@@ -629,14 +645,19 @@ internal class InstallerForm : Form
 			return;
 		}
 		string plugins = Path.Combine(_game, @"BepInEx\plugins");
-		string target = Path.Combine(_game, DisabledFolder, DateTime.Now.ToString("yyyyMMdd_HHmmss"));
+		string patchers = Path.Combine(_game, @"BepInEx\patchers");
+		string stamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
 		var moved = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 		foreach (string dll in dlls)
 		{
-			// 插件在 plugins 根目录就只移这个 DLL；在子文件夹里就把整个子文件夹移走
-			string rel = dll.Substring(plugins.Length + 1);
+			// patchers 里的停用到单独的子文件夹，和插件分开
+			bool isPatcher = dll.StartsWith(patchers + "\\", StringComparison.OrdinalIgnoreCase);
+			string root = isPatcher ? patchers : plugins;
+			string target = Path.Combine(_game, DisabledFolder, stamp, isPatcher ? "patchers" : "");
+			// 在根目录就只移这个 DLL；在子文件夹里就把整个子文件夹移走
+			string rel = dll.Substring(root.Length + 1);
 			int slash = rel.IndexOf('\\');
-			string item = slash < 0 ? dll : Path.Combine(plugins, rel.Substring(0, slash));
+			string item = slash < 0 ? dll : Path.Combine(root, rel.Substring(0, slash));
 			if (!moved.Add(item) || !(File.Exists(item) || Directory.Exists(item)))
 			{
 				continue;
@@ -655,7 +676,7 @@ internal class InstallerForm : Form
 			{
 				File.Move(item, dest);
 			}
-			Log("已停用：" + item.Substring(plugins.Length + 1) + "（移到 " + DisabledFolder + "）");
+			Log("已停用：" + (isPatcher ? @"patchers\" : "") + item.Substring(root.Length + 1) + "（移到 " + DisabledFolder + "）");
 		}
 	}
 
