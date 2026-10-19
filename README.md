@@ -81,6 +81,7 @@
 
 - **空过**：养成界面、留学地图按 ESC，菜单里有「空过」，消耗 1 次行动、不触发任何事件。
 - **直接获胜**：决斗、团战中按 ESC，菜单里有「直接获胜」。
+- **决斗回合间等待缩短**（F8 可关，默认开）：身上状态（buff）越多，回合之间原本要干等越久；现在空等的步骤直接跳过，效果、数值和结算顺序不变。
 - **养成行动点**（F8）：正常 / 不消耗 / 每旬 1 点。不消耗时行动点扣到 1 不再扣，用「空过」结束本旬；每旬 1 点时每旬只能行动一次。
   > ⚠️ 这两个模式可能让部分剧情不触发或提前触发，还可能有 bug 卡掉关键主线，后面的剧情接不上，整个存档等于废了。我们一直在测试和修复，但不能保证完全没问题，请谨慎使用，多存档。
 - **四师兄售卖全部物品**（默认关，配置 `EnableShopAllItems` 打开）：商店里加入所有没拥有的书籍、杂物、特殊物品；不卖《证类本草》（提前买会导致六月后山事件出 bug）。
@@ -151,6 +152,7 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 - **[活侠传助手](https://mod.3dmgame.com/mod/256420)**：爱死（3DM：wowowo4567）。本项目的基础，源码由其发布的插件反编译而来后再修改。它又整合自 [骰子大师](https://mod.3dmgame.com/mod/210536)（Gmhaxx）、[多功能 Mod](https://mod.3dmgame.com/mod/210629)（Jim97）、[任意位置存档](https://mod.3dmgame.com/mod/210679)（NothingNullNull）。
 - **随时存档**：移植自 mahosalieri85-a11y 的 MortalAnytimeSave（[issue #2](https://github.com/kevinnie2003/LOMAssistant/issues/2)）。
 - **剧情分支小窗、选项提示、输入隔离、随机事件自选**：参考 [赵活系统](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 许可）的功能思路。
+- **决斗回合间等待缩短**：移植自 [赵活系统](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 许可）。
 - **存档备注显示**：移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 许可）及其[汉化版](https://github.com/shiluodeqiou/LOM_SaveSlotExpander-zh)（shiluodeqiou）。
 - **修炼、锻造、炼丹**：参考风灵月影《活侠传》修改器的功能思路（未使用其代码）。
 - 下载包附带的 [BepInEx](https://github.com/BepInEx/BepInEx)、[UnityDoorstop](https://github.com/NeighTools/UnityDoorstop)、[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) 按各自的许可证分发。

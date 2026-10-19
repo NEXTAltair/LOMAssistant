@@ -144,6 +144,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			}
 			LogInfo("修炼/锻造/炼丹修改补丁已应用。");
 			TryPatchAll(typeof(DuelCheatPatch));
+			TryPatchAll(typeof(DuelPacePatch));
 			LogInfo("决斗修改补丁已应用。");
 			TryPatchAll(typeof(SaveSlotPatch));
 			LogInfo("存档栏位补丁已应用。");
