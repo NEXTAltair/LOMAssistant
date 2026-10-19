@@ -55,6 +55,7 @@
   <img src="media/option-hint.webp" width="640" alt="选项后面显示结果和解锁条件">
 
 - **选项解锁条件**：被锁住的选项（「解锁条件：？？？」「银两不足」这类）显示真正的解锁条件和当前值；满足条件就接一段剧情的选项，括号里写「若 条件：触发剧情」。
+- **一键设置**（F8 可关，默认开）：被锁住的选项旁有「一键设置」，把没满足的解锁条件直接改到满足，选项当场解锁。只改属性、好感、旗标；几项相加比大小时（如六道加起来 > 1），差多少补在其中一项上。条件含随机、时间、物品时不显示。
 - **剧情分支小窗**（F8 开启，默认关，可能剧透）：剧情走到分支判断时，屏幕左侧列出各分支条件，满足为绿、不满足为红，实际走的那行高亮。小窗可拖动、可关闭，15 秒没有新判断自动收起。
 
   <img src="media/branch-panel.webp" width="480" alt="剧情分支小窗：满足为绿，不满足为红">
@@ -151,7 +152,7 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 
 - **[活侠传助手](https://mod.3dmgame.com/mod/256420)**：爱死（3DM：wowowo4567）。本项目的基础，源码由其发布的插件反编译而来后再修改。它又整合自 [骰子大师](https://mod.3dmgame.com/mod/210536)（Gmhaxx）、[多功能 Mod](https://mod.3dmgame.com/mod/210629)（Jim97）、[任意位置存档](https://mod.3dmgame.com/mod/210679)（NothingNullNull）。
 - **随时存档**：移植自 mahosalieri85-a11y 的 MortalAnytimeSave（[issue #2](https://github.com/kevinnie2003/LOMAssistant/issues/2)）。
-- **剧情分支小窗、选项提示、输入隔离、随机事件自选**：参考 [赵活系统](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 许可）的功能思路。
+- **剧情分支小窗、选项提示、输入隔离、随机事件自选、一键设置**：参考 [赵活系统](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 许可）的功能思路。
 - **决斗回合间等待缩短**：移植自 [赵活系统](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 许可）。
 - **存档备注显示**：移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 许可）及其[汉化版](https://github.com/shiluodeqiou/LOM_SaveSlotExpander-zh)（shiluodeqiou）。
 - **修炼、锻造、炼丹**：参考风灵月影《活侠传》修改器的功能思路（未使用其代码）。
