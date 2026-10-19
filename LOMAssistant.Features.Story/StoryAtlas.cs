@@ -24,6 +24,8 @@ public sealed class StoryMission
 	public string Series = "";
 	public string SeriesTitle = "";
 	public bool Main;
+	/// <summary>游戏数据里没启用、不会在地图上自己触发，只能由别的剧本直接接进来（襄阳行这类）。</summary>
+	public bool Inactive;
 	public string Desc = "";
 	public string Place = "";
 	/// <summary>触发时间，按旬计；任意时间、每月一次的为 null。</summary>
@@ -43,8 +45,16 @@ public sealed class StoryMission
 	/// <summary>这个任务的剧本里第一条剧情记录，用作标题旁的一句话简介。</summary>
 	public string Summary = "";
 
-	/// <summary>显示用的名字：任务说明，没有就用第一条剧情记录，再没有就用支线名或编号。</summary>
-	public string Title => Desc.Length > 0 ? Desc : Summary.Length > 0 ? (Summary.Length > 16 ? Summary.Substring(0, 16) + "…" : Summary) : Main ? Key : SeriesTitle;
+	/// <summary>显示用的名字：任务说明，没有就用第一条剧情记录；主线再没有就按开始剧本写成「1-1」这样的章节号，最后才用编号。</summary>
+	public string Title => Desc.Length > 0 ? Desc : Summary.Length > 0 ? (Summary.Length > 16 ? Summary.Substring(0, 16) + "…" : Summary) : Main ? ChapterOf(StartScript) ?? Key : SeriesTitle;
+
+	private static readonly System.Text.RegularExpressions.Regex Chapter = new System.Text.RegularExpressions.Regex(@"^ch(\d+)_(\d+)");
+
+	private static string ChapterOf(string script)
+	{
+		var m = Chapter.Match(script ?? "");
+		return m.Success ? m.Groups[1].Value + "-" + m.Groups[2].Value : null;
+	}
 }
 
 /// <summary>会回到标题的剧本（结局、死亡），以及怎么走到。</summary>
@@ -273,6 +283,37 @@ public static class StoryAtlas
 			}
 		}
 
+		// 支线演到一半回地图、后面几段由地图事件接着演的（襄阳行这类），顺着剧本走不到：
+		// 同一任务组编号开头、又没归到别的任务的剧本，也算这条支线的（台词搜索、读过多少、剧情图、走完接到的主线都算上）
+		foreach (StoryMission mission in Missions.Where(m => !m.Main && m.Series.Length > 0))
+		{
+			var extra = names.Where(n => n.StartsWith(mission.Series + "_", StringComparison.OrdinalIgnoreCase) && !owner.ContainsKey(n)).ToList();
+			if (extra.Count == 0)
+			{
+				continue;
+			}
+			foreach (string name in extra)
+			{
+				owner[name] = mission;
+				mission.Scripts.Add(name);
+				StoryScript s = StoryScripts.Get(name);
+				if (s == null)
+				{
+					continue;
+				}
+				foreach (StoryExit exit in s.Exits)
+				{
+					if (exit.MainMission.Length > 0 && !mission.Next.Contains(exit.MainMission))
+					{
+						mission.Next.Add(exit.MainMission);
+					}
+				}
+			}
+			var all = mission.Scripts.Select(StoryScripts.Get).Where(s => s != null).ToList();
+			mission.Read = StoryScripts.ReadPercent(all.SelectMany(s => s.Lines));
+			mission.Visited = all.Any(s => s.Records.Any(visited.Contains));
+		}
+
 		// 剧本归属，以及别的任务接进来的地方（支线怎么进入）
 		Owner.Clear();
 		foreach (var pair in owner)
@@ -295,6 +336,17 @@ public static class StoryAtlas
 				}
 				into.Entries.Add(new StoryEntry { From = pair.Value, Script = pair.Key, Path = exit.Path });
 			}
+		}
+		// 没启用、也没有剧本接进来的支线是用不到的，去掉
+		var unused = new HashSet<StoryMission>(Missions.Where(m => m.Inactive && m.Entries.Count == 0));
+		Missions.RemoveAll(unused.Contains);
+		foreach (string name in Owner.Where(p => unused.Contains(p.Value)).Select(p => p.Key).ToList())
+		{
+			Owner.Remove(name);
+		}
+		foreach (StoryMission m in Missions)
+		{
+			m.Entries.RemoveAll(e => unused.Contains(e.From));
 		}
 		yield return null;
 
@@ -366,6 +418,20 @@ public static class StoryAtlas
 		FileLogger.Log($"[剧情回顾] 时间线生成完毕：剧本 {names.Count}，任务 {Missions.Count}，结局 {Endings.Count}，用时 {timer.ElapsedMilliseconds} 毫秒");
 	}
 
+	/// <summary>一句台词的文字（简体、去掉格式），读不到返回空。</summary>
+	public static string LineText(string key)
+	{
+		try
+		{
+			string text = LocalizationManager.Instance.LocaleResolver.GetStoryText(key);
+			return string.IsNullOrWhiteSpace(text) || text == key ? "" : TextConverter.ToSimplified(System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", "")).Replace("\n", " ");
+		}
+		catch
+		{
+			return "";
+		}
+	}
+
 	private static IEnumerator BuildDialogue()
 	{
 		Dialogue.Clear();
@@ -379,18 +445,10 @@ public static class StoryAtlas
 			}
 			foreach (string key in script.Lines)
 			{
-				string text;
-				try
+				string text = LineText(key);
+				if (text.Length > 0)
 				{
-					text = LocalizationManager.Instance.LocaleResolver.GetStoryText(key);
-				}
-				catch
-				{
-					continue;
-				}
-				if (!string.IsNullOrWhiteSpace(text) && text != key)
-				{
-					Dialogue.Add((name, TextConverter.ToSimplified(System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", "")).Replace("\n", " ")));
+					Dialogue.Add((name, text));
 				}
 				if (++n % 200 == 0)
 				{
@@ -440,7 +498,9 @@ public static class StoryAtlas
 		}
 		foreach (MissionCheckData check in series.GetFieldValue<MissionCheckData[]>("_missions") ?? new MissionCheckData[0])
 		{
-			if (check == null || !check.GetFieldValue<bool>("_active"))
+			// 没启用的支线先留着，等算完入口再看有没有剧本接进来
+			bool active = check != null && check.GetFieldValue<bool>("_active");
+			if (check == null || (main && !active))
 			{
 				continue;
 			}
@@ -453,7 +513,8 @@ public static class StoryAtlas
 				Desc = FirstLine(TextConverter.ToSimplified(check.GetFieldValue<string>("_desc") ?? ""), 30),
 				Place = check.Position.ToString() == "無" ? "" : TextConverter.ToSimplified(check.Position.ToString()),
 				StartScript = check.StartScript ?? "",
-				Conditions = check.GetFieldValue<ConditionResultItem[]>("_conditions") ?? new ConditionResultItem[0]
+				Conditions = check.GetFieldValue<ConditionResultItem[]>("_conditions") ?? new ConditionResultItem[0],
+				Inactive = !active
 			};
 			SetTime(mission, check);
 			Missions.Add(mission);

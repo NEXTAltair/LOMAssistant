@@ -318,6 +318,11 @@ public partial class StoryReviewPanel
 				Kept = StoryNodes.Latest(key),
 				Title = scripts.SelectMany(s => s.Records).Select(StoryScripts.Legend).FirstOrDefault(t => t.Length > 0) ?? ""
 			};
+			// 没有剧情记录的段落用第一句台词，再没有才用剧本名
+			if (box.Title.Length == 0)
+			{
+				box.Title = scripts.SelectMany(s => s.Lines).Take(6).Select(StoryAtlas.LineText).FirstOrDefault(t => t.Length > 0) ?? "";
+			}
 			if (box.Title.Length == 0)
 			{
 				box.Title = chain.Count > 1 ? chain[0] + " … " + key : key;
@@ -345,140 +350,182 @@ public partial class StoryReviewPanel
 		}
 
 		Box(mission.StartScript, 0);
-		while (queue.Count > 0)
+		// 回地图以后由地图事件接着演的段落（襄阳行这类）：顺着剧本走不到，演完前面的再从这些段落接着画，
+		// 前面放一个「地图上接着」的小方块
+		var later = new Queue<string>(mission.Scripts.Where(n => !string.Equals(n, mission.StartScript, StringComparison.OrdinalIgnoreCase)));
+		while (true)
 		{
-			FlowBox from = queue.Dequeue();
-			if (from.Last == null)
+			Drain();
+			string root = null;
+			while (later.Count > 0 && root == null)
 			{
-				continue;
-			}
-			foreach (StoryExit exit in from.Last.Exits)
-			{
-				FlowBox to;
-				if (exit.ToTitle)
-				{
-					string name = EndingName(from.Last, exit);
-					to = Terminal(from, name.Length > 0 ? "结局：" + Short(name, 9) : "结局", true);
-				}
-				else if (exit.MainMission.Length > 0)
-				{
-					StoryMission next = StoryAtlas.Find(exit.MainMission);
-					to = Terminal(from, "主线 → " + (next != null ? Short(next.Title, 10) : exit.MainMission), false);
-				}
-				else if (exit.ToMap)
-				{
-					to = Terminal(from, "回到地图", false);
-				}
-				else if (exit.Target.Length == 0)
+				string name = later.Dequeue();
+				if (byScript.ContainsKey(name) || otherStarts.Contains(name))
 				{
 					continue;
 				}
-				else if (otherStarts.Contains(exit.Target))
+				// 只从没有别的段落接进来的那几段开始
+				bool reached = mission.Scripts.Any(n => !string.Equals(n, name, StringComparison.OrdinalIgnoreCase) && (StoryScripts.Get(n)?.Exits.Any(x => string.Equals(x.Target, name, StringComparison.OrdinalIgnoreCase)) ?? false));
+				if (!reached)
 				{
-					StoryMission other = StoryAtlas.Missions.FirstOrDefault(m => string.Equals(m.StartScript, exit.Target, StringComparison.OrdinalIgnoreCase));
-					to = Terminal(from, "接到 " + (other != null ? Short(other.Title, 10) : exit.Target), false);
+					root = name;
 				}
-				else
+			}
+			if (root == null || graph.Boxes.Count >= FlowLimit)
+			{
+				break;
+			}
+			int layer = graph.Boxes.Max(b => b.Layer) + 1;
+			var map = new FlowBox { Id = "map|" + root, Title = "地图上接着", Terminal = true, Layer = layer };
+			graph.Boxes.Add(map);
+			FlowBox next = Box(root, layer + 1);
+			if (next != null)
+			{
+				graph.Links.Add(new FlowLink { From = map, To = next });
+			}
+		}
+		return Layout();
+
+		void Drain()
+		{
+			while (queue.Count > 0)
+			{
+				FlowBox from = queue.Dequeue();
+				if (from.Last == null)
 				{
-					to = Box(exit.Target, from.Layer + 1);
-					if (to == null)
+					continue;
+				}
+				foreach (StoryExit exit in from.Last.Exits)
+				{
+					FlowBox to;
+					if (exit.ToTitle)
+					{
+						string name = EndingName(from.Last, exit);
+						to = Terminal(from, name.Length > 0 ? "结局：" + Short(name, 9) : "结局", true);
+					}
+					else if (exit.MainMission.Length > 0)
+					{
+						StoryMission next = StoryAtlas.Find(exit.MainMission);
+						to = Terminal(from, "主线 → " + (next != null ? Short(next.Title, 10) : exit.MainMission), false);
+					}
+					else if (exit.ToMap)
+					{
+						to = Terminal(from, "回到地图", false);
+					}
+					else if (exit.Target.Length == 0)
 					{
 						continue;
 					}
+					else if (otherStarts.Contains(exit.Target))
+					{
+						StoryMission other = StoryAtlas.Missions.FirstOrDefault(m => string.Equals(m.StartScript, exit.Target, StringComparison.OrdinalIgnoreCase));
+						to = Terminal(from, "接到 " + (other != null ? Short(other.Title, 10) : exit.Target), false);
+					}
+					else
+					{
+						to = Box(exit.Target, from.Layer + 1);
+						if (to == null)
+						{
+							continue;
+						}
+					}
+					FlowLink link = graph.Links.Find(l => l.From == from && l.To == to);
+					if (link == null)
+					{
+						link = new FlowLink { From = from, To = to, Back = to.Layer <= from.Layer };
+						graph.Links.Add(link);
+					}
+					link.Exits.Add(exit);
+					string label = LinkLabel(exit);
+					if (label.Length > 0 && !link.Labels.Contains(label))
+					{
+						link.Labels.Add(label);
+					}
 				}
-				FlowLink link = graph.Links.Find(l => l.From == from && l.To == to);
-				if (link == null)
+				// 输了会死的决斗
+				foreach (var (path, level) in from.Last.Fights)
 				{
-					link = new FlowLink { From = from, To = to, Back = to.Layer <= from.Layer };
-					graph.Links.Add(link);
+					if (!ConditionBook.CombatDeaths.TryGetValue(level, out string deadId))
+					{
+						continue;
+					}
+					StoryEnding ending = StoryAtlas.Endings.FirstOrDefault(e => e.Death && e.Id == deadId);
+					FlowBox to = Terminal(from, "死亡：" + Short(ending != null ? ending.Title : deadId, 9), true);
+					FlowLink link = graph.Links.Find(l => l.From == from && l.To == to);
+					if (link == null)
+					{
+						link = new FlowLink { From = from, To = to };
+						graph.Links.Add(link);
+					}
+					string label = (path.Count > 0 ? StepLabel(path[path.Count - 1]) + "，" : "") + "决斗输了";
+					if (!link.Labels.Contains(label))
+					{
+						link.Labels.Add(label);
+					}
 				}
-				link.Exits.Add(exit);
-				string label = LinkLabel(exit);
-				if (label.Length > 0 && !link.Labels.Contains(label))
+				// 死亡（生死簿）不是「回到标题」，单独画出来
+				foreach (var (path, death, id) in from.Last.Endings.Where(e => e.Death))
 				{
-					link.Labels.Add(label);
-				}
-			}
-			// 输了会死的决斗
-			foreach (var (path, level) in from.Last.Fights)
-			{
-				if (!ConditionBook.CombatDeaths.TryGetValue(level, out string deadId))
-				{
-					continue;
-				}
-				StoryEnding ending = StoryAtlas.Endings.FirstOrDefault(e => e.Death && e.Id == deadId);
-				FlowBox to = Terminal(from, "死亡：" + Short(ending != null ? ending.Title : deadId, 9), true);
-				FlowLink link = graph.Links.Find(l => l.From == from && l.To == to);
-				if (link == null)
-				{
-					link = new FlowLink { From = from, To = to };
-					graph.Links.Add(link);
-				}
-				string label = (path.Count > 0 ? StepLabel(path[path.Count - 1]) + "，" : "") + "决斗输了";
-				if (!link.Labels.Contains(label))
-				{
-					link.Labels.Add(label);
-				}
-			}
-			// 死亡（生死簿）不是「回到标题」，单独画出来
-			foreach (var (path, death, id) in from.Last.Endings.Where(e => e.Death))
-			{
-				StoryEnding ending = StoryAtlas.Endings.FirstOrDefault(e => e.Death && e.Id == id);
-				FlowBox to = Terminal(from, "死亡：" + Short(ending != null ? ending.Title : id, 9), true);
-				FlowLink link = graph.Links.Find(l => l.From == from && l.To == to);
-				if (link == null)
-				{
-					link = new FlowLink { From = from, To = to };
-					graph.Links.Add(link);
-				}
-				string label = path.Count > 0 ? StepLabel(path[path.Count - 1]) : "";
-				if (label.Length > 0 && !link.Labels.Contains(label))
-				{
-					link.Labels.Add(label);
+					StoryEnding ending = StoryAtlas.Endings.FirstOrDefault(e => e.Death && e.Id == id);
+					FlowBox to = Terminal(from, "死亡：" + Short(ending != null ? ending.Title : id, 9), true);
+					FlowLink link = graph.Links.Find(l => l.From == from && l.To == to);
+					if (link == null)
+					{
+						link = new FlowLink { From = from, To = to };
+						graph.Links.Add(link);
+					}
+					string label = path.Count > 0 ? StepLabel(path[path.Count - 1]) : "";
+					if (label.Length > 0 && !link.Labels.Contains(label))
+					{
+						link.Labels.Add(label);
+					}
 				}
 			}
 		}
 
-		// 排版：同一层从上往下排；每条线的标签完整显示（每项一行，太长就换行），标签写在进方块的那段线上方，
-		// 所以每个方块上面按进来的标签留出空间
-		float w = S(230), h = S(62), gapX = S(260), gapY = S(24), labelWidth = gapX - S(60);
-		var labelStyle = new GUIStyle(_tag) { wordWrap = true, alignment = TextAnchor.LowerRight };
-		var reserve = new Dictionary<FlowBox, float>();
-		foreach (FlowLink link in graph.Links.Where(l => !l.Back && l.Labels.Count > 0))
+		FlowGraph Layout()
 		{
-			link.Text = string.Join("\n", link.Labels.ToArray());
-			link.Height = labelStyle.CalcHeight(new GUIContent(link.Text), labelWidth) + S(4);
-			reserve.TryGetValue(link.To, out float used);
-			link.Lift = used;
-			reserve[link.To] = used + link.Height + S(2);
-		}
-		// 一层一层往右排：同一层里按上一层「父方块」的位置排先后（父方块在上的排上面，同一个父方块下按去处原本的顺序），
-		// 剧情段在前、走出本任务的小方块在后；每个方块尽量和父方块对齐，放不下就往下挪
-		var parents = graph.Links.Where(l => !l.Back).GroupBy(l => l.To).ToDictionary(g => g.Key, g => g.Select(l => l.From).ToList());
-		var order = graph.Links.Select((l, i) => (l, i)).GroupBy(x => x.l.To).ToDictionary(g => g.Key, g => g.Min(x => x.i));
-		float bottom = 0;
-		foreach (var layer in graph.Boxes.GroupBy(b => b.Layer).OrderBy(g => g.Key))
-		{
-			float ParentY(FlowBox b) => parents.TryGetValue(b, out var ps) && ps.Count > 0 ? ps.Average(p => p.Rect.center.y) : 0f;
-			var sorted = layer.OrderBy(ParentY).ThenBy(b => b.Terminal ? 1 : 0).ThenBy(b => order.TryGetValue(b, out int i) ? i : int.MaxValue).ToList();
-			float y = S(24);
-			int row = 0;
-			foreach (FlowBox b in sorted)
+			// 排版：同一层从上往下排；每条线的标签完整显示（每项一行，太长就换行），标签写在进方块的那段线上方，
+			// 所以每个方块上面按进来的标签留出空间
+			float w = S(230), h = S(62), gapX = S(260), gapY = S(24), labelWidth = gapX - S(60);
+			var labelStyle = new GUIStyle(_tag) { wordWrap = true, alignment = TextAnchor.LowerRight };
+			var reserve = new Dictionary<FlowBox, float>();
+			foreach (FlowLink link in graph.Links.Where(l => !l.Back && l.Labels.Count > 0))
 			{
-				b.Row = row++;
-				float bh = b.Terminal ? h * 0.62f : h;
-				reserve.TryGetValue(b, out float above);
-				y += Mathf.Max(0, above - bh / 2f + S(6));
-				float wanted = layer.Key == 0 ? y : ParentY(b) - bh / 2f;
-				y = Mathf.Max(y, wanted);
-				b.Rect = new Rect(S(24) + layer.Key * (w + gapX), y, b.Terminal ? w * 0.8f : w, bh);
-				y += bh + gapY;
+				link.Text = string.Join("\n", link.Labels.ToArray());
+				link.Height = labelStyle.CalcHeight(new GUIContent(link.Text), labelWidth) + S(4);
+				reserve.TryGetValue(link.To, out float used);
+				link.Lift = used;
+				reserve[link.To] = used + link.Height + S(2);
 			}
-			bottom = Mathf.Max(bottom, y);
+			// 一层一层往右排：同一层里按上一层「父方块」的位置排先后（父方块在上的排上面，同一个父方块下按去处原本的顺序），
+			// 剧情段在前、走出本任务的小方块在后；每个方块尽量和父方块对齐，放不下就往下挪
+			var parents = graph.Links.Where(l => !l.Back).GroupBy(l => l.To).ToDictionary(g => g.Key, g => g.Select(l => l.From).ToList());
+			var order = graph.Links.Select((l, i) => (l, i)).GroupBy(x => x.l.To).ToDictionary(g => g.Key, g => g.Min(x => x.i));
+			float bottom = 0;
+			foreach (var layer in graph.Boxes.GroupBy(b => b.Layer).OrderBy(g => g.Key))
+			{
+				float ParentY(FlowBox b) => parents.TryGetValue(b, out var ps) && ps.Count > 0 ? ps.Average(p => p.Rect.center.y) : 0f;
+				var sorted = layer.OrderBy(ParentY).ThenBy(b => b.Terminal ? 1 : 0).ThenBy(b => order.TryGetValue(b, out int i) ? i : int.MaxValue).ToList();
+				float y = S(24);
+				int row = 0;
+				foreach (FlowBox b in sorted)
+				{
+					b.Row = row++;
+					float bh = b.Terminal ? h * 0.62f : h;
+					reserve.TryGetValue(b, out float above);
+					y += Mathf.Max(0, above - bh / 2f + S(6));
+					float wanted = layer.Key == 0 ? y : ParentY(b) - bh / 2f;
+					y = Mathf.Max(y, wanted);
+					b.Rect = new Rect(S(24) + layer.Key * (w + gapX), y, b.Terminal ? w * 0.8f : w, bh);
+					y += bh + gapY;
+				}
+				bottom = Mathf.Max(bottom, y);
+			}
+			graph.Width = S(48) + (graph.Boxes.Count == 0 ? 0 : graph.Boxes.Max(b => b.Layer) + 1) * (w + gapX);
+			graph.Height = bottom + S(40);
+			return graph;
 		}
-		graph.Width = S(48) + (graph.Boxes.Count == 0 ? 0 : graph.Boxes.Max(b => b.Layer) + 1) * (w + gapX);
-		graph.Height = bottom + S(40);
-		return graph;
 	}
 
 	private void DrawFlowCanvas(Rect canvas)
@@ -607,6 +654,10 @@ public partial class StoryReviewPanel
 		}
 		GUILayout.Space(S(10));
 		GUILayout.Label("接下来", _heading);
+		if (box.Last.Exits.Count == 0)
+		{
+			GUILayout.Label("这一段之后没有直接接着的剧本", _muted);
+		}
 		foreach (StoryExit exit in box.Last.Exits)
 		{
 			GUILayout.BeginVertical(_card);

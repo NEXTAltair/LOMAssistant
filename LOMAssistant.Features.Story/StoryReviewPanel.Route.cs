@@ -22,6 +22,8 @@ public partial class StoryReviewPanel
 	{
 		public string Series = "", Title = "";
 		public List<StoryMission> Missions = new List<StoryMission>();
+		/// <summary>走完会把主线设到这些站（襄阳行这类）。</summary>
+		public List<StoryMission> Joins = new List<StoryMission>();
 		public Rect Pill;
 		public int? Read;
 		public bool Visited, Dated;
@@ -219,8 +221,9 @@ public partial class StoryReviewPanel
 			.Select(g => new SideStory
 			{
 				Series = g.Key,
-				Title = g.First().SeriesTitle,
+				Title = SideTitle(g.ToList()),
 				Missions = g.ToList(),
+				Joins = g.SelectMany(m => m.Next).Distinct().Where(mains.ContainsKey).Select(k => mains[k]).ToList(),
 				Dated = g.Any(m => m.From != null),
 				Read = StoryScripts.ReadPercent(g.SelectMany(m => m.Scripts).Distinct().Select(StoryScripts.Get).Where(s => s != null).SelectMany(s => s.Lines)),
 				Visited = g.Any(m => m.Visited)
@@ -230,7 +233,7 @@ public partial class StoryReviewPanel
 		foreach (SideStory side in groups)
 		{
 			float sx = side.Dated ? XOf(layout, side.Missions.Where(m => m.From != null).Min(m => m.From.Value)) - Z(10) : Z(20);
-			float w = pillStyle.CalcSize(new GUIContent("✓ " + side.Title)).x + Z(26);
+			float w = pillStyle.CalcSize(new GUIContent("✓ " + side.Title + (side.Joins.Count > 0 ? " → 主线" : ""))).x + Z(26);
 			int row = rows.FindIndex(end => end <= sx);
 			if (row < 0)
 			{
@@ -244,6 +247,23 @@ public partial class StoryReviewPanel
 		layout.Width = Mathf.Max(layout.Columns.Count > 0 ? layout.Columns[layout.Columns.Count - 1].X : 0, rows.DefaultIfEmpty(0).Max()) + Z(200);
 		layout.Height = y + rows.Count * Z(30) + Z(30);
 		return layout;
+	}
+
+	/// <summary>
+	/// 支线签条的名字：任务组自己的名字；游戏里没起名（只有 S2321 这样的编号）的，
+	/// 用最早那个任务的说明，再没有就用它的第一条剧情记录。
+	/// </summary>
+	private static string SideTitle(List<StoryMission> missions)
+	{
+		string title = missions[0].SeriesTitle;
+		if (title.Any(c => c >= 128))
+		{
+			return title;
+		}
+		var first = missions.OrderBy(m => m.From ?? int.MaxValue).ThenBy(m => m.Key, StringComparer.Ordinal).ToList();
+		string named = first.Select(m => m.Desc).FirstOrDefault(d => d.Any(c => c >= 128))
+			?? first.Select(m => m.Summary).FirstOrDefault(d => d.Length > 0);
+		return named != null ? Short(named, 12) : title;
 	}
 
 	/// <summary>日期 → 横坐标：落在两列之间的按旬数插进去。</summary>
@@ -381,7 +401,8 @@ public partial class StoryReviewPanel
 					ReadBar(new Rect(side.Pill.x + Z(6), side.Pill.yMax - Z(4), side.Pill.width - Z(10), Z(2)), side.Read);
 				}
 				var tagText = new GUIStyle(name) { alignment = TextAnchor.MiddleCenter, wordWrap = false };
-				string text = (side.Visited ? "<color=#2F6B3A>✓</color> " : "") + side.Title;
+				// 走完会接到某一站主线的，后面标「→ 主线」
+				string text = (side.Visited ? "<color=#2F6B3A>✓</color> " : "") + side.Title + (side.Joins.Count > 0 ? " <color=#A3302A>→ 主线</color>" : "");
 				GUI.Label(new Rect(side.Pill.x + Z(4), side.Pill.y - Z(1), side.Pill.width - Z(4), side.Pill.height), dim ? "<color=#B5AA98>" + side.Title + "</color>" : text, tagText);
 			}
 			if (GUI.Button(side.Pill, GUIContent.none, GUIStyle.none))
@@ -475,6 +496,14 @@ public partial class StoryReviewPanel
 	{
 		GUILayout.Label("支线", _muted);
 		GUILayout.Label(side.Title, _heading);
+		foreach (StoryMission m in side.Joins)
+		{
+			if (GUILayout.Button("走完接到主线「" + m.Title + "」", _button))
+			{
+				_routePicked = m;
+				_routeSide = null;
+			}
+		}
 		GUILayout.Label((side.Visited ? "<color=#2F6B3A>✓ 这一局走过</color>" : "这一局没走过") + (side.Read != null ? $"　·　对白读过 {side.Read}%" : ""), _label);
 		foreach (StoryMission m in side.Missions.OrderBy(m => m.From ?? int.MaxValue))
 		{
