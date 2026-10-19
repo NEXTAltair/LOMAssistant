@@ -163,6 +163,8 @@ public partial class AnytimeSave : MonoBehaviour
 		UnityEngine.Random.state = JsonUtility.FromJson<UnityEngine.Random.State>(data.randomJson);
 	}
 
+	private readonly Dictionary<string, string> wrapped = new Dictionary<string, string>(StringComparer.Ordinal);
+
 	internal string PrepareScript(LuaEnvironment env, string code, string name)
 	{
 		if (!name.EndsWith(".LuaScript", StringComparison.Ordinal) || name == "tmp.LuaScript") return code;
@@ -182,8 +184,16 @@ public partial class AnytimeSave : MonoBehaviour
 		}
 		if (stamp == null) stamps.Add(new ScriptStamp { name = name, hash = hash });
 		Bind(env.Interpreter);
-		// 版本核对用的是原剧本的哈希；事件自选的等待先包上，再套记录/回放包装
-		return scriptPrefix + "\n" + Transform(EventPicker.Instrument(code));
+		// 版本核对用的是原剧本的哈希；事件自选的等待先包上，再套记录/回放包装。包装结果只取决于剧本内容，按哈希缓存
+		if (!wrapped.TryGetValue(hash, out string result))
+		{
+			if (wrapped.Count >= 40)
+			{
+				wrapped.Clear();
+			}
+			result = wrapped[hash] = scriptPrefix + "\n" + Transform(EventPicker.Instrument(code));
+		}
+		return result;
 	}
 
 	/// <summary>给剧情脚本套上记录/回放包装：台词、选项、掷骰、查询改成 ams_* 调用，数据修改在回放时跳过。</summary>

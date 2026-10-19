@@ -26,7 +26,7 @@ public class LuaParser
 	public Dictionary<string, List<Action>> OptionResult;
 
 	// 被锁的选项：脚本里写成「条件 and "正常选项" or "~锁住时显示的文字"」
-	private static readonly Regex lockedOptionRegex = new Regex("(\\w+)\\s+and\\s+\"([^\"]*)\"\\s+or\\s+\"~(O_\\w+)\"");
+	private static readonly Regex lockedOptionRegex = new Regex("\\b(\\w+)\\s+and\\s+\"([^\"]*)\"\\s+or\\s+\"~(O_\\w+)\"");
 
 	private static readonly Regex optionKeyRegex = new Regex("O_\\w+");
 
@@ -107,18 +107,34 @@ public class LuaParser
 		return result;
 	}
 
-	public void ExtractLockedOptions(string luaScript)
+	private readonly Dictionary<string, Dictionary<string, (string Condition, string Unlocked)>> lockedByScript = new Dictionary<string, Dictionary<string, (string, string)>>();
+
+	/// <param name="key">剧本内容的缓存键（同一份内容只解析一次）。</param>
+	public void ExtractLockedOptions(string key, string luaScript)
 	{
 		// 对话里也会零碎执行一些小段 Lua，那些不含选项菜单，不能把当前剧本的记录清掉
 		if (luaScript == null || !luaScript.Contains("setmenudialog"))
 		{
 			return;
 		}
-		LockedOptions.Clear();
-		foreach (Match m in lockedOptionRegex.Matches(luaScript ?? ""))
+		if (!lockedByScript.TryGetValue(key, out var locked))
 		{
-			Match unlocked = optionKeyRegex.Match(m.Groups[2].Value);
-			LockedOptions[m.Groups[3].Value] = (m.Groups[1].Value, unlocked.Success ? unlocked.Value : null);
+			locked = new Dictionary<string, (string, string)>();
+			// 没有「~O_」锁住选项就不用跑正则
+			if (luaScript.Contains("\"~O_"))
+			{
+				foreach (Match m in lockedOptionRegex.Matches(luaScript))
+				{
+					Match unlocked = optionKeyRegex.Match(m.Groups[2].Value);
+					locked[m.Groups[3].Value] = (m.Groups[1].Value, unlocked.Success ? unlocked.Value : null);
+				}
+			}
+			lockedByScript[key] = locked;
+		}
+		LockedOptions.Clear();
+		foreach (var pair in locked)
+		{
+			LockedOptions[pair.Key] = pair.Value;
 		}
 	}
 
@@ -151,51 +167,62 @@ public class LuaParser
 		luaPositionWork.Clear();
 	}
 
-	public Dictionary<string, List<Action>> ExtractOptionActionsFromLua(string friendlyName, string luaScript = "")
+	private readonly Dictionary<string, (Dictionary<string, List<Action>> Results, Dictionary<string, List<(string, int)>> Jumps)> optionsByScript
+		= new Dictionary<string, (Dictionary<string, List<Action>>, Dictionary<string, List<(string, int)>>)>();
+
+	/// <summary>
+	/// 剧本里每个选项（--index:O_xxx 标记）之后的数值变化和条件跳转。按剧本内容缓存；每次载入都把这个剧本的结果写回
+	/// OptionResult / OptionJumps，同一个选项 key 出现在别的剧本里时，以当前剧本为准。
+	/// </summary>
+	/// <param name="key">剧本内容的缓存键。</param>
+	public Dictionary<string, List<Action>> ExtractOptionActionsFromLua(string key, string luaScript = "")
 	{
-		Dictionary<string, List<Action>> dictionary = new Dictionary<string, List<Action>>();
-		if (luaOptions.TryGetValue(friendlyName, out var value))
+		if (!optionsByScript.TryGetValue(key, out var parsed))
 		{
-			foreach (string item in value)
+			var results = new Dictionary<string, List<Action>>();
+			var jumps = new Dictionary<string, List<(string, int)>>();
+			MatchCollection matchCollection = indexMarkerRegex.Matches(luaScript);
+			for (int i = 0; i < matchCollection.Count; i++)
 			{
-				dictionary.Add(item, OptionResult[item]);
-			}
-			return dictionary;
-		}
-		luaOptions[friendlyName] = new List<string>();
-		MatchCollection matchCollection = indexMarkerRegex.Matches(luaScript);
-		for (int i = 0; i < matchCollection.Count; i++)
-		{
-			string value2 = matchCollection[i].Groups[1].Value;
-			luaOptions[friendlyName].Add(value2);
-			if (OptionResult.ContainsKey(value2))
-			{
-				dictionary[value2] = OptionResult[value2];
-				continue;
-			}
-			int num = matchCollection[i].Index + matchCollection[i].Length;
-			int num2 = luaScript.Length;
-			if (i + 1 < matchCollection.Count)
-			{
-				num2 = Math.Min(num2, matchCollection[i + 1].Index);
-			}
-			else
-			{
-				Match match = endBlockRegex.Match(luaScript.Substring(num));
-				if (match.Success)
+				string option = matchCollection[i].Groups[1].Value;
+				// 同一个剧本里同一个选项出现多次时，以第一次为准（和原来一样）
+				if (results.ContainsKey(option))
 				{
-					num2 = num + match.Index;
+					continue;
 				}
+				int start = matchCollection[i].Index + matchCollection[i].Length;
+				int end = luaScript.Length;
+				if (i + 1 < matchCollection.Count)
+				{
+					end = Math.Min(end, matchCollection[i + 1].Index);
+				}
+				else
+				{
+					Match match = endBlockRegex.Match(luaScript, start);
+					if (match.Success)
+					{
+						end = match.Index;
+					}
+				}
+				string blockContent = luaScript.Substring(start, end - start);
+				List<Action> list = new List<Action>();
+				AddActionsToList(blockContent, modifyRegex, ActionType.ModifyAction, list);
+				AddActionsToList(blockContent, battleScenesRegex, ActionType.BattleScene, list);
+				results[option] = list;
+				jumps[option] = FindConditionalJumps(blockContent);
 			}
-			string blockContent = luaScript.Substring(num, num2 - num);
-			List<Action> list = new List<Action>();
-			AddActionsToList(blockContent, modifyRegex, ActionType.ModifyAction, list);
-			AddActionsToList(blockContent, battleScenesRegex, ActionType.BattleScene, list);
-			dictionary[value2] = list;
-			OptionResult[value2] = list;
-			OptionJumps[value2] = FindConditionalJumps(blockContent);
+			parsed = (results, jumps);
+			optionsByScript[key] = parsed;
 		}
-		return dictionary;
+		foreach (var pair in parsed.Results)
+		{
+			OptionResult[pair.Key] = pair.Value;
+		}
+		foreach (var pair in parsed.Jumps)
+		{
+			OptionJumps[pair.Key] = pair.Value;
+		}
+		return new Dictionary<string, List<Action>>(parsed.Results);
 	}
 
 	private void AddActionsToList(string blockContent, Regex regex, ActionType actionType, List<Action> actionList)

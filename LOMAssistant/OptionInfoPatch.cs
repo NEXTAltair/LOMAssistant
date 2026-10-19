@@ -35,19 +35,31 @@ internal static class OptionInfoPatch
 				return;
 			}
 			DicePlugin.Instance.ClearLogEntries();
-			LuaParser.Instance.ClearCache();
-			foreach (KeyValuePair<string, List<LOMAssistant.LuaParse.Action>> item in LuaParser.Instance.ExtractOptionActionsFromLua(friendlyName, luaString))
+			// 剧本内容不会变：解析结果按内容缓存，同一个剧本再次载入（地点菜单等会反复载入）不用重新解析
+			string key = friendlyName + "#" + (luaString ?? "").Length + "#" + (luaString ?? "").GetHashCode();
+			long lap = 0;
+			string laps = "";
+			void Lap(string name)
+			{
+				long now = timer.ElapsedMilliseconds;
+				laps += name + " " + (now - lap) + "，";
+				lap = now;
+			}
+			foreach (KeyValuePair<string, List<LOMAssistant.LuaParse.Action>> item in LuaParser.Instance.ExtractOptionActionsFromLua(key, luaString))
 			{
 				DicePlugin.Instance.AddOptionEntry(item.Key, LuaParser.Description(item.Value));
 			}
-			LuaParser.Instance.ExtractLockedOptions(luaString);
-			foreach (string item2 in LuaParser.Instance.ExtractSwitchCheckFromLua(friendlyName, luaString))
+			Lap("选项");
+			LuaParser.Instance.ExtractLockedOptions(key, luaString);
+			Lap("锁住选项");
+			foreach (string item2 in LuaParser.Instance.ExtractSwitchCheckFromLua(key, luaString))
 			{
 				string description = DataHelper.ParseSwitchCheckpoint(item2);
 				DicePlugin.Instance.AddSwitchEntry(item2, description);
 			}
+			Lap("分支");
 			TargetEvent = null;
-			List<string> list = LuaParser.Instance.ExtractPositionWorkFromLua(friendlyName, luaString);
+			List<string> list = LuaParser.Instance.ExtractPositionWorkFromLua(key, luaString);
 			if (list.Count > 0)
 			{
 				DicePlugin.Instance.ClearEventEntries();
@@ -65,9 +77,15 @@ internal static class OptionInfoPatch
 			{
 				DicePlugin.Instance.ClearEventEntries();
 			}
+			Lap("事件");
 			foreach (KeyValuePair<MissionCheckData, (string, string)> mission in DataHelper.GetMissions())
 			{
 				DicePlugin.Instance.AddMissionEntry(mission.Key, mission.Value.Item1, mission.Value.Item2);
+			}
+			Lap("任务");
+			if (timer.ElapsedMilliseconds >= 50)
+			{
+				FileLogger.Log($"[性能] 解析剧本 {friendlyName}：{laps.TrimEnd('，')}（毫秒）");
 			}
 		}
 		catch (Exception ex)
