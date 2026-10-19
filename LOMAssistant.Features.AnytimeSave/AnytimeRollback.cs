@@ -95,6 +95,7 @@ public partial class AnytimeSave
 				nativeSlot = SaveSystem.Instance.CurrentSlot,
 				gameJson = SaveSystem.Instance.GetCurrentSaveData(),
 				randomJson = JsonUtility.ToJson(Random.state),
+				music = CurrentSound("_currentMusic"), envSound = CurrentSound("_currentEnvSound"),
 				dice = new DiceState()
 			};
 		}

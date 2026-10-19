@@ -34,6 +34,8 @@ public class SaveFile
 	public int format = 2;
 	public string compatibilityId;
 	public string version, coreHash, storyHash, savedAt, scene, rootScript, currentScript, nativeSlot, gameJson, randomJson, preview;
+	// 存档时正在放的音乐、环境音（存档本身不记，读档快进时剧本里不一定会再放一次）
+	public string music, envSound;
 	public int target;
 	public List<Entry> trace = new List<Entry>();
 	public List<ScriptStamp> scripts = new List<ScriptStamp>();
@@ -259,6 +261,7 @@ public partial class AnytimeSave : MonoBehaviour
 			if (index != target) return true;
 			Apply(loading, true);
 			pendingDice = loading.dice;
+			RestoreSound(loading);
 			Replaying = false; Restoring = false; Time.timeScale = 1;
 			active = index;
 			// 恢复到的这句就是新的「最近一句」，之后的判定以它为回退点
@@ -354,6 +357,7 @@ public partial class AnytimeSave : MonoBehaviour
 				rootScript = rootScript, currentScript = PlayerStatManagerData.Instance.CurrentStoryScript,
 				nativeSlot = SaveSystem.Instance.CurrentSlot,
 				gameJson = SaveSystem.Instance.GetCurrentSaveData(), randomJson = JsonUtility.ToJson(UnityEngine.Random.state),
+				music = CurrentSound("_currentMusic"), envSound = CurrentSound("_currentEnvSound"),
 				target = active, preview = Preview(),
 				dice = CaptureDice(),
 				freeRng = SceneName == "Free" ? CaptureFreeRng() : null,
@@ -440,6 +444,8 @@ public partial class AnytimeSave : MonoBehaviour
 		rootScript = loading.rootScript; target = loading.target; cursor = 0; active = -1;
 		Replaying = loading.scene == "Story";
 		replayStarted = Time.realtimeSinceStartup;
+		// 原版读档界面进场景前会先停掉所有音乐，剧本里的 PlayMusic 才能接上；不停的话标题音乐会一直留着
+		SoundManager.Instance.StopMusic();
 		SceneController.Instance.LoadNewScene(loading.scene);
 		pendingLoad = false;
 		if (loading.scene == "Free")
@@ -453,6 +459,7 @@ public partial class AnytimeSave : MonoBehaviour
 			PlayerStatManagerData.Instance.SetStartScript(savedGame.StartStoryScript);
 			RestoreFreeRng(loading.freeRng);
 			UnityEngine.Random.state = JsonUtility.FromJson<UnityEngine.Random.State>(loading.randomJson);
+			RestoreSound(loading);
 			Restoring = false; Notice(restoreLabel);
 		}
 	}
@@ -486,6 +493,22 @@ public partial class AnytimeSave : MonoBehaviour
 			foreach (var action in pausedActions) action.Enable();
 			pausedActions.Clear(); Time.timeScale = panelTimeScale;
 		}
+	}
+
+	internal static string CurrentSound(string field)
+	{
+		try { return SoundManager.Instance == null ? null : Traverse.Create(SoundManager.Instance).Field(field).GetValue<string>(); }
+		catch { return null; }
+	}
+
+	private static void RestoreSound(SaveFile data)
+	{
+		try
+		{
+			if (!string.IsNullOrEmpty(data.music)) SoundManager.Instance.PlayMusic(data.music);
+			if (!string.IsNullOrEmpty(data.envSound)) SoundManager.Instance.PlayEnvSound(data.envSound);
+		}
+		catch (Exception e) { FileLogger.LogWarning("[随时存档] 恢复音乐失败: " + e.Message); }
 	}
 
 	private static object Field(object o, string n) => AccessTools.Field(o.GetType(), n).GetValue(o);
