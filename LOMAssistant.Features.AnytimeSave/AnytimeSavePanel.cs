@@ -90,7 +90,7 @@ public partial class AnytimeSave
 		{
 			var d = ReadSave(path);
 			detailMeta = "存档 " + slot + "：" + d.savedAt + "（" + (d.scene == "Free" ? "养成" : "剧情") + "）";
-			detailText = Regex.Replace(d.preview ?? "", "<[^>]+>", "");
+			detailText = RichText.Strip(d.preview ?? "");
 		}
 		catch (Exception ex) { detailMeta = "存档 " + slot + "：无法读取"; detailText = ex.Message; }
 	}

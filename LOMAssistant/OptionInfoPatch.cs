@@ -90,13 +90,13 @@ internal static class OptionInfoPatch
 			// 被锁的选项（「解锁条件：？？？」「银两不足」这类）：写出真正的解锁条件和当前值，以及解锁后的效果
 			if (LuaParser.Instance.LockedOptions.TryGetValue(key, out var locked))
 			{
-				string condition = Regex.Replace(DataHelper.ParseConditionCheckpoint(locked.Condition), "<.*?>", string.Empty);
+				string condition = RichText.Strip(DataHelper.ParseConditionCheckpoint(locked.Condition));
 				string effects = locked.Unlocked != null && LuaParser.Instance.OptionResult.TryGetValue(locked.Unlocked, out var unlockedActions)
-					? Regex.Replace(TextConverter.ToSimplified(LuaParser.Description(unlockedActions)), "<.*?>", string.Empty)
+					? RichText.Strip(TextConverter.ToSimplified(LuaParser.Description(unlockedActions)))
 					: "";
 				if (!condition.IsNullOrWhiteSpace())
 				{
-					__result = __result + "\n<size=16>(需 " + condition + (effects.IsNullOrWhiteSpace() ? "" : "；解锁后：" + effects) + ")</size>";
+					__result = __result + "\n<size=16>(" + condition + (effects.IsNullOrWhiteSpace() ? "" : "；解锁后：" + effects) + ")</size>";
 				}
 				return;
 			}
@@ -106,7 +106,7 @@ internal static class OptionInfoPatch
 			{
 				foreach (var jump in jumpList)
 				{
-					string condition = Regex.Replace(DataHelper.SwitchBranchCondition(jump.Switch, jump.Branch), "<.*?>", string.Empty);
+					string condition = RichText.Strip(DataHelper.SwitchBranchCondition(jump.Switch, jump.Branch));
 					if (!condition.IsNullOrWhiteSpace())
 					{
 						jumps += (jumps.Length > 0 ? "；" : "") + "若 " + condition + "：触发剧情";
@@ -122,7 +122,7 @@ internal static class OptionInfoPatch
 				}
 				if (!text.IsNullOrWhiteSpace())
 				{
-					string text2 = Regex.Replace(text, "<.*?>", string.Empty);
+					string text2 = RichText.Strip(text);
 					__result = __result + "\n<size=16>(" + text2 + ")</size>";
 				}
 			}

@@ -2,6 +2,14 @@ namespace LOMAssistant;
 
 public class RichText
 {
+	// 只去掉富文本标签。不能用 "<.*?>"：条件里的比较符「<」会把后面一大段当成标签吃掉（「道德 需<40 → 当前…」只剩「道德 需」）
+	private static readonly System.Text.RegularExpressions.Regex Tags = new System.Text.RegularExpressions.Regex("</?(color|size|b|i|material|quad)(=[^>]*)?>");
+
+	public static string Strip(string text)
+	{
+		return text == null ? null : Tags.Replace(text, string.Empty);
+	}
+
 	public static string Green(string text)
 	{
 		return "<color=#A3B86C>" + text + "</color>";
