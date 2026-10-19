@@ -17,6 +17,7 @@ using Mortal.Story;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UObject = UnityEngine.Object;
 
@@ -36,6 +37,8 @@ public class SaveFile
 	public string version, coreHash, storyHash, savedAt, scene, rootScript, currentScript, nativeSlot, gameJson, randomJson, preview;
 	// 存档时正在放的音乐、环境音（存档本身不记，读档快进时剧本里不一定会再放一次）
 	public string music, envSound;
+	// 存档时台上看得见的角色（读档快进时清场特效可能没跑，读档后把不在名单里的隐藏）
+	public List<string> visibleCharacters;
 	public int target;
 	public List<Entry> trace = new List<Entry>();
 	public List<ScriptStamp> scripts = new List<ScriptStamp>();
@@ -262,6 +265,7 @@ public partial class AnytimeSave : MonoBehaviour
 			Apply(loading, true);
 			pendingDice = loading.dice;
 			RestoreSound(loading);
+			StartCoroutine(TidyPortraits(loading.visibleCharacters));
 			Replaying = false; Restoring = false; Time.timeScale = 1;
 			active = index;
 			// 恢复到的这句就是新的「最近一句」，之后的判定以它为回退点
@@ -358,6 +362,7 @@ public partial class AnytimeSave : MonoBehaviour
 				nativeSlot = SaveSystem.Instance.CurrentSlot,
 				gameJson = SaveSystem.Instance.GetCurrentSaveData(), randomJson = JsonUtility.ToJson(UnityEngine.Random.state),
 				music = CurrentSound("_currentMusic"), envSound = CurrentSound("_currentEnvSound"),
+				visibleCharacters = VisibleCharacters(),
 				target = active, preview = Preview(),
 				dice = CaptureDice(),
 				freeRng = SceneName == "Free" ? CaptureFreeRng() : null,
@@ -493,6 +498,100 @@ public partial class AnytimeSave : MonoBehaviour
 			foreach (var action in pausedActions) action.Enable();
 			pausedActions.Clear(); Time.timeScale = panelTimeScale;
 		}
+	}
+
+	/// <summary>
+	/// 读档快进时同一角色短时间内连续换表情，几个淡入淡出叠在一起，旧表情可能没被隐藏、留在台上。
+	/// 恢复到位后等淡入淡出结束，每个角色只留当前那张立绘，已下台的角色整组隐藏。
+	/// </summary>
+	private IEnumerator TidyPortraits(List<string> keep)
+	{
+		yield return new WaitForSecondsRealtime(0.6f);
+		try
+		{
+			var current = new HashSet<Image>();
+			var sprites = new HashSet<Sprite>();
+			int hidden = 0;
+			foreach (var character in UObject.FindObjectsOfType<Character>())
+			{
+				var state = character.State;
+				if (state == null || state.allPortraits == null) continue;
+				foreach (var image in state.allPortraits)
+				{
+					if (image == null) continue;
+					if (image.sprite != null) sprites.Add(image.sprite);
+					if (state.onScreen && image == state.portraitImage) { current.Add(image); continue; }
+					if (!image.gameObject.activeSelf) continue;
+					LeanTween.cancel(image.gameObject);
+					image.gameObject.SetActive(false);
+					hidden++;
+				}
+			}
+			// 特效（如受惊抖动）会复制一份立绘，快进时可能没删掉：画布上用的是角色立绘图、却不是任何角色当前那张的，也隐藏
+			var visible = new List<string>();
+			foreach (var stage in Stage.ActiveStages)
+			{
+				if (stage == null || stage.PortraitCanvas == null) continue;
+				foreach (var image in stage.PortraitCanvas.GetComponentsInChildren<Image>())
+				{
+					if (current.Contains(image) || image.sprite == null || !sprites.Contains(image.sprite))
+					{
+						if (image.sprite != null && sprites.Contains(image.sprite)) visible.Add(image.sprite.name + "@" + image.transform.parent?.name);
+						continue;
+					}
+					LeanTween.cancel(image.gameObject);
+					image.gameObject.SetActive(false);
+					hidden++;
+				}
+			}
+			if (keep != null)
+			{
+				var keepSet = new HashSet<string>(keep);
+				foreach (var character in UObject.FindObjectsOfType<Character>())
+				{
+					if (keepSet.Contains(character.name) || !IsVisible(character)) continue;
+					foreach (var image in character.State.allPortraits)
+					{
+						if (image == null || !image.gameObject.activeSelf) continue;
+						LeanTween.cancel(image.gameObject);
+						image.gameObject.SetActive(false);
+						hidden++;
+					}
+					FileLogger.Log("[随时存档] 存档时不在台上，隐藏：" + character.name);
+				}
+			}
+			FileLogger.Log("[随时存档] 读档后台上立绘：" + string.Join("，", visible.ToArray()) + (hidden > 0 ? "；清理了 " + hidden + " 张残留" : ""));
+		}
+		catch (Exception e) { FileLogger.LogWarning("[随时存档] 清理立绘失败: " + e.Message); }
+	}
+
+	/// <summary>台上实际看得见：在台上、当前立绘激活且不透明。很多角色退场只是移到画面外或淡到透明，不会改 onScreen。</summary>
+	private static bool IsVisible(Character character)
+	{
+		var state = character.State;
+		if (state == null || !state.onScreen || state.portraitImage == null || state.holder == null) return false;
+		if (!state.portraitImage.gameObject.activeInHierarchy || state.portraitImage.color.a < 0.05f) return false;
+		var canvas = state.holder.GetComponentInParent<Canvas>();
+		if (canvas == null) return true;
+		var corners = new Vector3[4];
+		state.portraitImage.rectTransform.GetWorldCorners(corners);
+		var area = (canvas.transform as RectTransform);
+		var areaCorners = new Vector3[4];
+		area.GetWorldCorners(areaCorners);
+		// 和画布没有交集就是在画面外
+		return corners[2].x > areaCorners[0].x && corners[0].x < areaCorners[2].x && corners[2].y > areaCorners[0].y && corners[0].y < areaCorners[2].y;
+	}
+
+	internal static List<string> VisibleCharacters()
+	{
+		var list = new List<string>();
+		try
+		{
+			foreach (var character in UObject.FindObjectsOfType<Character>())
+				if (IsVisible(character)) list.Add(character.name);
+		}
+		catch (Exception e) { FileLogger.LogWarning("[随时存档] 记录台上角色失败: " + e.Message); }
+		return list;
 	}
 
 	internal static string CurrentSound(string field)
