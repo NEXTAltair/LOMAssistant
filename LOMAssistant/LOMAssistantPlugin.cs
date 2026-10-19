@@ -160,6 +160,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			TryPatchAll(typeof(EventPickerPatch));
 			TryPatchAll(typeof(OneClickUnlockPatch));
 			EventPicker.Ensure(base.gameObject);
+			UiHider.Ensure(base.gameObject);
 			TryPatchAll(typeof(LoadClickGuard));
 			TryPatchAll(typeof(SettingsDiagnosticsButton));
 			TryPatchAll(typeof(InputGuardActionGate));

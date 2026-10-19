@@ -57,6 +57,11 @@ public partial class AnytimeSave
 
 	private void OnGUI()
 	{
+		// 隐藏界面看 CG 时本 Mod 的窗口也不画
+		if (UiHider.Active)
+		{
+			return;
+		}
 		float scale = Mathf.Min(Screen.width / 1920f, Screen.height / 1080f);
 		if (scale <= 0) return;
 		if (!Mathf.Approximately(scale, _scale)) BuildStyles(scale);

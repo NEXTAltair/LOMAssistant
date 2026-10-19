@@ -32,6 +32,8 @@ public class EventPicker : MonoBehaviour
 	/// <summary>选中的事件，游戏下次从这个事件池抽结果时用掉。</summary>
 	internal static PositionEventData Pending;
 
+	public static bool IsWaiting => _state == State.Waiting;
+
 	private class Choice
 	{
 		public PositionEventData Data;

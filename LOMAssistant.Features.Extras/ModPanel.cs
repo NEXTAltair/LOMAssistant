@@ -57,6 +57,11 @@ public class ModPanel : MonoBehaviour
 
 	private void OnGUI()
 	{
+		// 隐藏界面看 CG 时本 Mod 的窗口也不画
+		if (UiHider.Active)
+		{
+			return;
+		}
 		if (!_visible)
 		{
 			return;
@@ -99,6 +104,7 @@ public class ModPanel : MonoBehaviour
 		Toggle(ConfigManager.ShowBranchChecks, "剧情分支条件提示");
 		Toggle(ConfigManager.EnableEventPicker, "随机事件自选");
 		Toggle(ConfigManager.EnableOneClickUnlock, "锁住选项一键设置");
+		Toggle(ConfigManager.EnableRightClickHideUI, "右键隐藏界面看 CG");
 		DrawSpeed();
 		DrawActionMode();
 

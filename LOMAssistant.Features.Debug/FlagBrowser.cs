@@ -151,6 +151,11 @@ public class FlagBrowser : MonoBehaviour
 
 	private void OnGUI()
 	{
+		// 隐藏界面看 CG 时本 Mod 的窗口也不画
+		if (UiHider.Active)
+		{
+			return;
+		}
 		if (!PanelVisible)
 		{
 			ResumeHotKeys();

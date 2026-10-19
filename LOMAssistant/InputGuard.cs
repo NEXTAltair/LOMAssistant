@@ -74,10 +74,16 @@ public class InputGuard : MonoBehaviour
 			: Input.GetMouseButton(0) || Input.GetMouseButton(1) || Input.GetMouseButton(2);
 	}
 
+	public static bool PointerOverModWindow => PointerOverMod();
+
 	public static bool BlockPointer
 	{
 		get
 		{
+			if (UiHider.Swallowing)
+			{
+				return true;
+			}
 			if (!Application.isFocused)
 			{
 				return false;
@@ -91,11 +97,16 @@ public class InputGuard : MonoBehaviour
 		}
 	}
 
-	public static bool BlockKeyboard => Application.isFocused && _textFocus;
+	public static bool BlockKeyboard => UiHider.Swallowing || (Application.isFocused && _textFocus);
 
 	/// <summary>某个游戏输入回调该不该被挡下（按触发它的设备判断）。</summary>
 	public static bool Suppress(InputAction.CallbackContext context)
 	{
+		// 隐藏界面期间、恢复用的那一下，以及拿来隐藏界面的右键，都不交给游戏
+		if (UiHider.Swallowing || UiHider.ClaimsRightClick(context.control))
+		{
+			return true;
+		}
 		InputDevice device = context.control != null ? context.control.device : null;
 		if (device is Keyboard)
 		{
