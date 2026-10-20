@@ -20,6 +20,8 @@ public partial class StoryReviewPanel
 		public Action<int> Set; // 设成这个值；没有就是只读（只显示）
 		public int Step = 5;
 		public Func<string> Extra; // 数值后面的小字，如加成、心上人是谁、等级上限
+		public bool NoValue; // 数值没有意义（功法已练满、锻造未开发等），显示「—」不显示 0
+		public int Of; // 大于 0 时数值写成「当前/Of」，如本层点数 2/5
 	}
 
 	private string _statsSearch = "";
@@ -199,15 +201,16 @@ public partial class StoryReviewPanel
 	{
 		GUILayout.BeginHorizontal(_card, GUILayout.Width(width - S(10)));
 		// 一行放得下：名字、说明太长就截短，鼠标停上去看全文
-		GUIStyle line = OneLine(_label);
-		GUIStyle muted = OneLine(_muted);
+		// 文字竖直居中、每个控件一样高（和设置页一样），一行里的字和框才对得齐
+		GUIStyle line = Middle(_label);
+		GUIStyle muted = Middle(_muted);
 		float nameWidth = S(120), extraWidth = S(80);
-		GUILayout.Label(Fit(row.Name, line, nameWidth), line, GUILayout.Width(nameWidth));
+		GUILayout.Label(Fit(row.Name, line, nameWidth), line, GUILayout.Width(nameWidth), Ctl());
 		Rect nameRect = GUILayoutUtility.GetLastRect();
 		int value = row.Get();
-		GUILayout.Label(value.ToString(), line, GUILayout.Width(S(52)));
+		GUILayout.Label(row.NoValue ? "—" : row.Of > 0 ? value + "/" + row.Of : value.ToString(), line, GUILayout.Width(S(52)), Ctl());
 		string extra = row.Extra?.Invoke() ?? "";
-		GUILayout.Label(Fit(extra, muted, extraWidth), muted, GUILayout.Width(extraWidth));
+		GUILayout.Label(Fit(extra, muted, extraWidth), muted, GUILayout.Width(extraWidth), Ctl());
 		Rect extraRect = GUILayoutUtility.GetLastRect();
 		string full = row.Name + (row.Note.Length > 0 ? "\n" + row.Note : "");
 		if (full != row.Name || Fit(row.Name, line, nameWidth) != row.Name)
@@ -222,12 +225,12 @@ public partial class StoryReviewPanel
 			GUILayout.EndHorizontal();
 			return;
 		}
-		if (GUILayout.Button("-" + row.Step, StepButton(), GUILayout.Width(S(58))))
+		if (GUILayout.Button("-" + row.Step, StepButton(), GUILayout.Width(S(58)), Ctl()))
 		{
 			row.Set(value - row.Step);
 			_statInputs.Remove(row.Id);
 		}
-		if (GUILayout.Button("+" + row.Step, StepButton(), GUILayout.Width(S(58))))
+		if (GUILayout.Button("+" + row.Step, StepButton(), GUILayout.Width(S(58)), Ctl()))
 		{
 			row.Set(value + row.Step);
 			_statInputs.Remove(row.Id);
@@ -237,7 +240,7 @@ public partial class StoryReviewPanel
 			input = value.ToString();
 		}
 		// 银两、门派资产这种五六位数也要放得下
-		string typed = GUILayout.TextField(input, _field, GUILayout.Width(S(72)));
+		string typed = GUILayout.TextField(input, _field, GUILayout.Width(S(72)), Ctl());
 		if (typed != value.ToString())
 		{
 			_statInputs[row.Id] = typed;
@@ -248,7 +251,7 @@ public partial class StoryReviewPanel
 		}
 		bool changed = _statInputs.ContainsKey(row.Id) && int.TryParse(typed, out int target);
 		GUI.enabled = changed;
-		if (GUILayout.Button("设定", changed ? _primary : _button, GUILayout.Width(S(50))) && int.TryParse(typed, out target))
+		if (GUILayout.Button("设定", changed ? _primary : _button, GUILayout.Width(S(50)), Ctl()) && int.TryParse(typed, out target))
 		{
 			row.Set(target);
 			_statInputs.Remove(row.Id);
@@ -405,7 +408,7 @@ public partial class StoryReviewPanel
 		return rows;
 	}
 
-	/// <summary>拥有的武学书：本层的修炼点数（层数照游戏自己的修炼规则走，这里不直接改层数）。</summary>
+	/// <summary>拥有的武学书：本层的修炼点数。加满一层就用游戏自己的 DirectLevelUp 升层（和修炼界面升层一样加上这层的加成，只是不花修炼次数），多的点数算到下一层。</summary>
 	private static List<StatRow> MartialRows()
 	{
 		var rows = new List<StatRow>();
@@ -423,17 +426,63 @@ public partial class StoryReviewPanel
 			{
 				Id = "martial:" + b.Id,
 				Name = Localized(b.GetNameKey(), b.Id),
-				Note = open ? "本层修炼点数，满 " + need + " 点进下一层（要在修炼界面再投一次点才会升层）。" : "已经练满。",
+				Note = open ? "本层修炼点数，满 " + need + " 点升到下一层，和在修炼界面升层一样加上这层的加成；多的点数算到下一层。\n只能升层不能降层：游戏没有撤回加成的办法，减点只减本层点数。" : b.CurrentMartialLevel >= max && max > 0 ? "已经练满。" : "游戏里没有这一层的数据，不能改。",
 				Get = () => b.CurrentLevelPoints,
-				Set = open && need > 0 ? v => b.SetMartial(b.CurrentMartialLevel, Mathf.Clamp(v, 0, need - 1)) : (Action<int>)null,
-				Step = 5,
-				Extra = () => open ? $"第{b.CurrentMartialLevel + 1}层/{need}" : "已满级",
+				Set = open && need > 0 ? v => SetMartialPoints(b, v) : (Action<int>)null,
+				// 一层只有几点的按 1 加减，点数多的按 5
+				Step = need > 20 ? 5 : 1,
+				NoValue = !open,
+				Of = need,
+				Extra = () => open ? $"第{b.CurrentMartialLevel + 1}/{max}层" : b.CurrentMartialLevel >= max && max > 0 ? "已满级" : $"第{b.CurrentMartialLevel + 1}层无数据",
 			});
+			if (!open && !(b.CurrentMartialLevel >= max && max > 0))
+			{
+				FileLogger.LogWarning($"[数值页] 功法 {b.Id} 层数 {b.CurrentMartialLevel}，共 {max} 层，这一层没有数据");
+			}
 		}
 		return rows;
 	}
 
-	/// <summary>锻造、炼丹的开发项目：本级的开发点数（等级照游戏自己的开发规则走）。</summary>
+	/// <summary>功法设成这么多点：每满一层用游戏的 DirectLevelUp 升一层，剩下的留在新的一层（练满就不再加）。</summary>
+	private static void SetMartialPoints(Book b, int points)
+	{
+		points = Mathf.Max(0, points);
+		while (b.CurrentMartialLevel >= 0 && b.CurrentMartialLevel < b.MaxLevel && b.LevelData[b.CurrentMartialLevel] != null)
+		{
+			int need = b.LevelData[b.CurrentMartialLevel].Points;
+			if (need <= 0 || points < need)
+			{
+				b.SetMartial(b.CurrentMartialLevel, points);
+				return;
+			}
+			points -= need;
+			b.SetMartial(b.CurrentMartialLevel, 0);
+			b.DirectLevelUp();
+			_statsDirty = true; // 层数变了，这一段重新整理
+		}
+	}
+
+	/// <summary>锻造、炼丹设成这么多点：每满一级用游戏的 Upgrade 升一级（会改相关旗标，和开发界面一样，只是不花银两），剩下的留在新的一级。</summary>
+	private static void SetUpgradePoints(UpgradeItemData u, int points)
+	{
+		points = Mathf.Max(0, points);
+		while (u.CurrentLevel >= 0 && u.CurrentLevel < u.LevelCounts && u.UpgradeLevels[u.CurrentLevel] != null)
+		{
+			int need = u.UpgradeLevels[u.CurrentLevel].LevelPoints;
+			if (need <= 0 || points < need)
+			{
+				u.Setup(u.CurrentLevel, points, u.AlreadyDevelop);
+				break;
+			}
+			points -= need;
+			u.Setup(u.CurrentLevel, 0, u.AlreadyDevelop);
+			u.Upgrade(need);
+			_statsDirty = true;
+		}
+		u.UpdateStatus();
+	}
+
+	/// <summary>锻造、炼丹的开发项目：本级的开发点数，加满一级就升级，多的点数算到下一级。</summary>
 	private static List<StatRow> UpgradeRows(PlayerStatManagerData player)
 	{
 		var rows = new List<StatRow>();
@@ -455,11 +504,13 @@ public partial class StoryReviewPanel
 				{
 					Id = "upgrade:" + u.Key,
 					Name = Localized(u.GetNameKey(), u.Key),
-					Note = open ? kind + "：本级开发点数，满 " + need + " 点升级（要在" + kind + "界面再投一次点才会升级）。" : kind + "：还没开发或已经满级。",
+					Note = open ? kind + "：本级开发点数，满 " + need + " 点升到下一级，和在" + kind + "界面升级一样；多的点数算到下一级。\n只能升级不能降级，减点只减本级点数。" : kind + "：还没开发或已经满级。",
 					Get = () => u.CurrentPoints,
-					Set = open && need > 0 ? v => { u.Setup(u.CurrentLevel, Mathf.Clamp(v, 0, need - 1), u.AlreadyDevelop); u.UpdateStatus(); } : (Action<int>)null,
-					Step = 5,
-					Extra = () => u.CurrentLevel < 0 ? "未开发" : u.CurrentLevel >= max ? "已满级" : $"{u.CurrentLevel}级/{need}",
+					Set = open && need > 0 ? v => SetUpgradePoints(u, v) : (Action<int>)null,
+					Step = need > 20 ? 5 : 1,
+					NoValue = !open,
+					Of = need,
+					Extra = () => u.CurrentLevel < 0 ? "未开发" : u.CurrentLevel >= max ? "已满级" : $"{u.CurrentLevel}/{max}级",
 				});
 			}
 		}

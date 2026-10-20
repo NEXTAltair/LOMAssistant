@@ -92,9 +92,11 @@ public partial class StoryReviewPanel : MonoBehaviour
 			{
 				_reading.Clear();
 				_texts.Clear();
-				// 每次打开先看「此刻」，内容重新整理
+				// 每次打开先看「此刻」，内容重新整理；数值页也重新整理（窗口关着时可能修炼、锻造升了级）
 				_tab = 0;
 				_now = null;
+				_statSections = null;
+				_statInputs.Clear();
 				StoryAtlas.ForgetConditions();
 			}
 		}
@@ -146,7 +148,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 		_tabOn.normal.textColor = _tabOn.hover.textColor = Ink;
 		_button = Outlined(new Color(0, 0, 0, 0), PaperDeep, Edge, Ink, 17);
 		_primary = Outlined(Cinnabar, new Color(0.8f, 0.24f, 0.18f, 1f), Cinnabar, PaperLight, 17);
-		_field = new GUIStyle(GUI.skin.textField) { fontSize = Mathf.RoundToInt(18 * scale) };
+		_field = new GUIStyle(GUI.skin.textField) { fontSize = Mathf.RoundToInt(18 * scale), alignment = TextAnchor.MiddleLeft };
 		_field.normal.background = _field.hover.background = Framed(PaperLight, Edge);
 		// 点中时边框变朱砂红，看得出正在输入
 		_field.focused.background = Framed(new Color(1f, 0.99f, 0.96f, 1f), Cinnabar);
