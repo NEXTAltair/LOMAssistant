@@ -240,7 +240,7 @@ public static class ConfigManager
 		EnableBattleWin = new ConfigElement<bool>("EnableBattleWin", "是否启用团战直接获胜（团战暂停界面增加“直接获胜”按钮）。true=开，false=关，改后重启生效", defaultValue: true);
 		PinballScoreMultiplier = new ConfigElement<float>("PinballScoreMultiplier", "弹珠小游戏得分倍率（每次加分乘以该值，扣分不受影响）。1=原版，2=双倍", 1f);
 		PinballFixedScore = new ConfigElement<int>("PinballFixedScore", "弹珠小游戏固定总分：离开小游戏时总分直接改为该值（影响剧情判定）。-1=关闭", -1);
-		PanelKey = new ConfigElement<KeyCode>("PanelKey", "打开活侠传拓展窗口「设置」页的热键", KeyCode.F8);
+		PanelKey = new ConfigElement<KeyCode>("PanelKey", "打开咖啡伴侣窗口「设置」页的热键", KeyCode.F8);
 		SaveNoteKey = new ConfigElement<KeyCode>("SaveNoteKey", "存档备注：在存档/读档界面选中手动存档后按这个键写备注（和设置页热键相同时，在存档界面优先写备注）", KeyCode.F8);
 		CheatUnlimitedTraining = new ConfigElement<bool>("CheatUnlimitedTraining", "无限修炼次数：修炼时可用次数和武学点用完自动补满，可以一直修炼。true=开，false=关", defaultValue: false);
 		CheatUnlimitedUpgrade = new ConfigElement<bool>("CheatUnlimitedUpgrade", "无限锻造、炼丹次数：可用次数和锻造点、炼丹点用完自动补满，可以一直锻造、炼丹。true=开，false=关", defaultValue: false);
@@ -262,7 +262,7 @@ public static class ConfigManager
 		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "隐藏界面看 CG：剧情里按热键（HideUIKey，默认鼠标右键）隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次恢复。true=开，false=关", defaultValue: true);
 		HideUIKey = new ConfigElement<KeyCode>("HideUIKey", "隐藏界面看 CG 的按键，默认鼠标右键（Mouse1）；习惯右键做别的事可以改成键盘上的键，如 H", KeyCode.Mouse1);
 		EnableStoryReview = new ConfigElement<bool>("EnableStoryReview", "剧情回顾：走到大节点（任务、事件的开头，以及会改变剧情走向的选项）时，在存档文件夹里收录这一段开头的进度（LOMStory_ 开头，跟着 Steam 云同步），以后可以从这里重玩。true=开，false=关", defaultValue: true);
-		StoryReviewKey = new ConfigElement<KeyCode>("StoryReviewKey", "活侠传拓展窗口（此刻、路线图、剧情图、收录节点、结局速查、数值、设置）的热键", KeyCode.Tab);
+		StoryReviewKey = new ConfigElement<KeyCode>("StoryReviewKey", "咖啡伴侣窗口（此刻、路线图、剧情图、收录节点、结局速查、数值、设置）的热键", KeyCode.Tab);
 		ShowBranchChecks = new ConfigElement<bool>("ShowBranchChecks", "剧情走到分支判断时在屏幕上列出各分支条件（满足为绿、不满足为红，可能剧透）。true=开，false=关", defaultValue: false);
 		BranchPanelX = new ConfigElement<float>("BranchPanelX", "剧情分支小窗的位置（占屏幕宽度的比例，-1=默认左侧）。拖动小窗会自动保存", -1f);
 		BranchPanelY = new ConfigElement<float>("BranchPanelY", "剧情分支小窗的位置（占屏幕高度的比例，-1=默认）。拖动小窗会自动保存", -1f);

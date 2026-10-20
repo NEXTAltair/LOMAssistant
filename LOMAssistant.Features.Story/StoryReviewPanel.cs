@@ -204,8 +204,8 @@ public partial class StoryReviewPanel : MonoBehaviour
 		// 题头一行：标题、各页、关闭按钮都在同一条带子里竖直居中；每页按字数定宽，字与字之间的空隙一样大
 		float top = S(10), bandHeight = S(36);
 		GUIStyle title = Middle(_heading);
-		float titleWidth = title.CalcSize(new GUIContent("活侠传拓展")).x;
-		GUI.Label(new Rect(pad, top, titleWidth, bandHeight), "活侠传拓展", title);
+		float titleWidth = title.CalcSize(new GUIContent("咖啡伴侣")).x;
+		GUI.Label(new Rect(pad, top, titleWidth, bandHeight), "咖啡伴侣", title);
 		float x = pad + titleWidth + S(48);
 		for (int i = 0; i < Tabs.Length; i++)
 		{

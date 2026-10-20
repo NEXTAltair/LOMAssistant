@@ -20,7 +20,7 @@ internal static class Diagnostics
 	public static string Export(string game, string installerLog)
 	{
 		string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
-		string zipPath = Path.Combine(desktop, "活侠传拓展诊断_安装器_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".zip");
+		string zipPath = Path.Combine(desktop, "咖啡伴侣诊断_安装器_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".zip");
 		using (FileStream stream = File.Create(zipPath))
 		using (var zip = new ZipArchive(stream, ZipArchiveMode.Create, false, Encoding.UTF8))
 		{
@@ -54,7 +54,7 @@ internal static class Diagnostics
 	private static string Summary(string game)
 	{
 		var sb = new StringBuilder();
-		sb.AppendLine("活侠传拓展 诊断信息（安装器导出）  " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+		sb.AppendLine("咖啡伴侣 诊断信息（安装器导出）  " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 		sb.AppendLine("系统：" + Environment.OSVersion + (Environment.Is64BitOperatingSystem ? "，64 位" : "，32 位") + "，.NET " + Environment.Version);
 		sb.AppendLine("Steam 在运行：" + (Process.GetProcessesByName("steam").Length > 0 ? "是" : "否"));
 		sb.AppendLine("游戏在运行：" + (Process.GetProcessesByName("Mortal").Length > 0 ? "是" : "否"));

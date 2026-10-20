@@ -23,7 +23,7 @@ public static class DiagnosticsExport
 		{
 			desktop = Paths.GameRootPath;
 		}
-		string zipPath = Path.Combine(desktop, "活侠传拓展诊断_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".zip");
+		string zipPath = Path.Combine(desktop, "咖啡伴侣诊断_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".zip");
 		using (FileStream stream = File.Create(zipPath))
 		using (var zip = new ZipArchive(stream, ZipArchiveMode.Create))
 		{
@@ -55,7 +55,7 @@ public static class DiagnosticsExport
 	private static string Summary()
 	{
 		var sb = new StringBuilder();
-		sb.AppendLine("活侠传拓展 诊断信息  " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+		sb.AppendLine("咖啡伴侣 诊断信息  " + DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 		sb.AppendLine("Mod 版本：" + Assembly.GetExecutingAssembly().GetName().Version);
 		sb.AppendLine("游戏版本：" + Application.version + "，Unity " + Application.unityVersion);
 		sb.AppendLine("系统：" + Environment.OSVersion + (Environment.Is64BitOperatingSystem ? "，64 位" : "，32 位"));

@@ -147,7 +147,7 @@ public static class SaveNotePatch
 				SetNote(slot, value);
 				imported++;
 			}
-			File.WriteAllText(ini + ImportedMarker, $"活侠传拓展已于 {DateTime.Now:yyyy-MM-dd HH:mm:ss} 导入本文件的备注：{imported} 条，跳过 {skipped} 条（已有备注）。\r\n删除本文件会在下次启动时重新导入。\r\n", new UTF8Encoding(false));
+			File.WriteAllText(ini + ImportedMarker, $"咖啡伴侣已于 {DateTime.Now:yyyy-MM-dd HH:mm:ss} 导入本文件的备注：{imported} 条，跳过 {skipped} 条（已有备注）。\r\n删除本文件会在下次启动时重新导入。\r\n", new UTF8Encoding(false));
 			string msg = $"存档备注：已从 LOM_SaveSlotExpander 导入 {imported} 条备注，跳过 {skipped} 条（已有备注）。";
 			LOMAssistantPlugin.LogInfo(msg);
 			FileLogger.Log(msg);

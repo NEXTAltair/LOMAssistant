@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace LOMAssistant;
 
-[BepInPlugin("LOMAssistant", "活侠传拓展", "2.2.0")]
+[BepInPlugin("LOMAssistant", "咖啡伴侣", "2.2.0")]
 public class LOMAssistantPlugin : BaseUnityPlugin
 {
 	private Harmony _harmony;
@@ -31,8 +31,8 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 		LogSource = base.Logger;
 		FileLogger.Init(Path.GetDirectoryName(base.Info.Location));
 		ConfigManager.Init();
-		LogInfo("活侠传拓展已加载。");
-		FileLogger.Log("活侠传拓展已加载。");
+		LogInfo("咖啡伴侣已加载。");
+		FileLogger.Log("咖啡伴侣已加载。");
 		Diagnostics.LogStartup(base.Info);
 		_harmony = new Harmony(base.Info.Metadata.GUID);
 		Diagnostics.PatchSteam(_harmony);

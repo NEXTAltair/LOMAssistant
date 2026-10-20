@@ -17,7 +17,7 @@ using Microsoft.Win32;
 namespace LOMAssistantInstaller;
 
 /// <summary>
-/// 活侠传拓展一键安装器。放在发布压缩包根目录，和 BepInEx\、winhttp.dll 等安装文件放在一起。
+/// 咖啡伴侣一键安装器。放在发布压缩包根目录，和 BepInEx\、winhttp.dll 等安装文件放在一起。
 /// 1. 自动从 Steam 库里找游戏目录（找不到可手动选）。
 /// 2. 列出 BepInEx\plugins 里的其他 Mod，已知会冲突的默认勾选，安装时移到「已停用的Mod」文件夹（不删除）。
 /// 3. 先从 GitHub 下载最新版安装；连不上或下载失败，就安装压缩包里自带的这一版。
@@ -103,7 +103,7 @@ internal class InstallerForm : Form
 	public InstallerForm(string game, string autoLog)
 	{
 		_autoLog = autoLog;
-		Text = "活侠传拓展 安装器";
+		Text = "咖啡伴侣 安装器";
 		Font = new Font("Microsoft YaHei UI", 10f);
 		AutoScaleMode = AutoScaleMode.Dpi;
 		ClientSize = new Size(640, 760);
@@ -113,7 +113,7 @@ internal class InstallerForm : Form
 
 		// 标题栏
 		var header = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, BackColor = Ink, Padding = new Padding(18, 12, 18, 12) };
-		var title = new Label { Text = "活侠传拓展", AutoSize = true, ForeColor = Color.White, Font = new Font("Microsoft YaHei UI", 18f, FontStyle.Bold), Margin = new Padding(0) };
+		var title = new Label { Text = "咖啡伴侣", AutoSize = true, ForeColor = Color.White, Font = new Font("Microsoft YaHei UI", 18f, FontStyle.Bold), Margin = new Padding(0) };
 		var subtitle = new Label { Text = "一键安装 / 更新 · 自动检测冲突 Mod · 不会覆盖你的设置", AutoSize = true, ForeColor = Color.FromArgb(201, 191, 175), Margin = new Padding(2, 4, 0, 0) };
 		header.Controls.Add(title);
 		header.Controls.Add(subtitle);
@@ -189,7 +189,7 @@ internal class InstallerForm : Form
 		_export.Click += delegate { ExportDiagnostics(); };
 		_uninstall.Click += delegate { Uninstall(); };
 
-		Log("活侠传拓展 安装器");
+		Log("咖啡伴侣 安装器");
 		SetGame(game ?? FindGame());
 		if (_game == null)
 		{
@@ -464,7 +464,7 @@ internal class InstallerForm : Form
 		}
 		RefreshPlugins();
 		int others = _pluginPaths.Count;
-		string question = "确定卸载活侠传拓展吗？\n\n"
+		string question = "确定卸载咖啡伴侣吗？\n\n"
 			+ (others > 0
 				? "还有 " + others + " 个别的 Mod，BepInEx 加载器会留给它们用，只删本 Mod。"
 				: "没有别的 Mod 了，BepInEx 加载器也一起删掉，游戏回到没装 Mod 的样子。")
@@ -502,7 +502,7 @@ internal class InstallerForm : Form
 				}
 			}
 			bool disabled = Directory.Exists(Path.Combine(_game, DisabledFolder));
-			Finish(true, "已卸载活侠传拓展。" + (disabled ? "\n\n以前停用的别的 Mod 还在「BepInEx\\已停用的Mod」里，想用的话自己挪回去。" : ""), "卸载");
+			Finish(true, "已卸载咖啡伴侣。" + (disabled ? "\n\n以前停用的别的 Mod 还在「BepInEx\\已停用的Mod」里，想用的话自己挪回去。" : ""), "卸载");
 		}
 		catch (UnauthorizedAccessException)
 		{
@@ -672,7 +672,7 @@ internal class InstallerForm : Form
 				return;
 			}
 			Logo();
-			Finish(true, "安装完成，当前版本 " + Short(now) + "。\n\n正常启动游戏即可，游戏里按 F8 打开设置，Tab 打开活侠传拓展窗口。");
+			Finish(true, "安装完成，当前版本 " + Short(now) + "。\n\n正常启动游戏即可，游戏里按 F8 打开设置，Tab 打开咖啡伴侣窗口。");
 		}
 		catch (UnauthorizedAccessException)
 		{

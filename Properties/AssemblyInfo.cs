@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
 [assembly: AssemblyTitle("LOMAssistant")]
-[assembly: AssemblyDescription("活侠传拓展 - 基于活侠传助手（合并骰子大师、多功能、随时存档）修改")]
+[assembly: AssemblyDescription("咖啡伴侣 - 基于活侠传助手（合并骰子大师、多功能、随时存档）修改")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("bk.plugins")]
 [assembly: AssemblyProduct("LOMAssistant")]

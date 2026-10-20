@@ -30,7 +30,7 @@ public static class FileLogger
 			_logFilePath = Path.Combine(text, path);
 			CleanupOldLogs(text, 30);
 			_initialized = true;
-			Log("活侠传拓展日志系统已初始化。");
+			Log("咖啡伴侣日志系统已初始化。");
 		}
 		catch (Exception ex)
 		{
