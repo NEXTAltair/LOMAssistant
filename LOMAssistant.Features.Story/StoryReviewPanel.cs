@@ -151,6 +151,17 @@ public partial class StoryReviewPanel : MonoBehaviour
 		{
 			BuildStyles(scale);
 		}
+		// 焦点在搜索框里时，按开关键（默认 Tab）会被输入框拿去切换焦点，Update 里也不会关面板：在这里先接住，直接关掉
+		Event e = Event.current;
+		KeyCode key = ConfigManager.StoryReviewKey.Value;
+		if (e.type == EventType.KeyDown && key != KeyCode.None && e.keyCode == key && GUIUtility.keyboardControl != 0)
+		{
+			GUIUtility.keyboardControl = 0;
+			_visible = false;
+			_confirming = null;
+			e.Use();
+			return;
+		}
 		_windowRect = GUI.Window(WindowId, _windowRect, DrawWindow, "", _window);
 		InputGuard.Report("StoryReview", _windowRect);
 	}
