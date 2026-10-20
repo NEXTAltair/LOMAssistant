@@ -6,7 +6,7 @@ using System.Text;
 /// 跳过开头的 Logo：游戏开头的两张 Logo 是 Unity 启动画面，由游戏设置文件 Mortal_Data\globalgamemanagers 里的
 /// 「显示启动画面」开关决定，放的时候 Mod 还没开始运行，只能改这个开关。
 ///
-/// 只改这一个字节（1 = 显示，0 = 不显示），第一次改之前把原文件备份成 globalgamemanagers.lom-original。
+/// 只改这一个字节（1 = 显示，0 = 不显示），改之前把原文件备份成 globalgamemanagers.lom-original（游戏更新后再改会覆盖旧备份）。
 /// 位置这样找：设置里依次存着公司名「Obb Studio」、产品名「Mortal」、默认鼠标（12 字节）、鼠标热点（8 字节）、
 /// 启动画面背景色（16 字节），后面紧跟着这个开关和「显示 Unity Logo」开关，再补两个 0 对齐。
 /// 找不到或者对不上，就什么都不改。游戏更新、Steam 验证文件后会变回原样，重新运行安装器即可。
@@ -34,10 +34,11 @@ internal static class SplashPatch
 		{
 			return skip ? "开头 Logo 已经是跳过的。" : "开头 Logo 保持原样。";
 		}
+		// 走到这里说明开关还是游戏原样：每次都重新备份，游戏更新后留着的旧备份是上一版的文件，不能再用
 		string backup = path + ".lom-original";
-		if (skip && !File.Exists(backup))
+		if (skip)
 		{
-			File.Copy(path, backup);
+			File.Copy(path, backup, overwrite: true);
 		}
 		using (var stream = new FileStream(path, FileMode.Open, FileAccess.Write))
 		{
