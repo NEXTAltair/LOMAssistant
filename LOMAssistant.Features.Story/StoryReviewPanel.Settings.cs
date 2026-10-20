@@ -103,9 +103,7 @@ public partial class StoryReviewPanel
 			{
 				new SettingRow { Element = ConfigManager.ActionMode, Name = "行动点", Choices = ActionModePatch.Options.Select(ActionModePatch.Label).ToArray(), Choose = ActionModePatch.Set },
 				Row(ConfigManager.CheatUnlimitedTraining, "无限修炼次数"),
-				Row(ConfigManager.CheatFastTraining, "快速修炼"),
 				Row(ConfigManager.CheatUnlimitedUpgrade, "无限锻造、炼丹"),
-				Row(ConfigManager.CheatFastUpgrade, "快速锻造、炼丹"),
 				Row(ConfigManager.CheatFreeUpgradeMoney, "锻造、炼丹不花银两"),
 				Row(ConfigManager.CheatDuelInvincible, "决斗我方无敌"),
 				Row(ConfigManager.CheatDuelNoDamage, "决斗敌方不受伤"),

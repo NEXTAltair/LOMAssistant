@@ -33,11 +33,7 @@ public static class ConfigManager
 
 	public static ConfigElement<bool> CheatUnlimitedTraining;
 
-	public static ConfigElement<bool> CheatFastTraining;
-
 	public static ConfigElement<bool> CheatUnlimitedUpgrade;
-
-	public static ConfigElement<bool> CheatFastUpgrade;
 
 	public static ConfigElement<bool> CheatFreeUpgradeMoney;
 
@@ -210,9 +206,7 @@ public static class ConfigManager
 		PanelKey = new ConfigElement<KeyCode>("PanelKey", "打开活侠传拓展窗口「设置」页的热键", KeyCode.F8);
 		SaveNoteKey = new ConfigElement<KeyCode>("SaveNoteKey", "存档备注：在存档/读档界面选中手动存档后按这个键写备注（和设置页热键相同时，在存档界面优先写备注）", KeyCode.F8);
 		CheatUnlimitedTraining = new ConfigElement<bool>("CheatUnlimitedTraining", "无限修炼次数：修炼时可用次数和武学点用完自动补满，可以一直修炼。true=开，false=关", defaultValue: false);
-		CheatFastTraining = new ConfigElement<bool>("CheatFastTraining", "快速修炼：投 1 点直接升级。true=开，false=关", defaultValue: false);
 		CheatUnlimitedUpgrade = new ConfigElement<bool>("CheatUnlimitedUpgrade", "无限锻造、炼丹次数：可用次数和锻造点、炼丹点用完自动补满，可以一直锻造、炼丹。true=开，false=关", defaultValue: false);
-		CheatFastUpgrade = new ConfigElement<bool>("CheatFastUpgrade", "快速锻造、炼丹：投 1 点直接升级。true=开，false=关", defaultValue: false);
 		CheatFreeUpgradeMoney = new ConfigElement<bool>("CheatFreeUpgradeMoney", "锻造、炼丹不消耗银两，银两不够也能升级。true=开，false=关", defaultValue: false);
 		CheatDuelInvincible = new ConfigElement<bool>("CheatDuelInvincible", "决斗中无敌：我方不受伤害。true=开，false=关", defaultValue: false);
 		CheatDuelNoDamage = new ConfigElement<bool>("CheatDuelNoDamage", "决斗中造成伤害为 0：敌方不受伤害。true=开，false=关", defaultValue: false);

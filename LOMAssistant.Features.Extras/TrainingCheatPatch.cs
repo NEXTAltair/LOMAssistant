@@ -8,14 +8,12 @@ namespace LOMAssistant.Features.Extras;
 
 /// <summary>
 /// 修炼 / 锻造 / 炼丹 相关修改（参考风灵月影）：
-/// 无限：本次可用次数（_currentCount）保持为 99，武学点/锻造点/炼丹点补满到上限；
-/// 快速：每次投入点数都直接升到下一级。
-/// 开关在游戏内面板（默认 F8）中切换，即时生效。
+/// 无限：本次可用次数（_currentCount）保持为 99，武学点/锻造点/炼丹点补满到上限。
+/// （以前的「快速：投 1 点直接升级」游戏自己已经支持了，删掉了。）开关在「设置」页，即时生效。
 /// </summary>
 public static class TrainingCheatPatch
 {
 	private const int UnlimitedCount = 99;
-	private const int FastPoints = 999999;
 
 	// ---- 修炼（MartialPanel / Book） ----
 
@@ -45,16 +43,6 @@ public static class TrainingCheatPatch
 		}
 	}
 
-	[HarmonyPrefix]
-	[HarmonyPatch(typeof(Book), "Learn")]
-	public static void Book_Learn_Prefix(ref int point)
-	{
-		if (ConfigManager.CheatFastTraining.Value)
-		{
-			point = FastPoints;
-		}
-	}
-
 	// ---- 锻造 / 炼丹（UpgradePanel / UpgradeItemData） ----
 
 	[HarmonyPatch]
@@ -80,16 +68,6 @@ public static class TrainingCheatPatch
 				Refill(tr.Field("_currentCount"));
 				TopUp(tr.Field("_pointData").GetValue<GameStat>());
 			}
-		}
-	}
-
-	[HarmonyPrefix]
-	[HarmonyPatch(typeof(UpgradeItemData), "Upgrade")]
-	public static void UpgradeItemData_Upgrade_Prefix(ref int points)
-	{
-		if (ConfigManager.CheatFastUpgrade.Value)
-		{
-			points = FastPoints;
 		}
 	}
 
