@@ -293,7 +293,20 @@ public partial class StoryReviewPanel
 	{
 		RouteLayout layout = _route;
 		Event e = Event.current;
-		if (e.type == EventType.ScrollWheel && canvas.Contains(e.mousePosition) && e.shift)
+		// Ctrl + 滚轮：以鼠标所在的位置为中心缩放（地图按新比例重排后，鼠标下面还是同一个地方）
+		if (e.type == EventType.ScrollWheel && canvas.Contains(e.mousePosition) && (e.control || e.command))
+		{
+			float before = _routeZoom;
+			float after = Mathf.Clamp(Mathf.Round((before + (e.delta.y < 0 ? 0.1f : -0.1f)) * 10f) / 10f, 0.6f, 1.6f);
+			if (!Mathf.Approximately(before, after))
+			{
+				Vector2 mouse = e.mousePosition - canvas.position;
+				_routeScroll = Vector2.Max(Vector2.zero, (_routeScroll + mouse) * (after / before) - mouse);
+				_routeZoom = after;
+			}
+			e.Use();
+		}
+		else if (e.type == EventType.ScrollWheel && canvas.Contains(e.mousePosition) && e.shift)
 		{
 			_routeScroll.x += e.delta.y * Z(30);
 			e.Use();
