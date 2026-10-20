@@ -7,7 +7,6 @@ using BepInEx.Unity.Mono;
 using HarmonyLib;
 using LOMAssistant.Config;
 using LOMAssistant.Features.Combat;
-using LOMAssistant.Features.Debug;
 using LOMAssistant.Features.AnytimeSave;
 using LOMAssistant.Features.Dice;
 using LOMAssistant.Features.Extras;
@@ -46,7 +45,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 	{
 		if (ConfigManager.EnableDebugPanel.Value && Input.GetKeyDown(ConfigManager.DebugPanelKey.Value))
 		{
-			DebugPanelFeature.ToggleTestPanel();
+			LOMAssistant.Features.Story.StoryReviewPanel.ToggleStats();
 		}
 	}
 

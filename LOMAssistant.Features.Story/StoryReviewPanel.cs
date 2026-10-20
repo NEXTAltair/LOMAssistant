@@ -15,7 +15,7 @@ namespace LOMAssistant.Features.Story;
 public partial class StoryReviewPanel : MonoBehaviour
 {
 	private const int WindowId = 584135;
-	private static readonly string[] Tabs = { "此刻", "路线图", "剧情图", "收录节点", "结局速查" };
+	private static readonly string[] Tabs = { "此刻", "路线图", "剧情图", "收录节点", "结局速查", "数值" };
 
 	private bool _visible;
 	private int _tab;
@@ -38,12 +38,11 @@ public partial class StoryReviewPanel : MonoBehaviour
 
 	private GUIStyle _window, _label, _rich, _small, _muted, _heading, _tabOff, _tabOn, _button, _primary, _field, _boxTitle, _boxSmall, _tag, _center, _card, _seal;
 
+	internal static StoryReviewPanel Instance { get; private set; }
+
 	public static void Ensure(GameObject host)
 	{
-		if (host.GetComponent<StoryReviewPanel>() == null)
-		{
-			host.AddComponent<StoryReviewPanel>();
-		}
+		Instance = host.GetComponent<StoryReviewPanel>() ?? host.AddComponent<StoryReviewPanel>();
 	}
 
 	private void Update()
@@ -71,6 +70,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 	{
 		_scale = scale;
 		_textures.Clear();
+		_oneLine.Clear();
 		_framed.Clear();
 		GUIStyle Plain(int size, Color color, bool wrap = true)
 		{
@@ -224,7 +224,8 @@ public partial class StoryReviewPanel : MonoBehaviour
 			case 1: DrawRoute(body); break;
 			case 2: DrawFlow(body); break;
 			case 3: DrawNodes(body); break;
-			default: DrawEndings(body); break;
+			case 4: DrawEndings(body); break;
+			default: DrawStats(body); break;
 		}
 		if (_confirming != null && !input)
 		{

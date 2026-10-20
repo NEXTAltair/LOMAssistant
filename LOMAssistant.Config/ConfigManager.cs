@@ -219,7 +219,7 @@ public static class ConfigManager
 		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "剧情里按鼠标右键隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次右键恢复。true=开，false=关", defaultValue: true);
 		HideUIKey = new ConfigElement<KeyCode>("HideUIKey", "隐藏界面看 CG 的热键（和右键效果一样），None=不绑定", KeyCode.None);
 		EnableStoryReview = new ConfigElement<bool>("EnableStoryReview", "剧情回顾：走到大节点（任务、事件的开头，以及会改变剧情走向的选项）时，在存档文件夹里收录这一段开头的进度（LOMStory_ 开头，跟着 Steam 云同步），以后可以从这里重玩。true=开，false=关", defaultValue: true);
-		StoryReviewKey = new ConfigElement<KeyCode>("StoryReviewKey", "剧情回顾面板（此刻、路线图、剧情图、收录节点、结局速查）的热键", KeyCode.Tab);
+		StoryReviewKey = new ConfigElement<KeyCode>("StoryReviewKey", "活侠传拓展窗口（此刻、路线图、剧情图、收录节点、结局速查、数值）的热键", KeyCode.Tab);
 		ShowBranchChecks = new ConfigElement<bool>("ShowBranchChecks", "剧情走到分支判断时在屏幕上列出各分支条件（满足为绿、不满足为红，可能剧透）。true=开，false=关。可在游戏内面板切换", defaultValue: false);
 		BranchPanelX = new ConfigElement<float>("BranchPanelX", "剧情分支小窗的位置（占屏幕宽度的比例，-1=默认左侧）。拖动小窗会自动保存", -1f);
 		BranchPanelY = new ConfigElement<float>("BranchPanelY", "剧情分支小窗的位置（占屏幕高度的比例，-1=默认）。拖动小窗会自动保存", -1f);
@@ -231,8 +231,8 @@ public static class ConfigManager
 		AutoSaveHistory = new ConfigElement<int>("AutoSaveHistory", "每类自动存档（养成/剧情/战斗）额外保留的旧档数量，0=不保留", 5);
 		EnableShopAllBooks = new ConfigElement<bool>("EnableShopAllBooks", "四师兄商店售卖全部书籍（包括各门派、线路限定、平时买不到的功法秘笈；没拥有的才卖；不卖《证类本草》和剧情里拿不到的松风剑法、天师剑法、四平枪谱）。true=开，false=关", defaultValue: false);
 		EnableShopAllItems = new ConfigElement<bool>("EnableShopAllItems", "四师兄商店售卖全部物品（书籍、杂物、特殊物品；不卖《证类本草》，提前买会导致六月后山事件出 bug）。true=开，false=关，改后重启生效", defaultValue: false);
-		EnableDebugPanel = new ConfigElement<bool>("EnableDebugPanel", "是否启用游戏内置测试面板。true=开，false=关，改后重启生效", defaultValue: true);
-		DebugPanelKey = new ConfigElement<KeyCode>("DebugPanelKey", "打开游戏内置测试面板的热键，如 F9 / P 等", KeyCode.F9);
+		EnableDebugPanel = new ConfigElement<bool>("EnableDebugPanel", "是否启用数值面板热键（F9 打开「数值」页：属性、好感、门派、天赋、旗标）。true=开，false=关", defaultValue: true);
+		DebugPanelKey = new ConfigElement<KeyCode>("DebugPanelKey", "打开数值面板的热键，如 F9 / P 等", KeyCode.F9);
 		EnableAnytimeSave = new ConfigElement<bool>("EnableAnytimeSave", "是否启用随时存档（剧情台词、选项、掷骰和养成界面都能存，存在独立的 8 个槽位，不占原版存档栏）。true=开，false=关，改后重启生效", defaultValue: true);
 		AnytimeSaveKey = new ConfigElement<KeyCode>("AnytimeSaveKey", "随时存档：保存到当前槽位的热键", KeyCode.F5);
 		AnytimeLoadKey = new ConfigElement<KeyCode>("AnytimeLoadKey", "随时存档：读取当前槽位的热键", KeyCode.F7);
