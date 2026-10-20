@@ -57,6 +57,7 @@ public partial class StoryReviewPanel
 			return false;
 		}
 		panel._visible = true;
+		StoryAtlas.RefreshProgress();
 		panel._tab = SettingsTab;
 		return true;
 	}

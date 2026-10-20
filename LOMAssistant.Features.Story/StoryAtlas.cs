@@ -113,6 +113,26 @@ public static class StoryAtlas
 	/// <summary>条件文字里带当前值（读数值、随机值都有代价），每次打开面板清一次。</summary>
 	public static void ForgetConditions() => Conditions.Clear();
 
+	/// <summary>
+	/// 按现在的进度重算每个任务「这一局走过」「对白读过多少」（不重读剧本）。打开窗口时调用：
+	/// 读剧本时算的是那一刻的进度，之后游戏推进了、换了存档都要跟着变。
+	/// </summary>
+	public static void RefreshProgress()
+	{
+		if (!Ready)
+		{
+			return;
+		}
+		var visited = new HashSet<string>(PlayerStatManagerData.Instance?.StoryKeyList ?? new List<string>(), StringComparer.Ordinal);
+		foreach (StoryMission mission in Missions)
+		{
+			var scripts = mission.Scripts.Select(StoryScripts.Get).Where(s => s != null).ToList();
+			mission.Read = StoryScripts.ReadPercent(scripts.SelectMany(s => s.Lines));
+			mission.Visited = scripts.Any(s => s.Records.Any(visited.Contains));
+		}
+		Version++; // 路线图、剧情图按新进度重画
+	}
+
 	private static IEnumerator _steps;
 
 	public static void Start()

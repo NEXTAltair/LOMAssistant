@@ -101,6 +101,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 				_statSections = null;
 				_statInputs.Clear();
 				StoryAtlas.ForgetConditions();
+				StoryAtlas.RefreshProgress();
 			}
 		}
 	}

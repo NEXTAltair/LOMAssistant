@@ -100,6 +100,7 @@ public partial class StoryReviewPanel
 			return;
 		}
 		panel._visible = true;
+		StoryAtlas.RefreshProgress();
 		panel._tab = StatsTab;
 		panel._statSections = null;
 		panel._statInputs.Clear();
