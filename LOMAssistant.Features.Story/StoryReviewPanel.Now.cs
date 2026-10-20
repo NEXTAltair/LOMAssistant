@@ -30,7 +30,10 @@ public partial class StoryReviewPanel
 	private sealed class NowSnapshot
 	{
 		public string Script = "";
-		public readonly List<(string Option, string Result)> Options = new List<(string, string)>();
+		/// <summary>正在演的剧本（PlayerStatManagerData.CurrentStoryScript），跳剧情图、标未读用。</summary>
+		public string Story = "";
+		public StoryScript StoryScript;
+		public readonly List<(string Key, string Option, string Result)> Options = new List<(string, string, string)>();
 		/// <summary>这一段剧情的去处：走过哪些选项、掷骰、条件，接到哪里（和剧情图里「接下来」一样）。</summary>
 		public readonly List<(string Way, string Effects)> Ways = new List<(string, string)>();
 		public readonly List<NowEvent> Events = new List<NowEvent>();
@@ -50,6 +53,18 @@ public partial class StoryReviewPanel
 		{
 			_now = BuildNow();
 		}
+		// 跳到这一段所在任务的剧情图（剧本还没读完时先切过去，读完再定位）
+		if (_now.Story.Length > 0)
+		{
+			bool owned = !StoryAtlas.Ready || StoryAtlas.Owner.ContainsKey(_now.Story);
+			GUI.enabled = owned;
+			if (GUI.Button(new Rect(r.xMax - S(130) - S(10) - S(220), r.y, S(220), S(36)), owned ? "在剧情图里看" : "这一段不属于任务", owned ? _primary : _button))
+			{
+				_flowJumpScript = _now.Story;
+				_tab = 2;
+			}
+			GUI.enabled = true;
+		}
 		var area = new Rect(r.x, r.y + S(46), r.width, r.height - S(46));
 		DragScroll("now", area, ref _nowScroll);
 		GUILayout.BeginArea(area);
@@ -59,10 +74,12 @@ public partial class StoryReviewPanel
 		{
 			any = true;
 			GUILayout.Label("这一段的选项", _heading);
-			foreach (var (option, result) in _now.Options)
+			foreach (var (key, option, result) in _now.Options)
 			{
 				GUILayout.BeginVertical(_card);
-				GUILayout.Label(option, _label);
+				// 选了以后接下去的剧情读过多少（和剧情图里一样）
+				string mark = _now.StoryScript == null ? "" : string.Concat(_now.StoryScript.Exits.Where(e => e.Path.Count > 0 && e.Path[0].Key == key).Select(ReadMark).Distinct().ToArray());
+				GUILayout.Label(option + (mark.Length > 0 ? "　<color=#A3302A>" + mark + "</color>" : ""), _rich);
 				if (result.Length > 0)
 				{
 					GUILayout.Label(result, _muted);
@@ -157,9 +174,11 @@ public partial class StoryReviewPanel
 							text = text.Substring(0, cut).Trim();
 						}
 					}
-					now.Options.Add((text.Length > 0 ? text : option.Key, result));
+					now.Options.Add((option.Key, text.Length > 0 ? text : option.Key, result));
 				}
-				StoryScript script = StoryScripts.Get(PlayerStatManagerData.Instance?.CurrentStoryScript);
+				now.Story = PlayerStatManagerData.Instance?.CurrentStoryScript ?? "";
+				StoryScript script = StoryScripts.Get(now.Story);
+				now.StoryScript = script;
 				if (script != null && script.Exits.Count > 1)
 				{
 					foreach (StoryExit exit in script.Exits)

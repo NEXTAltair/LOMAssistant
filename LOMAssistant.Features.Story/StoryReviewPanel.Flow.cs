@@ -65,6 +65,8 @@ public partial class StoryReviewPanel
 	}
 
 	private string _flowPickScript;
+	/// <summary>此刻页点「在剧情图里看」：剧本读完后打开它所在任务的剧情图，选中这一段。</summary>
+	private string _flowJumpScript;
 	private string _flowListQuery;
 	private HashSet<StoryMission> _flowDialogueHits = new HashSet<StoryMission>();
 
@@ -139,6 +141,15 @@ public partial class StoryReviewPanel
 		if (!EnsureAtlas(r))
 		{
 			return;
+		}
+		if (_flowJumpScript != null)
+		{
+			string script = _flowJumpScript;
+			_flowJumpScript = null;
+			if (StoryAtlas.Owner.TryGetValue(script, out StoryMission owner))
+			{
+				OpenFlow(owner, script);
+			}
 		}
 		// 左边：任务列表
 		float listWidth = Mathf.Min(S(330), r.width * 0.24f);
