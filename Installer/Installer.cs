@@ -645,7 +645,9 @@ internal class InstallerForm : Form
 			{
 				newest = _latest;
 			}
-			if (installed != null && newest != null && File.Exists(Path.Combine(_game, "winhttp.dll"))
+			// 混进了 BepInEx 5 的文件时，加载器多半被换掉了，版本一样也要重装一遍
+			bool mixed = File.Exists(Path.Combine(_game, @"BepInEx\core\BepInEx.dll")) || File.Exists(Path.Combine(_game, @"BepInEx\core\BepInEx.Preloader.dll"));
+			if (installed != null && newest != null && File.Exists(Path.Combine(_game, "winhttp.dll")) && !mixed
 				&& (Short(installed) == Short(newest) || installed > newest))
 			{
 				DisablePlugins(disable);
@@ -660,6 +662,7 @@ internal class InstallerForm : Form
 				return;
 			}
 			DisablePlugins(disable);
+			RemoveBepInEx5Core();
 			int copied = CopyTree(source, _game);
 			Log("已复制 " + copied + " 个文件。");
 			Version now = DllVersion(Path.Combine(_game, ModDll));
@@ -786,6 +789,27 @@ internal class InstallerForm : Form
 				File.Move(item, dest);
 			}
 			Log("已停用：" + (isPatcher ? @"patchers\" : "") + item.Substring(root.Length + 1) + "（移到 " + DisabledFolder + "）");
+		}
+	}
+
+	// 有的 Mod（如立绘替换「邪神认知污染ON」）自带 BepInEx 5，照它的说明装会把 BepInEx 5 的核心文件混进来，
+	// 和本 Mod 用的 BepInEx 6 混在一起游戏可能起不来。这些文件 BepInEx 6 用不到，删掉；共用的文件接下来会被覆盖成 BepInEx 6 的
+	private void RemoveBepInEx5Core()
+	{
+		string core = Path.Combine(_game, @"BepInEx\core");
+		var removed = new List<string>();
+		foreach (string name in new[] { "BepInEx.dll", "BepInEx.xml", "BepInEx.Preloader.dll", "BepInEx.Preloader.xml", "BepInEx.Harmony.dll", "BepInEx.Harmony.xml", "HarmonyXInterop.dll", "0Harmony20.dll" })
+		{
+			string path = Path.Combine(core, name);
+			if (File.Exists(path))
+			{
+				File.Delete(path);
+				removed.Add(name);
+			}
+		}
+		if (removed.Count > 0)
+		{
+			Log("清理了混进来的 BepInEx 5 文件：" + string.Join("、", removed.ToArray()));
 		}
 	}
 
