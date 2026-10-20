@@ -41,6 +41,10 @@ public static class ConfigManager
 
 	public static ConfigElement<bool> CheatDuelNoDamage;
 
+	public static ConfigElement<bool> CheatBattleInvincible;
+
+	public static ConfigElement<bool> CheatBattleNoCooldown;
+
 	public static ConfigElement<float> GameSpeed;
 
 	public static ConfigElement<int> ActionMode;
@@ -241,6 +245,8 @@ public static class ConfigManager
 		CheatFreeUpgradeMoney = new ConfigElement<bool>("CheatFreeUpgradeMoney", "锻造、炼丹不消耗银两，银两不够也能升级。true=开，false=关", defaultValue: false);
 		CheatDuelInvincible = new ConfigElement<bool>("CheatDuelInvincible", "决斗中无敌：我方不受伤害。true=开，false=关", defaultValue: false);
 		CheatDuelNoDamage = new ConfigElement<bool>("CheatDuelNoDamage", "决斗中造成伤害为 0：敌方不受伤害。true=开，false=关", defaultValue: false);
+		CheatBattleInvincible = new ConfigElement<bool>("CheatBattleInvincible", "团战中我方（主角和同伴）不会受伤：挨打、中毒都不扣血，敌人照常受伤。true=开，false=关", defaultValue: false);
+		CheatBattleNoCooldown = new ConfigElement<bool>("CheatBattleNoCooldown", "团战绝招没有冷却：放完马上又能用。true=开，false=关", defaultValue: false);
 		GameSpeed = new ConfigElement<float>("GameSpeed", "游戏倍速（在游戏原本速度上再乘以该值；1=原速）", 1f);
 		ActionMode = new ConfigElement<int>("ActionMode", "养成行动点：0=正常，1=不消耗（扣到剩 1 点后不再扣，可一直行动；用「空过」结束本旬），2=每旬只有 1 点", 0);
 		ShowFlagChanges = new ConfigElement<bool>("ShowFlagChanges", "剧情改动旗标时在屏幕上提示（可能剧透）。true=开，false=关", defaultValue: false);

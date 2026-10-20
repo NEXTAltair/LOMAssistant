@@ -142,6 +142,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			}
 			LogInfo("修炼/锻造/炼丹修改补丁已应用。");
 			TryPatchAll(typeof(DuelCheatPatch));
+			TryPatchAll(typeof(BattleCheatPatch));
 			TryPatchAll(typeof(DuelPacePatch));
 			TryPatchAll(typeof(FlowSpeedup.UniverseJsonPatch));
 			TryPatchAll(typeof(FlowSpeedup.FlagIndexPatch));

@@ -108,6 +108,8 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.CheatFreeUpgradeMoney, "锻造、炼丹不花银两"),
 				Row(ConfigManager.CheatDuelInvincible, "决斗我方无敌"),
 				Row(ConfigManager.CheatDuelNoDamage, "决斗敌方不受伤"),
+				Row(ConfigManager.CheatBattleInvincible, "团战我方不受伤"),
+				Row(ConfigManager.CheatBattleNoCooldown, "团战绝招无冷却"),
 				Row(ConfigManager.PinballScoreMultiplier, "弹珠得分倍率", 0f, 100f),
 				Row(ConfigManager.PinballFixedScore, "弹珠固定总分（-1=关）", -1f, 9999999f),
 				Row(ConfigManager.EnableSkipAction, "养成「空过」按钮"),
