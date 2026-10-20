@@ -341,7 +341,7 @@ public static class DataHelper
 		case TimeCheckType.特定:
 		{
 			GameTime fieldValue3 = checkData.GetFieldValue<GameTime>("_specificTime");
-			periodText = "第" + fieldValue3.YearText + "年" + fieldValue3.MonthText + "月" + fieldValue3.StageText;
+			periodText = LOMAssistant.Features.Story.StoryAtlas.DateText(fieldValue3);
 			return gameTime == fieldValue3;
 		}
 		default:
@@ -351,7 +351,7 @@ public static class DataHelper
 		{
 			GameTime fieldValue = checkData.GetFieldValue<GameTime>("_minTime");
 			GameTime fieldValue2 = checkData.GetFieldValue<GameTime>("_maxTime");
-			periodText = "第" + fieldValue.YearText + "年" + fieldValue.MonthText + "月" + fieldValue.StageText + " - 第" + fieldValue2.YearText + "年" + fieldValue2.MonthText + "月" + fieldValue2.StageText;
+			periodText = LOMAssistant.Features.Story.StoryAtlas.DateText(fieldValue) + " ~ " + LOMAssistant.Features.Story.StoryAtlas.DateText(fieldValue2);
 			if (gameTime >= fieldValue)
 			{
 				return gameTime <= fieldValue2;
