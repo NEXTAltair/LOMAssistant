@@ -76,6 +76,22 @@ public class InputGuard : MonoBehaviour
 
 	public static bool PointerOverModWindow => PointerOverMod();
 
+	/// <summary>有 Mod 的窗口开着（F8、F9 旗标搜索、剧情回顾、随时存档、事件自选）。剧情分支小窗只是提示，不算。</summary>
+	public static bool ModWindowOpen
+	{
+		get
+		{
+			foreach (KeyValuePair<string, Region> r in Regions)
+			{
+				if (r.Key != "Branch" && Time.frameCount - r.Value.Frame <= 2)
+				{
+					return true;
+				}
+			}
+			return false;
+		}
+	}
+
 	public static bool BlockPointer
 	{
 		get

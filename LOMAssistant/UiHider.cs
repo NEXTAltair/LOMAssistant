@@ -50,7 +50,7 @@ public class UiHider : MonoBehaviour
 	public static bool ClaimsRightClick(InputControl control)
 	{
 		return _instance != null && !Active && ConfigManager.EnableRightClickHideUI.Value && InStory()
-			&& control != null && Mouse.current != null && control == Mouse.current.rightButton && !EventPicker.IsWaiting && !LogOpen();
+			&& control != null && Mouse.current != null && control == Mouse.current.rightButton && !EventPicker.IsWaiting && !LogOpen() && !InputGuard.ModWindowOpen;
 	}
 
 	private void Update()
@@ -73,7 +73,8 @@ public class UiHider : MonoBehaviour
 			}
 			return;
 		}
-		if (!InStory() || EventPicker.IsWaiting || TextInputFocused() || LogOpen())
+		// 开着 Mod 的窗口（比如 F9、剧情回顾）时右键不隐藏界面，免得想关窗口却把界面全藏了
+		if (!InStory() || EventPicker.IsWaiting || TextInputFocused() || LogOpen() || InputGuard.ModWindowOpen)
 		{
 			return;
 		}
