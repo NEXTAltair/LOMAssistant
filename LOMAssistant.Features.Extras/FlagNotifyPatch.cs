@@ -80,11 +80,43 @@ public static class FlagNotifyPatch
 			if (ui != null && ui.isActiveAndEnabled)
 			{
 				ui.DisplayMessageText(message);
+				Linger(ui);
 			}
 		}
 		catch (Exception e)
 		{
 			FileLogger.LogWarning("旗标变化提示失败: " + e.Message);
+		}
+	}
+
+	/// <summary>
+	/// 游戏的提示只停 1 秒、按游戏时间算，开倍速时一闪就没。把刚弹出的这条改成按真实时间停留配置的秒数，
+	/// 往上飘的距离不变（停得久就飘得慢）。
+	/// </summary>
+	private static void Linger(StoryMainUI ui)
+	{
+		float seconds = ConfigManager.FlagNoticeSeconds.Value;
+		if (seconds <= 0f)
+		{
+			return;
+		}
+		GameMessagePanel panel = Traverse.Create(ui).Field("_messagePanel").GetValue<GameMessagePanel>();
+		if (panel == null || panel.transform.childCount == 0)
+		{
+			return;
+		}
+		FloatingText text = panel.transform.GetChild(panel.transform.childCount - 1).GetComponent<FloatingText>();
+		if (text == null)
+		{
+			return;
+		}
+		var tr = Traverse.Create(text);
+		float original = tr.Field("_showTime").GetValue<float>();
+		float scaled = seconds * UnityEngine.Mathf.Max(0.01f, UnityEngine.Time.timeScale);
+		tr.Field("_showTime").SetValue(scaled);
+		if (original > 0f)
+		{
+			tr.Field("_moveSpeed").SetValue(tr.Field("_moveSpeed").GetValue<float>() * original / scaled);
 		}
 	}
 

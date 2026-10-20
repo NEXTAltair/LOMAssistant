@@ -63,6 +63,8 @@ public static class ConfigManager
 
 	public static ConfigElement<bool> EnableBackgroundRun;
 
+	public static ConfigElement<float> FlagNoticeSeconds;
+
 	public static ConfigElement<KeyCode> HideUIKey;
 
 	public static ConfigElement<bool> EnableFastDuelRounds;
@@ -215,6 +217,7 @@ public static class ConfigManager
 		EnableEventPicker = new ConfigElement<bool>("EnableEventPicker", "随机事件自选：剧情走到随机事件（工作、闲逛等）时先停下，列出满足条件的事件选一个，也可以选随机。true=开，false=关。可在游戏内面板切换", defaultValue: false);
 		EnableFastDuelRounds = new ConfigElement<bool>("EnableFastDuelRounds", "决斗回合之间的等待缩短：身上状态（buff）多时回合间不再干等几秒，效果和结算不变。默认开；只有怀疑它导致问题时才关。true=开，false=关", defaultValue: true);
 		EnableOneClickUnlock = new ConfigElement<bool>("EnableOneClickUnlock", "被锁住的选项旁显示「一键设置」：把没满足的解锁条件（属性、好感、旗标）改到满足，选项当场解锁。true=开，false=关。可在游戏内面板切换", defaultValue: true);
+		FlagNoticeSeconds = new ConfigElement<float>("FlagNoticeSeconds", "剧情旗标变化提示在屏幕上停留几秒（按真实时间，开倍速也一样；原版 1 秒）。0=按游戏原样", 4f);
 		EnableBackgroundRun = new ConfigElement<bool>("EnableBackgroundRun", "后台继续运行：切到别的窗口时游戏不暂停，背景音乐也不停。true=开，false=关（游戏原本的做法：切走就停）。可在游戏内面板切换", defaultValue: true);
 		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "剧情里按鼠标右键隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次右键恢复。true=开，false=关", defaultValue: true);
 		HideUIKey = new ConfigElement<KeyCode>("HideUIKey", "隐藏界面看 CG 的热键（和右键效果一样），None=不绑定", KeyCode.None);
