@@ -184,6 +184,11 @@ public class InputGuard : MonoBehaviour
 		}
 		if (device is UnityEngine.InputSystem.Pointer)
 		{
+			// 右键用来关咖啡伴侣窗口，鼠标不在窗口上时也不交给游戏
+			if (device is Mouse mouse && context.control == mouse.rightButton && LOMAssistant.Features.Story.StoryReviewPanel.OwnsEscape)
+			{
+				return true;
+			}
 			return BlockPointer;
 		}
 		return false;

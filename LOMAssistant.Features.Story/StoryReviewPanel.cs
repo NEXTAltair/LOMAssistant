@@ -43,7 +43,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 
 	private int _escFrame = -10;
 
-	/// <summary>窗口开着（或刚被 Esc 关掉的这一两帧）：Esc 归窗口用，不交给游戏。</summary>
+	/// <summary>窗口开着（或刚被 Esc、右键关掉的这一两帧）：Esc 和右键归窗口用，不交给游戏。</summary>
 	public static bool OwnsEscape
 	{
 		get
@@ -67,10 +67,12 @@ public partial class StoryReviewPanel : MonoBehaviour
 			StopCapture();
 		}
 		CaptureMouse();
-		// Esc：先关确认框，再关窗口（游戏那边的 Esc 由输入隔离挡下，不会同时打开暂停菜单）。
-		// 正在等新热键时 Esc 是取消改键，交给设置页
+		// Esc 或鼠标右键（游戏里右键也是返回）：先关确认框，再关窗口（游戏那边由输入隔离挡下，不会同时打开暂停菜单）。
+		// 正在等新热键时 Esc 是取消改键、右键是绑定右键，交给设置页
 		Keyboard keyboard = Keyboard.current;
-		if (_visible && !UiHider.Active && _capturing == null && keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+		Mouse mouse = Mouse.current;
+		bool back = (keyboard != null && keyboard.escapeKey.wasPressedThisFrame) || (mouse != null && mouse.rightButton.wasPressedThisFrame);
+		if (_visible && !UiHider.Active && _capturing == null && back)
 		{
 			_escFrame = Time.frameCount;
 			if (_confirming != null)
