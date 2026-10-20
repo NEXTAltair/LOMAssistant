@@ -120,7 +120,7 @@ internal static class OptionInfoPatch
 		}
 		if (HasTriggerSubMissions(fieldValue, out var missionKey))
 		{
-			HandleDialogChange(__instance, addSuffix: true, "存在事件：" + missionKey);
+			HandleDialogChange(__instance, addSuffix: true, "可触发：" + missionKey);
 		}
 	}
 
@@ -177,7 +177,7 @@ internal static class OptionInfoPatch
 			string text = dialog.GetFieldValue<string>("_dialog");
 			if (addSuffix)
 			{
-				if (text.Contains("存在事件："))
+				if (text.Contains("可触发："))
 				{
 					int num = text.LastIndexOf("(");
 					if (num > 0)
@@ -195,7 +195,7 @@ internal static class OptionInfoPatch
 				dialog.SetPrivateField("_dialog", text2 + "(" + suffix + ")");
 				return;
 			}
-			if (!string.IsNullOrEmpty(_originalDialogKey) && _originalDialogKey.Contains("存在事件："))
+			if (!string.IsNullOrEmpty(_originalDialogKey) && _originalDialogKey.Contains("可触发："))
 			{
 				int num2 = _originalDialogKey.LastIndexOf("(");
 				if (num2 > 0)
@@ -213,59 +213,29 @@ internal static class OptionInfoPatch
 		}
 	}
 
+	/// <summary>
+	/// 点这个地点会不会触发任务：和游戏点地点时的判断一样（本旬生效的支线里，地点是这里、有开头剧本的那个），
+	/// 主线正在等时点哪都是走主线，不提示。返回任务的名字。
+	/// </summary>
 	private static bool HasTriggerSubMissions(PositionType position, out string missionKey)
 	{
-		List<MissionData> missionList = null;
-		try
-		{
-			SubMissionsData fieldValue = MissionManagerData.Instance.GetFieldValue<SubMissionsData>("_subMissions");
-			if (fieldValue != null)
-			{
-				missionList = fieldValue.GetFieldValue<List<MissionData>>("_list");
-			}
-		}
-		catch
-		{
-		}
-		foreach (KeyValuePair<string, MissionCheckData> activeSubMission in MissionManagerData.Instance.ActiveSubMissions)
-		{
-			MissionCheckData value = activeSubMission.Value;
-			if (value.Position == position && value.Check(PlayerStatManagerData.Instance) && !IsMissionCompleted(missionList, activeSubMission.Key))
-			{
-				string fieldValue2 = value.GetFieldValue<string>("_desc");
-				if (!string.IsNullOrEmpty(fieldValue2))
-				{
-					missionKey = TextConverter.ToSimplified(fieldValue2);
-				}
-				else
-				{
-					missionKey = value.Key;
-				}
-				return true;
-			}
-		}
 		missionKey = string.Empty;
-		return false;
-	}
-
-	private static bool IsMissionCompleted(List<MissionData> missionList, string missionName)
-	{
-		if (missionList == null || string.IsNullOrEmpty(missionName))
+		MissionManagerData missions = MissionManagerData.Instance;
+		if (missions?.ActiveSubMissions == null || (missions.MainMissionStart && missions.MainMissionPosition != PositionType.無))
 		{
 			return false;
 		}
-		try
+		foreach (KeyValuePair<string, MissionCheckData> active in missions.ActiveSubMissions)
 		{
-			foreach (MissionData mission in missionList)
+			MissionCheckData check = active.Value;
+			if (check.Position != position || string.IsNullOrEmpty(check.StartScript))
 			{
-				if (mission.Name == missionName && mission.CurrentKey == "clear")
-				{
-					return true;
-				}
+				continue;
 			}
-		}
-		catch
-		{
+			LOMAssistant.Features.Story.StoryMission known = LOMAssistant.Features.Story.StoryAtlas.Find(check.Key);
+			string desc = TextConverter.ToSimplified(check.GetFieldValue<string>("_desc") ?? "").Split('\n')[0].Trim();
+			missionKey = known != null && known.Title.Length > 0 ? known.Title : desc.Length > 0 ? desc : active.Key;
+			return true;
 		}
 		return false;
 	}
