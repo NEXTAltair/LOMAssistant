@@ -96,7 +96,8 @@ public partial class StoryReviewPanel
 		DragScroll("stats", area, ref _statsScroll);
 		GUILayout.BeginArea(area);
 		_statsScroll = GUILayout.BeginScrollView(_statsScroll);
-		float rowWidth = S(540);
+		// 一行里的东西加起来要比格子窄，不然会撑出横向滚动条；1080p 下正好排三列
+		float rowWidth = S(566);
 		int columns = Mathf.Max(1, (int)((area.width - S(30)) / rowWidth));
 		foreach (var (title, rows) in _statSections)
 		{
@@ -145,11 +146,11 @@ public partial class StoryReviewPanel
 		// 一行放得下：名字、说明太长就截短，鼠标停上去看全文
 		GUIStyle line = OneLine(_label);
 		GUIStyle muted = OneLine(_muted);
-		float nameWidth = S(150), extraWidth = S(110);
+		float nameWidth = S(120), extraWidth = S(80);
 		GUILayout.Label(Fit(row.Name, line, nameWidth), line, GUILayout.Width(nameWidth));
 		Rect nameRect = GUILayoutUtility.GetLastRect();
 		int value = row.Get();
-		GUILayout.Label(value.ToString(), line, GUILayout.Width(S(60)));
+		GUILayout.Label(value.ToString(), line, GUILayout.Width(S(52)));
 		string extra = row.Extra?.Invoke() ?? "";
 		GUILayout.Label(Fit(extra, muted, extraWidth), muted, GUILayout.Width(extraWidth));
 		Rect extraRect = GUILayoutUtility.GetLastRect();
@@ -159,12 +160,12 @@ public partial class StoryReviewPanel
 			Hover(nameRect, full);
 			Hover(extraRect, full);
 		}
-		if (GUILayout.Button("-" + row.Step, _button, GUILayout.Width(S(52))))
+		if (GUILayout.Button("-" + row.Step, StepButton(), GUILayout.Width(S(58))))
 		{
 			row.Set(value - row.Step);
 			_statInputs.Remove(row.Id);
 		}
-		if (GUILayout.Button("+" + row.Step, _button, GUILayout.Width(S(52))))
+		if (GUILayout.Button("+" + row.Step, StepButton(), GUILayout.Width(S(58))))
 		{
 			row.Set(value + row.Step);
 			_statInputs.Remove(row.Id);
@@ -173,7 +174,8 @@ public partial class StoryReviewPanel
 		{
 			input = value.ToString();
 		}
-		string typed = GUILayout.TextField(input, _field, GUILayout.Width(S(64)));
+		// 银两、门派资产这种五六位数也要放得下
+		string typed = GUILayout.TextField(input, _field, GUILayout.Width(S(72)));
 		if (typed != value.ToString())
 		{
 			_statInputs[row.Id] = typed;
@@ -184,7 +186,7 @@ public partial class StoryReviewPanel
 		}
 		bool changed = _statInputs.ContainsKey(row.Id) && int.TryParse(typed, out int target);
 		GUI.enabled = changed;
-		if (GUILayout.Button("设定", changed ? _primary : _button, GUILayout.Width(S(52))) && int.TryParse(typed, out target))
+		if (GUILayout.Button("设定", changed ? _primary : _button, GUILayout.Width(S(50))) && int.TryParse(typed, out target))
 		{
 			row.Set(target);
 			_statInputs.Remove(row.Id);
@@ -192,6 +194,20 @@ public partial class StoryReviewPanel
 		}
 		GUI.enabled = true;
 		GUILayout.EndHorizontal();
+	}
+
+	private GUIStyle _stepButton;
+	private float _stepScale;
+
+	// 加减按钮左右留白小一点，「+500」这样的四个字也放得下
+	private GUIStyle StepButton()
+	{
+		if (_stepButton == null || _stepScale != _scale)
+		{
+			_stepButton = new GUIStyle(_button) { padding = new RectOffset((int)S(2), (int)S(2), _button.padding.top, _button.padding.bottom) };
+			_stepScale = _scale;
+		}
+		return _stepButton;
 	}
 
 	private static List<(string, List<StatRow>)> BuildStatSections(PlayerStatManagerData player)
