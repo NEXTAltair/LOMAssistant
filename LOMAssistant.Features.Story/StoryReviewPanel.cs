@@ -705,6 +705,13 @@ public partial class StoryReviewPanel : MonoBehaviour
 
 	private Vector2 _endingsScroll;
 	private string _endingsSearch = "";
+	private int _endingsSection, _endingsFilter;
+	private static readonly string[] EndingSections = { "结局（汗青书）", "死亡（生死簿）", "成就（风云史）" };
+	private static readonly string[] EndingFilters = { "全部", "已达成", "未达成" };
+
+	private static IEnumerable<StoryEnding> EndingSection(int section) =>
+		section == 2 ? StoryAtlas.Achievements : StoryAtlas.Endings.Where(e => e.Death == (section == 1))
+			.OrderBy(e => e.Ways.Select(w => w.Mission?.From ?? int.MaxValue).DefaultIfEmpty(int.MaxValue).Min()).ThenBy(e => e.Id, StringComparer.Ordinal);
 
 	private void DrawEndings(Rect r)
 	{
@@ -712,39 +719,95 @@ public partial class StoryReviewPanel : MonoBehaviour
 		{
 			return;
 		}
-		string query = SearchBox(new Rect(r.x, r.y, Mathf.Min(S(520), r.width), S(36)), ref _endingsSearch);
-		var groups = new[] { (Death: false, Title: "结局（汗青书）"), (Death: true, Title: "死亡（生死簿）") };
-		float x = r.x + Mathf.Min(S(520), r.width) + S(16);
-		foreach (var g in groups)
+		float searchWidth = Mathf.Min(S(420), r.width);
+		string query = SearchBox(new Rect(r.x, r.y, searchWidth, S(36)), ref _endingsSearch);
+		// 搜索框右边：全部 / 已达成 / 未达成
+		float fx = r.x + searchWidth + S(16);
+		for (int i = 0; i < EndingFilters.Length; i++)
 		{
-			var list = StoryAtlas.Endings.Where(e => e.Death == g.Death).ToList();
-			GUI.Label(new Rect(x, r.y + S(6), S(260), S(30)), $"{g.Title} {list.Count(e => e.Achieved)}/{list.Count}", _label);
-			x += S(270);
+			if (GUI.Button(new Rect(fx, r.y + S(2), S(96), S(32)), EndingFilters[i], i == _endingsFilter ? _primary : _button) && _endingsFilter != i)
+			{
+				_endingsFilter = i;
+				_endingsScroll = Vector2.zero;
+			}
+			fx += S(102);
 		}
-		var endingsArea = new Rect(r.x, r.y + S(46), r.width, r.height - S(46));
+		// 下面一排是三类，点哪类看哪类；搜索时三类的结果都列出来
+		float gx = r.x, gy = r.y + S(44);
+		for (int i = 0; i < EndingSections.Length; i++)
+		{
+			var all = EndingSection(i).ToList();
+			string title = $"{EndingSections[i]}  {all.Count(e => e.Achieved)}/{all.Count}";
+			float width = _tabOn.CalcSize(new GUIContent(title)).x * 0.85f + S(24);
+			bool on = i == _endingsSection && query.Length == 0;
+			if (GUI.Button(new Rect(gx, gy, width, S(32)), title, on ? _primary : _button) && (_endingsSection != i || query.Length > 0))
+			{
+				_endingsSection = i;
+				_endingsSearch = "";
+				_endingsScroll = Vector2.zero;
+			}
+			gx += width + S(6);
+		}
+		var endingsArea = new Rect(r.x, r.y + S(86), r.width, r.height - S(86));
 		DragScroll("endings", endingsArea, ref _endingsScroll);
 		GUILayout.BeginArea(endingsArea);
 		_endingsScroll = GUILayout.BeginScrollView(_endingsScroll);
-		foreach (var g in groups)
+		int shownTotal = 0;
+		for (int section = 0; section < EndingSections.Length; section++)
 		{
-			GUILayout.Space(S(8));
-			GUILayout.Label(g.Title, _heading);
-			foreach (StoryEnding ending in StoryAtlas.Endings.Where(e => e.Death == g.Death)
-				.OrderBy(e => e.Ways.Select(w => w.Mission?.From ?? int.MaxValue).DefaultIfEmpty(int.MaxValue).Min()).ThenBy(e => e.Id, StringComparer.Ordinal))
+			if (query.Length == 0 && section != _endingsSection)
 			{
-				string where = string.Join("、", ending.Ways.Select(w => w.Mission).Where(m => m != null).Select(m => (m.Main ? "主线" : m.SeriesTitle) + "「" + m.Title + "」").Distinct().ToArray());
-				if (!Matches(query, ending.Title, ending.Desc, ending.Id, where))
-				{
-					continue;
-				}
+				continue;
+			}
+			var shown = EndingSection(section).Where(e => _endingsFilter == 0 || e.Achieved == (_endingsFilter == 1)).Where(e =>
+			{
+				string where = string.Join("、", e.Ways.Select(w => w.Mission).Where(m => m != null).Select(m => (m.Main ? "主线" : m.SeriesTitle) + "「" + m.Title + "」").Distinct().ToArray());
+				return Matches(query, e.Title, e.Desc, e.Id, e.Award, where);
+			}).ToList();
+			if (shown.Count == 0)
+			{
+				continue;
+			}
+			shownTotal += shown.Count;
+			if (query.Length > 0)
+			{
+				GUILayout.Space(S(8));
+				GUILayout.Label(EndingSections[section], _heading);
+			}
+			foreach (StoryEnding ending in shown)
+			{
 				GUILayout.BeginVertical(_card);
 				GUILayout.BeginHorizontal();
 				GUILayout.Label(ending.Achieved ? "<color=#2F6B3A><b>✓ 已达成</b></color>" : "<color=#A3302A>未达成</color>", _small, GUILayout.Width(S(80)));
 				GUILayout.Label("<b>" + ending.Title + "</b>", _label);
 				GUILayout.EndHorizontal();
-				GUILayout.Label(Cached(ending, () => EndingWays(ending)), _rich);
+				if (section == 2)
+				{
+					// 成就的说明就是达成条件；奖励在新开存档时生效
+					if (ending.Desc.Length > 0)
+					{
+						GUILayout.Label(OnPaper(ending.Desc), _rich);
+					}
+					if (ending.Award.Length > 0)
+					{
+						GUILayout.Label("<color=#73644F>奖励：" + ending.Award + "</color>", _rich);
+					}
+					if (ending.Ways.Count > 0)
+					{
+						GUILayout.Label(Cached(ending, () => EndingWays(ending)), _rich);
+					}
+				}
+				else
+				{
+					GUILayout.Label(Cached(ending, () => EndingWays(ending)), _rich);
+				}
 				GUILayout.EndVertical();
 			}
+		}
+		if (shownTotal == 0)
+		{
+			GUILayout.Space(S(12));
+			GUILayout.Label(query.Length > 0 ? "没有搜到相关条目" : _endingsFilter == 1 ? "这一类还没有达成的条目" : "这一类已经全部达成", _muted);
 		}
 		GUILayout.EndScrollView();
 		GUILayout.EndArea();

@@ -65,6 +65,8 @@ public sealed class StoryEnding
 	public bool Death;
 	public string Title = "";
 	public string Desc = "";
+	/// <summary>成就给新存档的奖励，一行；结局、死亡没有。</summary>
+	public string Award = "";
 	public LibraryItemData Item;
 	public List<StoryEndingWay> Ways = new List<StoryEndingWay>();
 
@@ -91,6 +93,8 @@ public static class StoryAtlas
 
 	public static readonly List<StoryMission> Missions = new List<StoryMission>();
 	public static readonly List<StoryEnding> Endings = new List<StoryEnding>();
+	/// <summary>成就（风云史）：游戏里的全部条目，剧本里直接解锁的附上位置；其余由游戏按条件解锁，看说明。</summary>
+	public static readonly List<StoryEnding> Achievements = new List<StoryEnding>();
 	/// <summary>剧本 → 它属于哪个任务（从任务开始剧本一路接下去的那些）。</summary>
 	public static readonly Dictionary<string, StoryMission> Owner = new Dictionary<string, StoryMission>(StringComparer.OrdinalIgnoreCase);
 	/// <summary>全部台词（剧本、文字），搜索用；读完剧本以后在后台慢慢整理。</summary>
@@ -168,6 +172,7 @@ public static class StoryAtlas
 		var timer = Stopwatch.StartNew();
 		Missions.Clear();
 		Endings.Clear();
+		Achievements.Clear();
 		// 全部剧本：读一遍，记下大概，文字马上放掉
 		TextAsset[] assets = Resources.LoadAll<TextAsset>("story/chinesetraditional");
 		var names = new List<string>();
@@ -383,6 +388,21 @@ public static class StoryAtlas
 			AddItems(library.EndGame, false);
 			AddItems(library.Dead, true);
 		}
+		var achievementById = new Dictionary<string, StoryEnding>(StringComparer.Ordinal);
+		if (library?.Achievement?.List != null)
+		{
+			foreach (LibraryItemData item in library.Achievement.List)
+			{
+				if (item == null)
+				{
+					continue;
+				}
+				string award = string.Join("；", LibraryText(item.GetAwardKey(), "").Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(x => x.Trim()).Where(x => x.Length > 0).ToArray());
+				var achievement = new StoryEnding { Id = item.name, Item = item, Title = LibraryText(item.GetTitleKey(), item.name), Desc = LibraryText(item.GetDescKey(), ""), Award = award };
+				achievementById[item.name] = achievement;
+				Achievements.Add(achievement);
+			}
+		}
 		foreach (string name in names)
 		{
 			StoryScript script = StoryScripts.Get(name);
@@ -403,6 +423,14 @@ public static class StoryAtlas
 				if (m != null && !death)
 				{
 					m.Endings++;
+				}
+			}
+			foreach (var (path, id) in script.Achievements)
+			{
+				if (achievementById.TryGetValue(id, out StoryEnding achievement))
+				{
+					owner.TryGetValue(name, out StoryMission m);
+					achievement.Ways.Add(new StoryEndingWay { Script = script.Name, Path = path, Mission = m });
 				}
 			}
 			foreach (var (path, level) in script.Fights)

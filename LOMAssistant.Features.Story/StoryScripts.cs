@@ -47,6 +47,8 @@ public sealed class StoryScript
 	public List<List<StoryStep>> Menus = new List<List<StoryStep>>();
 	/// <summary>结局（汗青书）、死亡（生死簿）的触发位置：在哪条分岔路上、哪个条目。</summary>
 	public List<(List<StoryStep> Path, bool Death, string Id)> Endings = new List<(List<StoryStep>, bool, string)>();
+	/// <summary>剧本里直接解锁的成就（风云史，AddAchievementLib）：在哪条分岔路上、哪个条目。</summary>
+	public List<(List<StoryStep> Path, string Id)> Achievements = new List<(List<StoryStep>, string)>();
 	/// <summary>决斗（ChangeScene("Combat", 关卡)）：在哪条分岔路上、哪一关。输了会死的关卡见 ConditionBook.CombatDeaths。</summary>
 	public List<(List<StoryStep> Path, string Level)> Fights = new List<(List<StoryStep>, string)>();
 	/// <summary>数值变化（属性、好感、旗标、物品），记在发生时所在的分岔下。</summary>
@@ -77,6 +79,7 @@ public static class StoryScripts
 	private static readonly Regex Next = new Regex(@"luamanager\.(SetNextScript|SetCurrentStoryScript)\(""([^""]+)""\)");
 	private static readonly Regex Scene = new Regex(@"luamanager\.ChangeScene\(""(\w+)""(?:, *""(\w*)"")?");
 	private static readonly Regex EndPanel = new Regex(@"endgamepanel\.Open\(""(\w+)""\)");
+	private static readonly Regex Achievement = new Regex(@"statmodifymanager\.AddAchievementLib\(""(\w+)""\)");
 	private static readonly Regex MainSet = new Regex(@"statmodifymanager\.Mission\(""Main"", *""([^""]+)""");
 	private static readonly Regex StoryText = new Regex(@"GetStoryText\(""([^""]+)""\)");
 	private static readonly Regex AddStory = new Regex(@"AddStory\(""([^""]+)""\)");
@@ -284,6 +287,10 @@ public static class StoryScripts
 			if ((m = EndPanel.Match(line)).Success)
 			{
 				script.Endings.Add((CurrentPath(blocks, choices, switches), false, m.Groups[1].Value));
+			}
+			if ((m = Achievement.Match(line)).Success)
+			{
+				script.Achievements.Add((CurrentPath(blocks, choices, switches), m.Groups[1].Value));
 			}
 			if ((m = MainSet.Match(line)).Success)
 			{
