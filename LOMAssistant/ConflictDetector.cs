@@ -30,6 +30,7 @@ public static class ConflictDetector
 	public static void Check(Harmony ours)
 	{
 		Warnings.Clear();
+		Warnings.AddRange(BepInEx5Plugins.Notices);
 		try
 		{
 			Dictionary<string, string> pluginNames = LoadedPluginNames();

@@ -19,11 +19,16 @@ for d in "$M"/*.dll "$C/BepInEx.Core.dll" "$C/BepInEx.Unity.Mono.dll" "$C/0Harmo
 done
 
 mkdir -p bin
+# BepInEx 5 插件兼容层（名叫 BepInEx 的小程序集），嵌进 Mod 里，见 LOMAssistant/BepInEx5Plugins.cs
+"$DOTNET" "$CSC" -nologo -noconfig -nostdlib+ -target:library -langversion:12 -optimize+ -deterministic -out:bin/BepInEx.dll \
+	-r:"$M/mscorlib.dll" -r:"$M/netstandard.dll" -r:"$M/System.dll" -r:"$M/System.Core.dll" -r:"$M/UnityEngine.CoreModule.dll" -r:"$C/BepInEx.Core.dll" \
+	tools/bepinex5-shim/BepInEx5Shim.cs
 "$DOTNET" "$CSC" -nologo -noconfig -nostdlib+ -target:library -langversion:12 -optimize+ -deterministic \
 	-nowarn:CS1701,CS1702 -out:bin/LOMAssistant.dll "${refs[@]}" \
 	-resource:LOMAssistant.Features.AnytimeSave/Replay.lua,LOMAssistant.AnytimeSave.Replay.lua \
 	-resource:LOMAssistant.Features.AnytimeSave/contract.tsv.gz,LOMAssistant.AnytimeSave.contract.tsv.gz \
 	-resource:LOMAssistant/conditions.json.gz,LOMAssistant.conditions.json.gz \
+	-resource:bin/BepInEx.dll,LOMAssistant.BepInEx5Shim.dll \
 	$(find . -name '*.cs' -not -path './bin/*' -not -path './Installer/*' -not -path './tools/*')
 
 cp bin/LOMAssistant.dll "$P/LOMAssistant.dll"
