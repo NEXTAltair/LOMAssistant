@@ -83,6 +83,8 @@ public static class ConfigManager
 
 	public static ConfigElement<float> PopupOpacity;
 
+	public static ConfigElement<float> PanelOpacity;
+
 	public static ConfigElement<int> SaveSlotCount;
 
 	public static ConfigElement<bool> EnableFlowSpeedup;
@@ -267,6 +269,7 @@ public static class ConfigManager
 		BranchPanelX = new ConfigElement<float>("BranchPanelX", "剧情分支小窗的位置（占屏幕宽度的比例，-1=默认左侧）。拖动小窗会自动保存", -1f);
 		BranchPanelY = new ConfigElement<float>("BranchPanelY", "剧情分支小窗的位置（占屏幕高度的比例，-1=默认）。拖动小窗会自动保存", -1f);
 		BranchPanelAutoHide = new ConfigElement<float>("BranchPanelAutoHide", "剧情分支小窗多少秒没有新判断就自动收起（0=不自动收起）", 15f);
+		PanelOpacity = new ConfigElement<float>("PanelOpacity", "咖啡伴侣窗口的背景不透明度（0.3～1，1=不透明）。调低能透过窗口看到游戏画面，文字和按钮不变", 1f);
 		PopupOpacity = new ConfigElement<float>("PopupOpacity", "剧情分支小窗的背景不透明度（0=完全透明，1=不透明），改后重启游戏生效", 0.5f);
 		EnableFastStartup = new ConfigElement<bool>("EnableFastStartup", "开游戏更快：标题画面按钮浮现的开场动画加快 6 倍。true=开（默认），false=关，改后重启生效", defaultValue: true);
 		EnableFlowSpeedup = new ConfigElement<bool>("EnableFlowSpeedup", "流程提速：切场景不再写多余的全局存档副本、读档时旗标查表、回想关着时不重排、快进时指令不空等、数值变化后的停顿缩到 0.2 秒（没显示的不停顿）、养成地图上行动后的等待和转场加快 3 倍。默认开；只有怀疑它导致问题时才关。true=开，false=关", defaultValue: true);

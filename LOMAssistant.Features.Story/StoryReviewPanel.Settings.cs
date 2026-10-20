@@ -120,6 +120,7 @@ public partial class StoryReviewPanel
 			("其他", new List<SettingRow>
 			{
 				new SettingRow { Element = ConfigManager.GameSpeed, Name = "游戏倍速", Speeds = GameSpeed.Options },
+				Row(ConfigManager.PanelOpacity, "咖啡伴侣窗口不透明度", 0.3f, 1f),
 				Row(ConfigManager.EnableBackgroundRun, "后台继续运行"),
 				Row(ConfigManager.EnableFastStartup, "开游戏更快"),
 				Row(ConfigManager.EnableFlowSpeedup, "流程提速"),

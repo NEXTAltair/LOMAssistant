@@ -22,6 +22,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 	private int _tab;
 	private Rect _windowRect;
 	private float _scale = -1f;
+	private float _opacity = -1f;
 	private string _message = "";
 	private float _messageUntil;
 	private string _tooltip = "";
@@ -106,9 +107,15 @@ public partial class StoryReviewPanel : MonoBehaviour
 
 	private float S(float v) => v * _scale;
 
+	/// <summary>窗口底色和卡片底色的不透明度（设置页可调）；文字、按钮、边框不变，调低也看得清。</summary>
+	private static float PanelOpacity => Mathf.Clamp(ConfigManager.PanelOpacity.Value, 0.3f, 1f);
+
 	private void BuildStyles(float scale)
 	{
+		bool rescale = !Mathf.Approximately(scale, _scale);
 		_scale = scale;
+		_opacity = PanelOpacity;
+		Color Faded(Color c) => new Color(c.r, c.g, c.b, c.a * _opacity);
 		_textures.Clear();
 		_oneLine.Clear();
 		_framed.Clear();
@@ -132,7 +139,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 			return s;
 		}
 		_window = new GUIStyle(GUI.skin.window);
-		_window.normal.background = _window.onNormal.background = Framed(Paper, Ink);
+		_window.normal.background = _window.onNormal.background = Framed(Faded(Paper), Ink);
 		_window.border = new RectOffset(2, 2, 2, 2);
 		_window.padding = new RectOffset((int)S(16), (int)S(16), (int)S(12), (int)S(12));
 		_label = Plain(19, Ink);
@@ -166,14 +173,18 @@ public partial class StoryReviewPanel : MonoBehaviour
 		_tag.normal.background = Texture(new Color(PaperLight.r, PaperLight.g, PaperLight.b, 0.92f));
 		_tag.padding = new RectOffset((int)S(5), (int)S(5), (int)S(1), (int)S(1));
 		_card = new GUIStyle(GUI.skin.box);
-		_card.normal.background = Framed(PaperLight, new Color(Edge.r, Edge.g, Edge.b, 0.5f));
+		_card.normal.background = Framed(Faded(PaperLight), new Color(Edge.r, Edge.g, Edge.b, 0.5f));
 		_card.border = new RectOffset(2, 2, 2, 2);
 		_card.padding = new RectOffset((int)S(10), (int)S(10), (int)S(8), (int)S(8));
 		_card.margin = new RectOffset(0, 0, (int)S(4), (int)S(4));
 		_seal = Plain(18, PaperLight, false);
 		_seal.alignment = TextAnchor.MiddleCenter;
 		_seal.fontStyle = FontStyle.Bold;
-		_windowRect = new Rect(Mathf.Round(Screen.width * 0.04f), Mathf.Round(Screen.height * 0.05f), Mathf.Round(Screen.width * 0.92f), Mathf.Round(Screen.height * 0.9f));
+		// 只调透明度时不动窗口位置（可能被拖过）
+		if (rescale)
+		{
+			_windowRect = new Rect(Mathf.Round(Screen.width * 0.04f), Mathf.Round(Screen.height * 0.05f), Mathf.Round(Screen.width * 0.92f), Mathf.Round(Screen.height * 0.9f));
+		}
 	}
 
 	private void OnGUI()
@@ -187,7 +198,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 		{
 			return;
 		}
-		if (!Mathf.Approximately(scale, _scale))
+		if (!Mathf.Approximately(scale, _scale) || !Mathf.Approximately(PanelOpacity, _opacity))
 		{
 			BuildStyles(scale);
 		}
