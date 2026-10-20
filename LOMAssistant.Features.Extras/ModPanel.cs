@@ -49,6 +49,7 @@ public class ModPanel : MonoBehaviour
 		}
 		TrackSelectedSlot();
 		GameSpeed.Tick();
+		BackgroundRun.Tick();
 		// 检测到冲突时自动弹出一次面板，玩家不按 F8 也能看到
 		if (ConflictDetector.Warnings.Count > 0 && !_conflictShown)
 		{
@@ -110,6 +111,7 @@ public class ModPanel : MonoBehaviour
 		Toggle(ConfigManager.CheatDuelInvincible, "决斗中无敌");
 		Toggle(ConfigManager.CheatDuelNoDamage, "决斗中造成伤害为0");
 		Section("游戏");
+		Toggle(ConfigManager.EnableBackgroundRun, "后台继续运行（切走时音乐不停）");
 		DrawSpeed();
 		DrawActionMode();
 
