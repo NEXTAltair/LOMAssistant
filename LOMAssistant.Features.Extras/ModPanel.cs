@@ -26,6 +26,8 @@ public class ModPanel : MonoBehaviour
 	private GUIStyle _window;
 	private GUIStyle _warning;
 
+	private GUIStyle _section;
+
 	private GUIStyle _title;
 
 	private PinballManager _boundPinball;
@@ -92,17 +94,22 @@ public class ModPanel : MonoBehaviour
 		{
 			GUILayout.Label("【注意】" + warning, _warning);
 		}
+		// 按用途分组：剧情、养成、决斗，最后是倍速和行动点
+		Section("剧情");
+		Toggle(ConfigManager.EnableEventPicker, "随机事件自选");
+		Toggle(ConfigManager.EnableOneClickUnlock, "锁住选项一键设置");
+		Toggle(ConfigManager.ShowBranchChecks, "剧情分支条件提示");
+		Toggle(ConfigManager.ShowFlagChanges, "剧情旗标变化提示");
+		Section("修炼、锻造、炼丹");
 		Toggle(ConfigManager.CheatUnlimitedTraining, "无限修炼次数");
 		Toggle(ConfigManager.CheatFastTraining, "快速修炼");
 		Toggle(ConfigManager.CheatUnlimitedUpgrade, "无限锻造、炼丹次数");
 		Toggle(ConfigManager.CheatFastUpgrade, "快速锻造、炼丹");
 		Toggle(ConfigManager.CheatFreeUpgradeMoney, "锻造、炼丹不消耗银两");
+		Section("决斗");
 		Toggle(ConfigManager.CheatDuelInvincible, "决斗中无敌");
 		Toggle(ConfigManager.CheatDuelNoDamage, "决斗中造成伤害为0");
-		Toggle(ConfigManager.ShowFlagChanges, "剧情旗标变化提示");
-		Toggle(ConfigManager.ShowBranchChecks, "剧情分支条件提示");
-		Toggle(ConfigManager.EnableEventPicker, "随机事件自选");
-		Toggle(ConfigManager.EnableOneClickUnlock, "锁住选项一键设置");
+		Section("游戏");
 		DrawSpeed();
 		DrawActionMode();
 
@@ -284,6 +291,12 @@ public class ModPanel : MonoBehaviour
 		GUILayout.EndHorizontal();
 	}
 
+	private void Section(string text)
+	{
+		GUILayout.Space(_label.fontSize * 0.4f);
+		GUILayout.Label(text, _section);
+	}
+
 	private void Toggle(ConfigElement<bool> element, string text)
 	{
 		bool value = GUILayout.Toggle(element.Value, " " + text, _toggle);
@@ -324,5 +337,7 @@ public class ModPanel : MonoBehaviour
 		_warning.normal.textColor = new Color(1f, 0.45f, 0.35f);
 		_window.padding.top = (int)(8f * scale);
 		_title = new GUIStyle(_label) { fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+		_section = new GUIStyle(_label) { fontStyle = FontStyle.Bold };
+		_section.normal.textColor = new Color(0.95f, 0.78f, 0.42f);
 	}
 }
