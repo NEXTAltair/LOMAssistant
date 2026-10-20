@@ -10,10 +10,14 @@ using Mono.Cecil.Cil;
 
 namespace LOMAssistant.Features.AnytimeSave
 {
-    // Conservative semantic contract: do not trust version numbers, MVIDs or
-    // metadata tokens. Keep all existing methods and type layouts in the four
-    // gameplay assemblies, including compiler-generated coroutine state machines.
-    // New unrelated types/methods are allowed; changed existing logic is not.
+    // Semantic contract over the game code Anytime Save actually relies on: do not
+    // trust version numbers, MVIDs or metadata tokens. Replay itself is guarded at
+    // run time (story scripts are hashed per save, queries are replayed from the
+    // trace and any divergence stops the restore, native saves are blocked while
+    // replaying), so unrelated game changes must not disable the feature.
+    //   FullTypes:   layout and every method body (nested state machines included).
+    //   BodyMethods: method bodies we replace or whose input we rewrite.
+    //   Members:     fields/methods used through reflection; only their signatures.
     public static class CompatibilityContract
     {
         public static string Digest(string value)
@@ -56,22 +60,62 @@ namespace LOMAssistant.Features.AnytimeSave
                 s.Append("\nEH:").Append(((int)e.HandlerType)).Append(':').Append(b.Instructions.IndexOf(e.TryStart)).Append(':').Append(b.Instructions.IndexOf(e.TryEnd)).Append(':').Append(b.Instructions.IndexOf(e.HandlerStart)).Append(':').Append(b.Instructions.IndexOf(e.HandlerEnd)).Append(':').Append(b.Instructions.IndexOf(e.FilterStart)).Append(':').Append(e.CatchType);
             return s.ToString();
         }
+        static readonly string[] Files = { "Mortal.Core.dll", "Mortal.Story.dll", "Mortal.Free.dll", "Fungus.dll", "mscorlib.dll", "UnityEngine.CoreModule.dll" };
+        static readonly string[] FullTypes =
+        {
+            "Mortal.Core.SaveSystem", "Mortal.Story.DiceMenuDialog", "Mortal.Story.DiceCheckResult", "Mortal.Story.DiceCheckAddition",
+            "System.Random", "UnityEngine.Random",
+        };
+        static readonly string[] BodyMethods =
+        {
+            "Mortal.Core.CustomMenuDialog::InteractableCacheButton", "Mortal.Core.CustomMenuDialog::get_CachedButtons",
+            "Fungus.LuaEnvironment::LoadLuaFunction",
+        };
+        static readonly string[] Members =
+        {
+            "Mortal.Core.GameSave::StartStoryScript",
+            "Mortal.Core.PlayerStatManagerData::get_Instance", "Mortal.Core.PlayerStatManagerData::get_CurrentStoryScript",
+            "Mortal.Core.PlayerStatManagerData::SetStoryScript", "Mortal.Core.PlayerStatManagerData::SetStartScript",
+            "Mortal.Core.SceneController::get_Instance", "Mortal.Core.SceneController::get_IsPrepare", "Mortal.Core.SceneController::get_IsLoading",
+            "Mortal.Core.SceneController::LoadTitle", "Mortal.Core.SceneController::LoadNewScene",
+            "Mortal.Core.SoundManager::get_Instance", "Mortal.Core.SoundManager::_currentMusic", "Mortal.Core.SoundManager::_currentEnvSound",
+            "Mortal.Core.SoundManager::PlayMusic", "Mortal.Core.SoundManager::PlayEnvSound", "Mortal.Core.SoundManager::StopMusic",
+            "Mortal.Free.FreeManager::get_Instance", "Mortal.Free.FreeManager::_rand",
+            "Mortal.Free.FreeManager::get_IsProcessing", "Mortal.Free.FreeManager::get_EnableHotKey",
+        };
+        static bool IsFull(string type)
+        {
+            return FullTypes.Any(t => type == t || type.StartsWith(t + "/", StringComparison.Ordinal));
+        }
         public static SortedDictionary<string, string> Snapshot(string managed)
         {
             var result = new SortedDictionary<string, string>(StringComparer.Ordinal);
-            foreach (string file in new[] { "Mortal.Core.dll", "Mortal.Story.dll", "Mortal.Free.dll", "Fungus.dll", "mscorlib.dll", "UnityEngine.CoreModule.dll" })
+            foreach (string file in Files)
             using (var module = ModuleDefinition.ReadModule(Path.Combine(managed, file)))
             foreach (var type in Types(module.Types))
             {
-                if (file == "mscorlib.dll" && type.FullName != "System.Random") continue;
-                if (file == "UnityEngine.CoreModule.dll" && type.FullName != "UnityEngine.Random/State" && type.FullName != "UnityEngine.Random") continue;
                 string prefix = file + "|";
-                var shape = new StringBuilder(type.FullName + "|" + ((int)type.Attributes) + "|" + type.BaseType + "|" + type.PackingSize + "|" + type.ClassSize + "|" + Attributes(type));
-                foreach (var face in type.Interfaces) shape.Append("\nI:").Append(face.InterfaceType.FullName);
-                // Preserve field order: native/Unity serialization may depend on it.
-                foreach (var f in type.Fields) shape.Append("\nF:").Append(f.FullName).Append('|').Append(((int)f.Attributes)).Append('|').Append(f.Offset).Append('|').Append(Value(f.Constant)).Append('|').Append(Value(f.InitialValue)).Append('|').Append(Attributes(f));
-                result[prefix + "T:" + type.FullName] = Digest(shape.ToString());
-                foreach (var method in type.Methods) result[prefix + "M:" + method.FullName] = Digest(Body(method));
+                if (IsFull(type.FullName))
+                {
+                    var shape = new StringBuilder(type.FullName + "|" + ((int)type.Attributes) + "|" + type.BaseType + "|" + type.PackingSize + "|" + type.ClassSize + "|" + Attributes(type));
+                    foreach (var face in type.Interfaces) shape.Append("\nI:").Append(face.InterfaceType.FullName);
+                    // Preserve field order: native/Unity serialization may depend on it.
+                    foreach (var f in type.Fields) shape.Append("\nF:").Append(f.FullName).Append('|').Append(((int)f.Attributes)).Append('|').Append(f.Offset).Append('|').Append(Value(f.Constant)).Append('|').Append(Value(f.InitialValue)).Append('|').Append(Attributes(f));
+                    result[prefix + "T:" + type.FullName] = Digest(shape.ToString());
+                    foreach (var method in type.Methods) result[prefix + "M:" + method.FullName] = Digest(Body(method));
+                    continue;
+                }
+                foreach (var method in type.Methods)
+                    if (BodyMethods.Contains(type.FullName + "::" + method.Name)) result[prefix + "M:" + method.FullName] = Digest(Body(method));
+                foreach (string member in Members)
+                {
+                    if (!member.StartsWith(type.FullName + "::", StringComparison.Ordinal)) continue;
+                    string name = member.Substring(type.FullName.Length + 2);
+                    var signatures = type.Fields.Where(f => f.Name == name).Select(f => f.FullName + "|" + (f.IsStatic ? "static" : "instance"))
+                        .Concat(type.Methods.Where(m => m.Name == name).Select(m => m.FullName + "|" + (m.IsStatic ? "static" : "instance")))
+                        .OrderBy(x => x, StringComparer.Ordinal).ToArray();
+                    if (signatures.Length != 0) result[prefix + "S:" + member] = Digest(String.Join("\n", signatures));
+                }
             }
             return result;
         }
@@ -87,7 +131,7 @@ namespace LOMAssistant.Features.AnytimeSave
                 if (at != 64) throw new InvalidDataException("Invalid compatibility contract");
                 result.Add(line.Substring(at + 1).TrimEnd('\r'), line.Substring(0, at));
             }
-            if (result.Count < 100) throw new InvalidDataException("Incomplete compatibility contract");
+            if (result.Count < 50) throw new InvalidDataException("Incomplete compatibility contract");
             return result;
         }
         public static List<string> Differences(SortedDictionary<string, string> expected, SortedDictionary<string, string> current)

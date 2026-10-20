@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # 重新生成随时存档的兼容契约（LOMAssistant.Features.AnytimeSave/contract.tsv.gz）。
-# 游戏更新后先只对比：./tools/anytime-contract/generate.sh -   （列出改动的方法）
+# 契约只覆盖随时存档真正依赖的游戏代码（范围见 CompatibilityContract.cs），游戏更新改到这些地方时随时存档才会停用。
+# 游戏更新后先只对比：./tools/anytime-contract/generate.sh -   （列出改动的项目，没有改动时返回 0）
 # 确认改动不影响存读档后再生成：./tools/anytime-contract/generate.sh
 set -euo pipefail
 cd "$(dirname "$0")/../.."
