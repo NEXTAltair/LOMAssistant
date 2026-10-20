@@ -86,6 +86,7 @@ internal class InstallerForm : Form
 	private readonly TextBox _log = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, BorderStyle = BorderStyle.None };
 	private readonly CheckBox _skipLogo = new CheckBox { Text = "跳过游戏开头Logo（取消勾选恢复Logo）", AutoSize = true, Checked = true, Margin = new Padding(0, 4, 0, 6) };
 	private readonly Button _install = new Button { Text = "一键安装 / 更新", Dock = DockStyle.Fill, Height = 46, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+	private readonly Button _uninstall = new Button { Text = "卸载本 Mod", Dock = DockStyle.Fill, Height = 34, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 	private readonly Button _export = new Button { Text = "导出诊断（Mod 不生效时用，打包日志发给作者）", Dock = DockStyle.Fill, Height = 34, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 	private readonly Button _browse = new Button { Text = "选择…", AutoSize = true, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 	private readonly List<string> _pluginPaths = new List<string>();
@@ -105,8 +106,8 @@ internal class InstallerForm : Form
 		Text = "活侠传拓展 安装器";
 		Font = new Font("Microsoft YaHei UI", 10f);
 		AutoScaleMode = AutoScaleMode.Dpi;
-		ClientSize = new Size(640, 720);
-		MinimumSize = new Size(560, 640);
+		ClientSize = new Size(640, 760);
+		MinimumSize = new Size(560, 680);
 		StartPosition = FormStartPosition.CenterScreen;
 		BackColor = Paper;
 
@@ -136,6 +137,7 @@ internal class InstallerForm : Form
 			_skipLogo,
 			_install,
 			_export,
+			_uninstall,
 			Heading("日志"),
 			logCard,
 		};
@@ -169,6 +171,10 @@ internal class InstallerForm : Form
 		_export.ForeColor = Ink;
 		_export.Margin = new Padding(0, 6, 0, 0);
 		_export.FlatAppearance.BorderColor = Color.FromArgb(200, 190, 175);
+		_uninstall.BackColor = Card;
+		_uninstall.ForeColor = Muted;
+		_uninstall.Margin = new Padding(0, 6, 0, 0);
+		_uninstall.FlatAppearance.BorderColor = Color.FromArgb(200, 190, 175);
 		_browse.BackColor = Card;
 		_browse.FlatAppearance.BorderColor = Color.FromArgb(200, 190, 175);
 		_browse.Margin = new Padding(8, 3, 0, 3);
@@ -181,6 +187,7 @@ internal class InstallerForm : Form
 		_browse.Click += delegate { BrowseGame(); };
 		_install.Click += delegate { StartInstall(); };
 		_export.Click += delegate { ExportDiagnostics(); };
+		_uninstall.Click += delegate { Uninstall(); };
 
 		Log("活侠传拓展 安装器");
 		SetGame(game ?? FindGame());
@@ -437,6 +444,92 @@ internal class InstallerForm : Form
 			_pluginPaths.Add(dll);
 			_plugins.Items.Add(@"patchers\" + dll.Substring(patchers.Length + 1) + "　【预加载补丁：本 Mod 不需要，可能导致 BepInEx 启动失败】", true);
 		}
+	}
+
+	// ---------------- 卸载 ----------------
+
+	// 删掉本 Mod 和它的配置，恢复开头 Logo。还有别的 Mod 就把 BepInEx 加载器留给它们；没有了就连加载器一起删，
+	// 游戏目录回到没装 Mod 的样子。「已停用的Mod」、别的 Mod 的配置和存档（在游戏存档文件夹里，含随时存档、剧情回顾收录）都不动
+	private void Uninstall()
+	{
+		if (_game == null)
+		{
+			MessageBox.Show(this, "请先选择游戏目录。", "卸载", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			return;
+		}
+		if (Process.GetProcessesByName("Mortal").Length > 0)
+		{
+			MessageBox.Show(this, "游戏正在运行，请先退出游戏再卸载。", "卸载", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+			return;
+		}
+		RefreshPlugins();
+		int others = _pluginPaths.Count;
+		string question = "确定卸载活侠传拓展吗？\n\n"
+			+ (others > 0
+				? "还有 " + others + " 个别的 Mod，BepInEx 加载器会留给它们用，只删本 Mod。"
+				: "没有别的 Mod 了，BepInEx 加载器也一起删掉，游戏回到没装 Mod 的样子。")
+			+ "\n\n存档不受影响（随时存档、剧情回顾收录的节点也留着，以后重装还能接着用）。";
+		if (MessageBox.Show(this, question, "卸载", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
+		{
+			return;
+		}
+		try
+		{
+			try
+			{
+				Log(SplashPatch.Apply(_game, false));
+			}
+			catch (Exception e)
+			{
+				Log("恢复开头 Logo 失败（" + e.Message + "）。");
+			}
+			DeletePath(@"BepInEx\plugins\LOMAssistant");
+			DeletePath(@"BepInEx\config\LOMAssistant.cfg");
+			if (others == 0)
+			{
+				foreach (string rel in new[] { "winhttp.dll", "doorstop_config.ini", ".doorstop_version", "changelog.txt", @"BepInEx\core", @"BepInEx\cache", @"BepInEx\LogOutput.log", @"BepInEx\ErrorLog.log" })
+				{
+					DeletePath(rel);
+				}
+				// 剩下的文件夹里没有文件了就删掉（「已停用的Mod」、别的 Mod 的配置还在的话会留下）
+				foreach (string rel in new[] { @"BepInEx\plugins", @"BepInEx\patchers", @"BepInEx\config", "BepInEx" })
+				{
+					string dir = Path.Combine(_game, rel);
+					if (Directory.Exists(dir) && Directory.GetFiles(dir, "*", SearchOption.AllDirectories).Length == 0)
+					{
+						DeletePath(rel);
+					}
+				}
+			}
+			bool disabled = Directory.Exists(Path.Combine(_game, DisabledFolder));
+			Finish(true, "已卸载活侠传拓展。" + (disabled ? "\n\n以前停用的别的 Mod 还在「BepInEx\\已停用的Mod」里，想用的话自己挪回去。" : ""), "卸载");
+		}
+		catch (UnauthorizedAccessException)
+		{
+			AskElevate();
+		}
+		catch (Exception e)
+		{
+			Finish(false, "卸载没有完成：" + e.Message + "\n\n请确认游戏已退出，再试一次。", "卸载");
+		}
+	}
+
+	private void DeletePath(string rel)
+	{
+		string path = Path.Combine(_game, rel);
+		if (Directory.Exists(path))
+		{
+			Directory.Delete(path, recursive: true);
+		}
+		else if (File.Exists(path))
+		{
+			File.Delete(path);
+		}
+		else
+		{
+			return;
+		}
+		Log("已删除 " + rel);
 	}
 
 	// ---------------- 联网检查 ----------------
@@ -728,7 +821,7 @@ internal class InstallerForm : Form
 		return a != null && b != null && string.Equals(Path.GetFullPath(a).TrimEnd('\\'), Path.GetFullPath(b).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase);
 	}
 
-	private void Finish(bool ok, string message)
+	private void Finish(bool ok, string message, string title = null)
 	{
 		Log(message.Replace("\n\n", " "));
 		BeginInvoke(new Action(() =>
@@ -742,7 +835,7 @@ internal class InstallerForm : Form
 			SetGame(_game);
 			_install.Enabled = true;
 			_browse.Enabled = true;
-			MessageBox.Show(this, message, ok ? "安装完成" : "安装失败", MessageBoxButtons.OK, ok ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+			MessageBox.Show(this, message, title ?? (ok ? "安装完成" : "安装失败"), MessageBoxButtons.OK, ok ? MessageBoxIcon.Information : MessageBoxIcon.Error);
 		}));
 	}
 
