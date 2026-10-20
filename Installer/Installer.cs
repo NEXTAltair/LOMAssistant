@@ -84,6 +84,7 @@ internal class InstallerForm : Form
 	private readonly Label _pluginsNone = new Label { AutoSize = true, Text = "没有发现其他 Mod。", ForeColor = Color.FromArgb(120, 110, 98) };
 	private readonly CheckedListBox _plugins = new CheckedListBox { Dock = DockStyle.Fill, CheckOnClick = true, IntegralHeight = false, BorderStyle = BorderStyle.FixedSingle, Height = 84 };
 	private readonly TextBox _log = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, BorderStyle = BorderStyle.None };
+	private readonly CheckBox _skipLogo = new CheckBox { Text = "跳过游戏开头Logo（取消勾选恢复Logo）", AutoSize = true, Checked = true, Margin = new Padding(0, 4, 0, 6) };
 	private readonly Button _install = new Button { Text = "一键安装 / 更新", Dock = DockStyle.Fill, Height = 46, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 	private readonly Button _export = new Button { Text = "导出诊断（Mod 不生效时用，打包日志发给作者）", Dock = DockStyle.Fill, Height = 34, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 	private readonly Button _browse = new Button { Text = "选择…", AutoSize = true, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
@@ -104,8 +105,8 @@ internal class InstallerForm : Form
 		Text = "活侠传拓展 安装器";
 		Font = new Font("Microsoft YaHei UI", 10f);
 		AutoScaleMode = AutoScaleMode.Dpi;
-		ClientSize = new Size(640, 640);
-		MinimumSize = new Size(560, 560);
+		ClientSize = new Size(640, 720);
+		MinimumSize = new Size(560, 640);
 		StartPosition = FormStartPosition.CenterScreen;
 		BackColor = Paper;
 
@@ -132,6 +133,7 @@ internal class InstallerForm : Form
 			_pluginsNone,
 			_plugins,
 			new Panel { Height = 12, Dock = DockStyle.Fill },
+			_skipLogo,
 			_install,
 			_export,
 			Heading("日志"),
@@ -554,6 +556,7 @@ internal class InstallerForm : Form
 				&& (Short(installed) == Short(newest) || installed > newest))
 			{
 				DisablePlugins(disable);
+				Logo();
 				Finish(true, "已经是最新版本 " + Short(installed) + "，不需要重新安装。" + (disable.Count > 0 ? "\n\n勾选的 Mod 已移到「BepInEx\\已停用的Mod」。" : ""));
 				return;
 			}
@@ -572,6 +575,7 @@ internal class InstallerForm : Form
 				Finish(false, "安装后检查失败：游戏目录里缺少 Mod 文件。");
 				return;
 			}
+			Logo();
 			Finish(true, "安装完成，当前版本 " + Short(now) + "。\n\n正常启动游戏即可，游戏里按 F8 打开 Mod 面板。");
 		}
 		catch (UnauthorizedAccessException)
@@ -581,6 +585,18 @@ internal class InstallerForm : Form
 		catch (Exception e)
 		{
 			Finish(false, "安装失败：" + e.Message);
+		}
+	}
+
+	private void Logo()
+	{
+		try
+		{
+			Log(SplashPatch.Apply(_game, _skipLogo.Checked));
+		}
+		catch (Exception e)
+		{
+			Log("设置开头 Logo 失败（" + e.Message + "），不影响 Mod 使用。");
 		}
 	}
 
