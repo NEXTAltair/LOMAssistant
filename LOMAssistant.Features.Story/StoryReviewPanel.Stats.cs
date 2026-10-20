@@ -17,15 +17,19 @@ public partial class StoryReviewPanel
 	{
 		public string Id = "", Name = "", Note = "";
 		public Func<int> Get;
-		public Action<int> Set; // 设成这个值
+		public Action<int> Set; // 设成这个值；没有就是只读（只显示）
 		public int Step = 5;
 		public Func<string> Extra; // 数值后面的小字，如加成、心上人是谁、等级上限
 	}
 
 	private string _statsSearch = "";
 	private Vector2 _statsScroll;
-	private int _flagPage;
+	private readonly Dictionary<string, int> _sectionPages = new Dictionary<string, int>();
+	// 子分页：一次只看一组（搜索时各组都搜）
+	private string _statsGroup = "角色数值";
 	private string _flagQuery;
+	// 物品数量改了以后，功法修炼那段要跟着变（新拿到的书也要列出来），下次画的时候重新整理
+	private static bool _statsDirty;
 	private readonly Dictionary<string, string> _statInputs = new Dictionary<string, string>();
 	private List<(string Title, List<StatRow> Rows)> _statSections;
 	private object _statsFor;
@@ -36,7 +40,7 @@ public partial class StoryReviewPanel
 	{
 		GameStatType.體力, GameStatType.內力, GameStatType.輕功, GameStatType.學問, GameStatType.嘴力, GameStatType.心理衛生,
 		GameStatType.性情, GameStatType.處世, GameStatType.修養, GameStatType.道德, GameStatType.陰陽內功, GameStatType.命運,
-		GameStatType.魅力, GameStatType.銀兩, GameStatType.個人貢獻度, GameStatType.抗毒, GameStatType.抗麻, GameStatType.愛人, GameStatType.變心,
+		GameStatType.魅力, GameStatType.廚藝, GameStatType.銀兩, GameStatType.個人貢獻度, GameStatType.抗毒, GameStatType.抗麻, GameStatType.愛人, GameStatType.變心,
 	};
 
 	private static readonly GameStatType[] Martial =
@@ -49,6 +53,34 @@ public partial class StoryReviewPanel
 	{
 		GameStatType.門派規模, GameStatType.門派人數, GameStatType.向心力, GameStatType.門派名聲, GameStatType.武學點數,
 		GameStatType.鍛造, GameStatType.毒藥, GameStatType.門派資產, GameStatType.門派貢獻,
+	};
+
+	// 上面几段没列的其它数值：游戏里有就显示，原版测试面板改不了的也能改
+	private static readonly GameStatType[] Other =
+	{
+		GameStatType.行動次數, GameStatType.額外行動次數_1, GameStatType.額外行動次數_2, GameStatType.額外行動次數_3,
+		GameStatType.防禦, GameStatType.攻擊爆擊, GameStatType.暗器爆擊, GameStatType.戰役預設血量, GameStatType.稱號, GameStatType.娘化,
+		GameStatType.全武學點數, GameStatType.全鍛造點數, GameStatType.全毒藥點數, GameStatType.全貢獻度,
+	};
+
+	// 游戏本地化里没有名字的数值，用这里的名字
+	private static readonly Dictionary<GameStatType, string> OwnNames = new Dictionary<GameStatType, string>
+	{
+		{ GameStatType.廚藝, "厨艺" },
+		{ GameStatType.行動次數, "本旬行动次数" },
+		{ GameStatType.額外行動次數_1, "额外行动次数 1" },
+		{ GameStatType.額外行動次數_2, "额外行动次数 2" },
+		{ GameStatType.額外行動次數_3, "额外行动次数 3" },
+		{ GameStatType.防禦, "防御" },
+		{ GameStatType.攻擊爆擊, "攻击暴击" },
+		{ GameStatType.暗器爆擊, "暗器暴击" },
+		{ GameStatType.戰役預設血量, "团战预设血量" },
+		{ GameStatType.稱號, "称号" },
+		{ GameStatType.娘化, "娘化" },
+		{ GameStatType.全武學點數, "累计武学点" },
+		{ GameStatType.全鍛造點數, "累计锻造点" },
+		{ GameStatType.全毒藥點數, "累计炼丹点" },
+		{ GameStatType.全貢獻度, "累计贡献度" },
 	};
 
 	/// <summary>F9：打开面板并切到「数值」页；已经在这一页就关掉。</summary>
@@ -81,8 +113,9 @@ public partial class StoryReviewPanel
 			GUI.Label(new Rect(r.x, r.y, r.width, S(40)), "进游戏读档后才能改数值", _muted);
 			return;
 		}
-		if (_statSections == null || !ReferenceEquals(_statsFor, player))
+		if (_statSections == null || !ReferenceEquals(_statsFor, player) || _statsDirty)
 		{
+			_statsDirty = false;
 			_statSections = BuildStatSections(player);
 			_statsFor = player;
 		}
@@ -90,9 +123,26 @@ public partial class StoryReviewPanel
 		if (query != _flagQuery)
 		{
 			_flagQuery = query;
-			_flagPage = 0;
+			_sectionPages.Clear();
 		}
-		var area = new Rect(r.x, r.y + S(46), r.width, r.height - S(46));
+		// 搜索框下面一排分组，点哪组看哪组；在搜索时各组的结果都列出来
+		float gx = r.x, gy = r.y + S(44);
+		foreach (var (title, _) in _statSections)
+		{
+			float width = _tabOn.CalcSize(new GUIContent(title)).x * 0.85f + S(24);
+			if (gx + width > r.xMax)
+			{
+				break;
+			}
+			bool on = title == _statsGroup && query.Length == 0;
+			if (GUI.Button(new Rect(gx, gy, width, S(32)), title, on ? _primary : _button) && _statsGroup != title)
+			{
+				_statsGroup = title;
+				_statsScroll = Vector2.zero;
+			}
+			gx += width + S(6);
+		}
+		var area = new Rect(r.x, r.y + S(86), r.width, r.height - S(86));
 		DragScroll("stats", area, ref _statsScroll);
 		GUILayout.BeginArea(area);
 		_statsScroll = GUILayout.BeginScrollView(_statsScroll);
@@ -101,29 +151,34 @@ public partial class StoryReviewPanel
 		int columns = Mathf.Max(1, (int)((area.width - S(30)) / rowWidth));
 		foreach (var (title, rows) in _statSections)
 		{
+			if (query.Length == 0 && title != _statsGroup)
+			{
+				continue;
+			}
 			var shown = rows.Where(row => Matches(query, row.Name, row.Id, row.Note)).ToList();
 			if (shown.Count == 0)
 			{
 				continue;
 			}
 			bool flags = title == "旗标";
-			int pages = 1;
-			if (flags)
-			{
-				pages = Mathf.Max(1, (shown.Count + FlagsPerPage - 1) / FlagsPerPage);
-				_flagPage = Mathf.Clamp(_flagPage, 0, pages - 1);
-				shown = shown.Skip(_flagPage * FlagsPerPage).Take(FlagsPerPage).ToList();
-			}
+			// 一段太长（旗标、书籍、物品）就分页
+			int total = shown.Count;
+			int pages = Mathf.Max(1, (total + FlagsPerPage - 1) / FlagsPerPage);
+			_sectionPages.TryGetValue(title, out int page);
+			page = Mathf.Clamp(page, 0, pages - 1);
+			shown = shown.Skip(page * FlagsPerPage).Take(FlagsPerPage).ToList();
 			GUILayout.Space(S(8));
 			GUILayout.BeginHorizontal();
-			GUILayout.Label(title + (flags ? $"　<size={Mathf.RoundToInt(16 * _scale)}><color=#73644F>共 {rows.Count(row => Matches(query, row.Name, row.Id, row.Note))} 面，按编号或中文说明搜</color></size>" : ""), _heading);
+			string count = flags ? $"共 {total} 面，按编号或中文说明搜" : pages > 1 ? $"共 {total} 项" : "";
+			GUILayout.Label(title + (count.Length > 0 ? $"　<size={Mathf.RoundToInt(16 * _scale)}><color=#73644F>{count}</color></size>" : ""), _heading);
 			GUILayout.FlexibleSpace();
-			if (flags && pages > 1)
+			if (pages > 1)
 			{
-				if (GUILayout.Button("上一页", _button, GUILayout.Width(S(90)))) _flagPage = Mathf.Max(0, _flagPage - 1);
-				GUILayout.Label($"{_flagPage + 1} / {pages}", _center, GUILayout.Width(S(80)));
-				if (GUILayout.Button("下一页", _button, GUILayout.Width(S(90)))) _flagPage = Mathf.Min(pages - 1, _flagPage + 1);
+				if (GUILayout.Button("上一页", _button, GUILayout.Width(S(90)))) page = Mathf.Max(0, page - 1);
+				GUILayout.Label($"{page + 1} / {pages}", _center, GUILayout.Width(S(80)));
+				if (GUILayout.Button("下一页", _button, GUILayout.Width(S(90)))) page = Mathf.Min(pages - 1, page + 1);
 			}
+			_sectionPages[title] = page;
 			GUILayout.EndHorizontal();
 			for (int i = 0; i < shown.Count; i += columns)
 			{
@@ -159,6 +214,13 @@ public partial class StoryReviewPanel
 		{
 			Hover(nameRect, full);
 			Hover(extraRect, full);
+		}
+		if (row.Set == null)
+		{
+			// 只读：只显示数值，右边空着
+			GUILayout.FlexibleSpace();
+			GUILayout.EndHorizontal();
+			return;
 		}
 		if (GUILayout.Button("-" + row.Step, StepButton(), GUILayout.Width(S(58))))
 		{
@@ -217,6 +279,7 @@ public partial class StoryReviewPanel
 			("角色数值", Character.Select(t => StatRowOf(player, t)).Where(x => x != null).ToList()),
 			("武功与学识", Martial.Select(t => StatRowOf(player, t)).Where(x => x != null).ToList()),
 			("门派", Sect.Select(t => StatRowOf(player, t)).Where(x => x != null).ToList()),
+			("其他数值", Other.Concat(UnlistedStats(player)).Select(t => StatRowOf(player, t)).Where(x => x != null).ToList()),
 		};
 		// 好感：游戏里所有人，原版测试面板没列的（龙渊、石公远……）也在
 		var favor = new List<StatRow>();
@@ -236,11 +299,11 @@ public partial class StoryReviewPanel
 			});
 		}
 		sections.Add(("好感", favor));
-		// 天赋：会显示等级的那些
+		// 天赋：全部（游戏里不显示等级的也列出来）
 		var talents = new List<StatRow>();
 		foreach (PlayerTalentData talent in player.Talents?.List ?? new List<PlayerTalentData>())
 		{
-			if (talent == null || !talent.DisplayLevel)
+			if (talent == null)
 			{
 				continue;
 			}
@@ -258,6 +321,12 @@ public partial class StoryReviewPanel
 			});
 		}
 		sections.Add(("天赋", talents));
+		sections.Add(("功法修炼", MartialRows()));
+		sections.Add(("锻造与炼丹", UpgradeRows(player)));
+		sections.Add(("设施", FacilityRows(player)));
+		ItemDatabase items = ItemDatabase.Instance;
+		sections.Add(("书籍", ItemRows(items?.Books)));
+		sections.Add(("物品", ItemRows(items?.Miscs).Concat(ItemRows(items?.Special)).Concat(ItemRows(items?.Consumables)).ToList()));
 		// 旗标：全部，按编号排，说明转简体
 		var flags = new List<StatRow>();
 		MissionManagerData missions = MissionManagerData.Instance;
@@ -281,6 +350,154 @@ public partial class StoryReviewPanel
 		return sections;
 	}
 
+	// 上面几组都没列到的数值（游戏以后新加的也算），放进「其他数值」
+	private static IEnumerable<GameStatType> UnlistedStats(PlayerStatManagerData player)
+	{
+		var listed = new HashSet<GameStatType>(Character.Concat(Martial).Concat(Sect).Concat(Other));
+		var list = player.Stats?.List ?? new List<GameStat>();
+		return list.Where(st => st != null && !listed.Contains(st.StatType)).Select(st => st.StatType).Distinct().OrderBy(t => (int)t).ToList();
+	}
+
+	// 不推荐直接拿的书：和四师兄商店不卖的是同一批
+	private static readonly Dictionary<string, string> ItemWarnings = new Dictionary<string, string>
+	{
+		{ "9001", "提前拿到会让六月后山事件出 bug，剧情需要时游戏会自己给。" },
+		{ "2010", "剧情里拿不到、原版商店也不卖，像是没做完的书。" },
+		{ "2200", "剧情里拿不到、原版商店也不卖，像是没做完的书。" },
+		{ "4000", "剧情里拿不到、原版商店也不卖，像是没做完的书。" },
+	};
+
+	/// <summary>书籍、物品的数量：改成多少背包里就有多少。从没有到有时，像在商店买到一样推进相关任务。</summary>
+	private static List<StatRow> ItemRows(ItemDataCollection collection)
+	{
+		var rows = new List<StatRow>();
+		ItemDatabase items = ItemDatabase.Instance;
+		foreach (ItemData item in collection?.List?.OfType<ItemData>() ?? Enumerable.Empty<ItemData>())
+		{
+			ItemData it = item;
+			// 消耗品（团战里的药之类）游戏不往存档里写数量，改了也存不住，只显示
+			bool consumable = it.ItemType == GameItemType.消耗品;
+			ItemWarnings.TryGetValue(it.Id, out string warning);
+			string desc = Localized(it.GetDescKey(), "").Replace("\n", " ");
+			rows.Add(new StatRow
+			{
+				Id = "item:" + (int)it.ItemType + ":" + it.Id,
+				Name = Localized(it.GetNameKey(), it.Id),
+				Note = (warning != null ? "【注意】" + warning + "\n" : "") + (consumable ? "消耗品的数量不写进存档，这里只显示。\n" : "") + desc,
+				Get = () => it.CurrentCount,
+				Set = consumable ? null : v =>
+				{
+					int before = it.CurrentCount;
+					items.SetItem(it.ItemType, it.Id, Mathf.Max(0, v));
+					if (it.CurrentCount > before)
+					{
+						foreach (PlayerMissionStat stat in it.ApplyMissionStat ?? new PlayerMissionStat[0])
+						{
+							stat?.Mission?.SetCurrentKey(stat.Key);
+						}
+					}
+					_statsDirty = true;
+				},
+				Step = 1,
+				Extra = () => warning != null ? "(慎用)" : "",
+			});
+		}
+		return rows;
+	}
+
+	/// <summary>拥有的武学书：本层的修炼点数（层数照游戏自己的修炼规则走，这里不直接改层数）。</summary>
+	private static List<StatRow> MartialRows()
+	{
+		var rows = new List<StatRow>();
+		foreach (Book book in ItemDatabase.Instance?.Books?.List?.OfType<Book>() ?? Enumerable.Empty<Book>())
+		{
+			if (!book.IsMartial || book.CurrentCount <= 0)
+			{
+				continue;
+			}
+			Book b = book;
+			int max = b.LevelData?.Length ?? 0;
+			bool open = b.CurrentMartialLevel >= 0 && b.CurrentMartialLevel < max && b.LevelData[b.CurrentMartialLevel] != null;
+			int need = open ? b.LevelData[b.CurrentMartialLevel].Points : 0;
+			rows.Add(new StatRow
+			{
+				Id = "martial:" + b.Id,
+				Name = Localized(b.GetNameKey(), b.Id),
+				Note = open ? "本层修炼点数，满 " + need + " 点进下一层（要在修炼界面再投一次点才会升层）。" : "已经练满。",
+				Get = () => b.CurrentLevelPoints,
+				Set = open && need > 0 ? v => b.SetMartial(b.CurrentMartialLevel, Mathf.Clamp(v, 0, need - 1)) : (Action<int>)null,
+				Step = 5,
+				Extra = () => open ? $"第{b.CurrentMartialLevel + 1}层/{need}" : "已满级",
+			});
+		}
+		return rows;
+	}
+
+	/// <summary>锻造、炼丹的开发项目：本级的开发点数（等级照游戏自己的开发规则走）。</summary>
+	private static List<StatRow> UpgradeRows(PlayerStatManagerData player)
+	{
+		var rows = new List<StatRow>();
+		foreach (string field in new[] { "_weaponUpgradeItems", "_poisonUpgradeItems" })
+		{
+			var collection = Traverse.Create(player).Field(field).GetValue<UpgradeItemCollectionData>();
+			foreach (UpgradeItemData item in collection?.List ?? new List<UpgradeItemData>())
+			{
+				if (item == null)
+				{
+					continue;
+				}
+				UpgradeItemData u = item;
+				int max = u.LevelCounts;
+				bool open = u.CurrentLevel >= 0 && u.CurrentLevel < max && u.UpgradeLevels[u.CurrentLevel] != null;
+				int need = open ? u.UpgradeLevels[u.CurrentLevel].LevelPoints : 0;
+				string kind = field == "_weaponUpgradeItems" ? "锻造" : "炼丹";
+				rows.Add(new StatRow
+				{
+					Id = "upgrade:" + u.Key,
+					Name = Localized(u.GetNameKey(), u.Key),
+					Note = open ? kind + "：本级开发点数，满 " + need + " 点升级（要在" + kind + "界面再投一次点才会升级）。" : kind + "：还没开发或已经满级。",
+					Get = () => u.CurrentPoints,
+					Set = open && need > 0 ? v => { u.Setup(u.CurrentLevel, Mathf.Clamp(v, 0, need - 1), u.AlreadyDevelop); u.UpdateStatus(); } : (Action<int>)null,
+					Step = 5,
+					Extra = () => u.CurrentLevel < 0 ? "未开发" : u.CurrentLevel >= max ? "已满级" : $"{u.CurrentLevel}级/{need}",
+				});
+			}
+		}
+		return rows;
+	}
+
+	/// <summary>门派设施（药铺、温泉……）的等级，存在旗标里，这里用设施名显示。</summary>
+	private static List<StatRow> FacilityRows(PlayerStatManagerData player)
+	{
+		var rows = new List<StatRow>();
+		var config = Traverse.Create(player).Field("_facility").GetValue<FacilityConfigData>();
+		foreach (FacilityItemData facility in config?.Data ?? new FacilityItemData[0])
+		{
+			if (facility == null)
+			{
+				continue;
+			}
+			var flag = Traverse.Create(facility).Field("_level").GetValue<FlagData>();
+			int max = (Traverse.Create(facility).Field("_levelData").GetValue() as Array)?.Length ?? 0;
+			if (flag == null)
+			{
+				continue;
+			}
+			FlagData f = flag;
+			rows.Add(new StatRow
+			{
+				Id = "facility:" + f.name,
+				Name = Localized(facility.GetNameKey(), facility.name),
+				Note = "设施等级（旗标 " + f.name + "），0 是还没建。",
+				Get = () => f.State,
+				Set = v => f.State = Mathf.Clamp(v, 0, max),
+				Step = 1,
+				Extra = () => "/ " + max,
+			});
+		}
+		return rows;
+	}
+
 	private static StatRow StatRowOf(PlayerStatManagerData player, GameStatType type)
 	{
 		GameStat stat;
@@ -298,11 +515,13 @@ public partial class StoryReviewPanel
 		}
 		GameStat s = stat;
 		bool money = type == GameStatType.銀兩 || type == GameStatType.門派資產;
-		bool small = type == GameStatType.門派規模 || type == GameStatType.愛人 || type == GameStatType.變心;
+		bool small = type == GameStatType.門派規模 || type == GameStatType.愛人 || type == GameStatType.變心 || type == GameStatType.行動次數
+			|| type == GameStatType.額外行動次數_1 || type == GameStatType.額外行動次數_2 || type == GameStatType.額外行動次數_3
+			|| type == GameStatType.稱號 || type == GameStatType.娘化;
 		return new StatRow
 		{
 			Id = "stat:" + (int)type,
-			Name = Localized(s.GetLocaleKey(), type.ToString()),
+			Name = Localized(s.GetLocaleKey(), OwnNames.TryGetValue(type, out string own) ? own : TextConverter.ToSimplified(type.ToString())),
 			Get = () => s.FinalValue,
 			Set = v => s.AddValue(v - s.FinalValue, totalAdd: false),
 			Step = money ? 500 : small ? 1 : 5,
