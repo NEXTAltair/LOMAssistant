@@ -126,7 +126,7 @@
 
 ### F9 数值面板
 
-按 F9 打开活侠传拓展窗口的「数值」页，一页里分几段：角色数值（含厨艺）、武功与学识、门派、其他数值（行动次数、防御、暴击、累计点数等）、好感、天赋（全部）、功法修炼点数、锻造与炼丹开发点数、设施等级、书籍、物品、旗标。
+按 F9 打开活侠传拓展窗口的「数值」页，一页里分几段：角色数值、武功与学识、门派、其他数值（行动次数、防御、暴击、累计点数等）、好感、天赋（全部）、功法修炼点数、锻造与炼丹开发点数、设施等级、书籍、物品、旗标。
 
 - **书籍、物品**直接改数量，改成几背包里就有几，不用去四师兄商店买；从没有到有时，和在商店买到一样推进相关任务。《证类本草》等几本会标「慎用」，鼠标停上去看原因。
 
@@ -157,6 +157,8 @@
 **选项结果不显示、骰子不能自选？** 和旧版骰子大师、多功能 Mod 冲突，用安装器会自动处理，手动安装请删掉 `BepInEx\plugins` 里的旧 Mod。
 
 **能和立绘替换 Mod「邪神认知污染ON」一起用吗？** 能。它是 BepInEx 5 的插件，本 Mod 会帮它加载起来。只装它的「1_必装_插件」，**不要**装它的「2_只有没装过BepInEx才装」（装了会把 BepInEx 5 混进来，本 Mod 起不来；真装了就重新运行一次本 Mod 的安装器，会自动清掉）。它的 F8、F9 改不了，检测到它时本 Mod 的设置页、存档备注、数值页热键会让给它，可以按 Tab 打开窗口再点对应的页，或在设置页另绑别的键。
+
+**能和「剧情随行」一起用吗？** 能。xiaozhanshang 的 [剧情随行](https://github.com/xiaozhanshang/MortalStoryWorkbench) 可以和本 Mod 同时安装：两边重叠的功能自动用本 Mod 的，它的快捷键改成 Ctrl+F6 / F8 / F9。
 
 **Linux / Steam Deck？** 手动安装后，在 Steam 启动选项里加 `WINEDLLOVERRIDES="winhttp=n,b" %command%`。
 
@@ -203,5 +205,3 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 - **存档备注显示**：移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 许可）及其[汉化版](https://github.com/shiluodeqiou/LOM_SaveSlotExpander-zh)（shiluodeqiou）。
 - **修炼、锻造、炼丹**：参考风灵月影《活侠传》修改器的功能思路（未使用其代码）。
 - 下载包附带的 [BepInEx](https://github.com/BepInEx/BepInEx)、[UnityDoorstop](https://github.com/NeighTools/UnityDoorstop)、[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) 按各自的许可证分发。
-
-也推荐 xiaozhanshang 的 [剧情随行](https://github.com/xiaozhanshang/MortalStoryWorkbench)，可以和本 Mod 同时安装：两边重叠的功能自动用本 Mod 的，它的快捷键改成 Ctrl+F6 / F8 / F9。
