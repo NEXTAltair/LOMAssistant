@@ -45,6 +45,7 @@ public static class AutoSaveHistoryPatch
 		{
 			return;
 		}
+		var clock = System.Diagnostics.Stopwatch.StartNew();
 		try
 		{
 			string current = GetFile(__instance, slot);
@@ -74,7 +75,7 @@ public static class AutoSaveHistoryPatch
 					File.Move(from, to);
 				}
 			}
-			FileLogger.Log($"自动存档历史：{slot} 已保留旧档（最多 {max} 个）");
+			FileLogger.Log($"自动存档历史：{slot} 已保留旧档（最多 {max} 个）" + (clock.ElapsedMilliseconds >= 200 ? $"，挪旧档用时 {clock.ElapsedMilliseconds} 毫秒" : ""));
 		}
 		catch (Exception e)
 		{
