@@ -49,6 +49,8 @@ public static class ConfigManager
 
 	public static ConfigElement<int> ActionMode;
 
+	public static ConfigElement<int> ActionsPerRound;
+
 	public static ConfigElement<bool> ShowFlagChanges;
 
 	public static ConfigElement<bool> ShowBranchChecks;
@@ -248,7 +250,8 @@ public static class ConfigManager
 		CheatBattleInvincible = new ConfigElement<bool>("CheatBattleInvincible", "团战中我方（主角和同伴）不会受伤：挨打、中毒都不扣血，敌人照常受伤。true=开，false=关", defaultValue: false);
 		CheatBattleNoCooldown = new ConfigElement<bool>("CheatBattleNoCooldown", "团战绝招没有冷却：放完马上又能用。true=开，false=关", defaultValue: false);
 		GameSpeed = new ConfigElement<float>("GameSpeed", "游戏倍速（在游戏原本速度上再乘以该值；1=原速）", 1f);
-		ActionMode = new ConfigElement<int>("ActionMode", "养成行动点：0=正常，1=不消耗（扣到剩 1 点后不再扣，可一直行动；用「空过」结束本旬），2=每旬只有 1 点", 0);
+		ActionMode = new ConfigElement<int>("ActionMode", "养成行动点：0=正常，1=不消耗（扣到剩 1 点后不再扣，可一直行动；用「空过」结束本旬），2=每旬固定 N 点（N 见 ActionsPerRound）", 0);
+		ActionsPerRound = new ConfigElement<int>("ActionsPerRound", "行动点选「每旬N点」时，每旬固定几点（1～5，原版每旬 3 点）。有的选项要「剩余行动点大于 2」才出现，设成 3 点以上就能在旬初触发", 1);
 		ShowFlagChanges = new ConfigElement<bool>("ShowFlagChanges", "剧情改动旗标时在屏幕上提示（可能剧透）。true=开，false=关", defaultValue: false);
 		EnableEventPicker = new ConfigElement<bool>("EnableEventPicker", "随机事件自选：剧情走到随机事件（工作、闲逛等）时先停下，列出满足条件的事件选一个，也可以选随机。true=开，false=关", defaultValue: false);
 		EnableFastDuelRounds = new ConfigElement<bool>("EnableFastDuelRounds", "决斗回合之间的等待缩短：身上状态（buff）多时回合间不再干等几秒，效果和结算不变。默认开；只有怀疑它导致问题时才关。true=开，false=关", defaultValue: true);

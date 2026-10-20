@@ -173,6 +173,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			TryPatchAll(typeof(InputGuardActionGate));
 			TryPatchAll(typeof(InputGuardDialogGate));
 			TryPatchAll(typeof(InputGuardNavigationGate));
+			ConfigManager.ActionsPerRound.OnValueChanged += _ => ActionModePatch.LimitThisRound();
 			LogInfo("行动点模式补丁已应用（当前：" + ActionModePatch.Label(ActionModePatch.Mode) + "）。");
 			LogInfo("自动存档历史补丁已应用。");
 			TryPatchAll(typeof(ShopAllItemsPatch));

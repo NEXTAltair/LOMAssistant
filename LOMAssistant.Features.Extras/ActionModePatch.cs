@@ -7,30 +7,34 @@ using Mortal.Free;
 namespace LOMAssistant.Features.Extras;
 
 /// <summary>
-/// 养成行动点模式（F8 面板切换）：
+/// 养成行动点模式（设置页切换）：
 /// 不消耗：行动点扣到剩 1 点后不再扣。不锁在满值，是因为不少剧情（包括主线）要「行动次数 ≤ 1 / ≤ 2」才触发，
 ///   锁满会卡剧情；剩 1 点时这些条件都满足。想进入下一旬就用「空过」，此时空过会用掉本旬全部行动点。
-/// 每旬 1 点：每旬行动点上限改为 1（地图上的点数显示、旬初自动存档都按 1 算）。
+/// 每旬 N 点：每旬行动点固定为 N（1～5，设置页里改；地图上的点数显示、旬初自动存档都按 N 算）。
+///   有的选项要「剩余行动点大于 2」才出现，设成 3 点以上就能在旬初触发。
 /// </summary>
 public static class ActionModePatch
 {
 	public const int Normal = 0;
 	public const int Unlimited = 1;
-	public const int OnePerRound = 2;
+	public const int FixedPerRound = 2;
 
-	public static readonly int[] Options = { Normal, Unlimited, OnePerRound };
+	public static readonly int[] Options = { Normal, Unlimited, FixedPerRound };
 
 	// 空过结束本旬时置 true，让扣点不被「不消耗」拦下。
 	internal static bool Bypass;
 
 	public static int Mode => ConfigManager.ActionMode.Value;
 
+	/// <summary>每旬固定几点（1～5）。</summary>
+	public static int PerRound => System.Math.Max(1, System.Math.Min(5, ConfigManager.ActionsPerRound.Value));
+
 	public static string Label(int mode)
 	{
 		switch (mode)
 		{
 			case Unlimited: return "不消耗";
-			case OnePerRound: return "每旬1点";
+			case FixedPerRound: return "每旬" + PerRound + "点";
 			default: return "正常";
 		}
 	}
@@ -40,10 +44,15 @@ public static class ActionModePatch
 		ConfigManager.ActionMode.Value = mode;
 		ConfigManager.SetConfigValue(ConfigManager.ActionMode, mode);
 		FileLogger.Log("行动点模式 -> " + Label(mode));
-		// 切到每旬 1 点时，本旬多出来的点立即收掉
-		if (mode == OnePerRound && PlayerStatManagerData.Instance != null && PlayerStatManagerData.Instance.CurrentActionCount > 1)
+		LimitThisRound();
+	}
+
+	/// <summary>改成每旬 N 点（或改了 N）时，本旬多出来的点立即收掉；少的不补，下一旬起按 N 点。</summary>
+	public static void LimitThisRound()
+	{
+		if (Mode == FixedPerRound && PlayerStatManagerData.Instance != null && PlayerStatManagerData.Instance.CurrentActionCount > PerRound)
 		{
-			PlayerStatManagerData.Instance.Stats.Set(GameStatType.行動次數, 1);
+			PlayerStatManagerData.Instance.Stats.Set(GameStatType.行動次數, PerRound);
 		}
 	}
 
@@ -76,9 +85,9 @@ public static class ActionModePatch
 	[HarmonyPatch(typeof(PlayerStatManagerData), "GetMaxActionCount")]
 	public static void GetMaxActionCount_Postfix(ref int __result)
 	{
-		if (Mode == OnePerRound && __result > 1)
+		if (Mode == FixedPerRound)
 		{
-			__result = 1;
+			__result = PerRound;
 		}
 	}
 
@@ -86,19 +95,35 @@ public static class ActionModePatch
 	[HarmonyPatch(typeof(PlayerStatManagerData), "MaxActionCount", MethodType.Getter)]
 	public static void MaxActionCount_Postfix(ref int __result)
 	{
-		if (Mode == OnePerRound && __result > 1)
+		if (Mode == FixedPerRound)
 		{
-			__result = 1;
+			__result = PerRound;
 		}
 	}
 
-	// 有些剧情会让下一旬少行动几次（旗标 T0002）。每旬只有 1 点时再扣就成了 0 点，
+	// 行动次数这个数值自带上限，N 比原版每旬点数多时会被截住，旬初发点前先把上限调够
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(PlayerStatManagerData), "ResetActionCount")]
+	public static void ResetActionCount_Prefix(PlayerStatManagerData __instance)
+	{
+		if (Mode != FixedPerRound)
+		{
+			return;
+		}
+		GameStat stat = __instance.Stats.Get(GameStatType.行動次數);
+		if (stat != null && stat.Max < PerRound)
+		{
+			stat.SetMax(PerRound);
+		}
+	}
+
+	// 有些剧情会让下一旬少行动几次（旗标 T0002）。每旬点数少时再扣就成了 0 点，
 	// 地图上什么都做不了、空过也用不了，会卡住，所以保底 1 点。
 	[HarmonyPostfix]
 	[HarmonyPatch(typeof(PlayerStatManagerData), "ResetActionCount")]
 	public static void ResetActionCount_Postfix(PlayerStatManagerData __instance)
 	{
-		if (Mode == OnePerRound && __instance.CurrentActionCount < 1)
+		if (Mode == FixedPerRound && __instance.CurrentActionCount < 1)
 		{
 			__instance.Stats.Set(GameStatType.行動次數, 1);
 		}
@@ -106,7 +131,7 @@ public static class ActionModePatch
 
 	private static readonly System.Reflection.MethodInfo GetMainCheckData = AccessTools.Method(typeof(MissionManagerData), "GetMainCheckData");
 
-	// 每旬 1 点时，旬初的唐门会议之类的事件会用掉唯一的行动点。行动点归零后游戏先进入下一旬、再检查任务，
+	// 每旬点数少时，旬初的唐门会议之类的事件会用掉仅有的行动点。行动点归零后游戏先进入下一旬、再检查任务，
 	// 只在这一旬触发的主线（例如 3 年 3 月上旬的 M4001_01）就永远错过了，后面的主线全部卡住。
 	// 所以检查任务前，如果本旬还有该触发的主线，就补 1 点，不进入下一旬。
 	[HarmonyPrefix]
@@ -120,7 +145,7 @@ public static class ActionModePatch
 
 	private static void KeepRoundForMain(MissionManagerData missions)
 	{
-		if (Mode != OnePerRound || missions == null)
+		if (Mode != FixedPerRound || missions == null)
 		{
 			return;
 		}
@@ -136,7 +161,7 @@ public static class ActionModePatch
 			{
 				stats.Stats.Set(GameStatType.行動次數, 1);
 				GameTime t = stats.GameTime;
-				FileLogger.Log($"行动点模式（每旬1点）：{t.Year}年{t.Month}月{t.Stage} 主线 {main.Key} 还没触发，补 1 点，不进入下一旬。");
+				FileLogger.Log($"行动点模式（每旬{PerRound}点）：{t.Year}年{t.Month}月{t.Stage} 主线 {main.Key} 还没触发，补 1 点，不进入下一旬。");
 			}
 		}
 		catch (System.Exception e)
