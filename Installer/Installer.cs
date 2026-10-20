@@ -576,7 +576,7 @@ internal class InstallerForm : Form
 				return;
 			}
 			Logo();
-			Finish(true, "安装完成，当前版本 " + Short(now) + "。\n\n正常启动游戏即可，游戏里按 F8 打开 Mod 面板。");
+			Finish(true, "安装完成，当前版本 " + Short(now) + "。\n\n正常启动游戏即可，游戏里按 F8 打开设置，Tab 打开活侠传拓展窗口。");
 		}
 		catch (UnauthorizedAccessException)
 		{

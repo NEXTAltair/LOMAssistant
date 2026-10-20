@@ -43,7 +43,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 
 	private void Update()
 	{
-		if (ConfigManager.EnableDebugPanel.Value && Input.GetKeyDown(ConfigManager.DebugPanelKey.Value))
+		if (ConfigManager.EnableDebugPanel.Value && InputGuard.HotkeyDown(ConfigManager.DebugPanelKey.Value))
 		{
 			LOMAssistant.Features.Story.StoryReviewPanel.ToggleStats();
 		}

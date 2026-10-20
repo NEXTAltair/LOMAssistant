@@ -34,6 +34,29 @@ public class InputGuard : MonoBehaviour
 	private RectTransform _shieldRoot;
 	private readonly Dictionary<string, RectTransform> _shields = new Dictionary<string, RectTransform>();
 
+	private static bool _capturing;
+	private static int _captureEnd = -1;
+
+	/// <summary>设置页正在等玩家按新热键：这时所有热键都不响应（按下的那一帧也算，免得刚绑的键立刻触发）。</summary>
+	public static bool CapturingKey
+	{
+		get => _capturing || Time.frameCount <= _captureEnd;
+		set
+		{
+			if (_capturing && !value)
+			{
+				_captureEnd = Time.frameCount + 1;
+			}
+			_capturing = value;
+		}
+	}
+
+	/// <summary>本 Mod 的热键按下了（没绑定、正在改键时都算没按）。</summary>
+	public static bool HotkeyDown(KeyCode key)
+	{
+		return key != KeyCode.None && !CapturingKey && Input.GetKeyDown(key);
+	}
+
 	public static void Ensure()
 	{
 		if (_instance == null)

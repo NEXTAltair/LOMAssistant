@@ -15,7 +15,7 @@ namespace LOMAssistant.Features.Story;
 public partial class StoryReviewPanel : MonoBehaviour
 {
 	private const int WindowId = 584135;
-	private static readonly string[] Tabs = { "此刻", "路线图", "剧情图", "收录节点", "结局速查", "数值" };
+	private static readonly string[] Tabs = { "此刻", "路线图", "剧情图", "收录节点", "结局速查", "数值", "设置" };
 
 	private bool _visible;
 	private int _tab;
@@ -48,7 +48,12 @@ public partial class StoryReviewPanel : MonoBehaviour
 	private void Update()
 	{
 		StoryAtlas.Tick();
-		if (GUIUtility.keyboardControl == 0 && ConfigManager.StoryReviewKey.Value != KeyCode.None && Input.GetKeyDown(ConfigManager.StoryReviewKey.Value))
+		// 等新热键时面板被关掉或切走了：不再等，免得热键一直失灵
+		if (_capturing != null && (!_visible || _tab != SettingsTab || UiHider.Active))
+		{
+			StopCapture();
+		}
+		if (GUIUtility.keyboardControl == 0 && InputGuard.HotkeyDown(ConfigManager.StoryReviewKey.Value))
 		{
 			_visible = !_visible;
 			_confirming = null;
@@ -133,7 +138,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 		_seal = Plain(18, PaperLight, false);
 		_seal.alignment = TextAnchor.MiddleCenter;
 		_seal.fontStyle = FontStyle.Bold;
-		_windowRect = new Rect(Screen.width * 0.04f, Screen.height * 0.05f, Screen.width * 0.92f, Screen.height * 0.9f);
+		_windowRect = new Rect(Mathf.Round(Screen.width * 0.04f), Mathf.Round(Screen.height * 0.05f), Mathf.Round(Screen.width * 0.92f), Mathf.Round(Screen.height * 0.9f));
 	}
 
 	private void OnGUI()
@@ -153,6 +158,10 @@ public partial class StoryReviewPanel : MonoBehaviour
 		}
 		// 焦点在搜索框里时，按开关键（默认 Tab）会被输入框拿去切换焦点，Update 里也不会关面板：在这里先接住，直接关掉
 		Event e = Event.current;
+		if (CaptureKey(e))
+		{
+			return;
+		}
 		KeyCode key = ConfigManager.StoryReviewKey.Value;
 		if (e.type == EventType.KeyDown && key != KeyCode.None && e.keyCode == key && GUIUtility.keyboardControl != 0)
 		{
@@ -187,33 +196,38 @@ public partial class StoryReviewPanel : MonoBehaviour
 				Event.current.Use();
 			}
 		}
-		// 题头：朱砂印「回」+ 标题
-		var seal = new Rect(pad, S(12), S(34), S(34));
-		Round(seal, Cinnabar, S(4));
-		GUI.Label(seal, "回", _seal);
-		GUI.Label(new Rect(seal.xMax + S(10), S(10), S(160), S(38)), "剧情回顾", _heading);
-		float x = seal.xMax + S(150);
+		// 输入框的光标、选中颜色：皮肤默认是白色，宣纸底上看不见
+		Color cursor = GUI.skin.settings.cursorColor, selection = GUI.skin.settings.selectionColor;
+		GUI.skin.settings.cursorColor = Ink;
+		GUI.skin.settings.selectionColor = new Color(Cinnabar.r, Cinnabar.g, Cinnabar.b, 0.3f);
+		// 题头一行：标题、各页、关闭按钮都在同一条带子里竖直居中；每页按字数定宽，字与字之间的空隙一样大
+		float top = S(10), bandHeight = S(36);
+		GUIStyle title = Middle(_heading);
+		float titleWidth = title.CalcSize(new GUIContent("活侠传拓展")).x;
+		GUI.Label(new Rect(pad, top, titleWidth, bandHeight), "活侠传拓展", title);
+		float x = pad + titleWidth + S(48);
 		for (int i = 0; i < Tabs.Length; i++)
 		{
-			var tab = new Rect(x, S(10), S(110), S(36));
+			float textWidth = _tabOn.CalcSize(new GUIContent(Tabs[i])).x;
+			var tab = new Rect(x, top, textWidth + S(36), bandHeight);
 			if (GUI.Button(tab, Tabs[i], i == _tab ? _tabOn : _tabOff))
 			{
 				_tab = i;
 			}
 			if (i == _tab)
 			{
-				Fill(new Rect(tab.x + S(22), tab.yMax, tab.width - S(44), S(3)), Cinnabar);
+				Fill(new Rect(tab.center.x - textWidth / 2f - S(4), tab.yMax, textWidth + S(8), S(3)), Cinnabar);
 			}
-			x += S(114);
+			x = tab.xMax + S(8);
 		}
-		var close = new Rect(w - pad - S(36), S(12), S(36), S(36));
+		var close = new Rect(w - pad - S(36), top, S(36), bandHeight);
 		if (GUI.Button(close, "✕", _tabOff))
 		{
 			_visible = false;
 		}
 		if (Time.realtimeSinceStartup < _messageUntil)
 		{
-			GUI.Label(new Rect(x + S(16), S(14), close.x - x - S(30), S(30)), _message, _label);
+			GUI.Label(new Rect(x + S(16), top, close.x - x - S(30), bandHeight), _message, Middle(_label));
 		}
 		// 题头下一道墨线
 		Fill(new Rect(pad, S(56), w - pad * 2, S(2)), InkLine);
@@ -225,7 +239,8 @@ public partial class StoryReviewPanel : MonoBehaviour
 			case 2: DrawFlow(body); break;
 			case 3: DrawNodes(body); break;
 			case 4: DrawEndings(body); break;
-			default: DrawStats(body); break;
+			case 5: DrawStats(body); break;
+			default: DrawSettings(body); break;
 		}
 		if (_confirming != null && !input)
 		{
@@ -235,6 +250,8 @@ public partial class StoryReviewPanel : MonoBehaviour
 		{
 			DrawTooltip();
 		}
+		GUI.skin.settings.cursorColor = cursor;
+		GUI.skin.settings.selectionColor = selection;
 		GUI.DragWindow(new Rect(0, 0, w, S(56)));
 	}
 
@@ -243,19 +260,30 @@ public partial class StoryReviewPanel : MonoBehaviour
 		if (!string.IsNullOrEmpty(text) && r.Contains(Event.current.mousePosition))
 		{
 			_tooltip = text;
+			// 记下悬停的那一项在屏幕上的位置（Hover 可能在滚动区里调用，坐标和窗口不同）
+			_tooltipAnchor = new Rect(GUIUtility.GUIToScreenPoint(r.position), r.size);
 		}
 	}
 
+	private Rect _tooltipAnchor;
+
+	// 提示框固定在悬停那一项的下方、按整像素放，不跟着鼠标走：跟着鼠标的话位置有小数，文字每帧重新对齐像素，看着一闪一闪
 	private void DrawTooltip()
 	{
 		var content = new GUIContent(_tooltip);
-		float width = Mathf.Min(S(460), _small.CalcSize(content).x + S(20));
-		float height = _small.CalcHeight(content, width - S(20)) + S(14);
-		Vector2 p = Event.current.mousePosition;
-		var r = new Rect(Mathf.Min(p.x + S(18), _windowRect.width - width - S(8)), Mathf.Min(p.y + S(20), _windowRect.height - height - S(8)), width, height);
+		float width = Mathf.Round(Mathf.Min(S(460), _small.CalcSize(content).x + S(20)));
+		float height = Mathf.Round(_small.CalcHeight(content, width - S(20)) + S(14));
+		Vector2 anchor = GUIUtility.ScreenToGUIPoint(_tooltipAnchor.position);
+		float y = anchor.y + _tooltipAnchor.height + S(4);
+		if (y + height > _windowRect.height - S(8))
+		{
+			y = anchor.y - height - S(4);
+		}
+		var r = new Rect(Mathf.Round(Mathf.Clamp(anchor.x, S(8), _windowRect.width - width - S(8))), Mathf.Round(Mathf.Max(S(8), y)), width, height);
 		Fill(r, PaperLight);
 		Frame(r, Edge, 1);
-		GUI.Label(new Rect(r.x + S(10), r.y + S(7), r.width - S(20), r.height - S(14)), content, _small);
+		float px = Mathf.Round(S(10)), py = Mathf.Round(S(7));
+		GUI.Label(new Rect(r.x + px, r.y + py, r.width - px * 2, r.height - py * 2), content, _small);
 	}
 
 	private StoryNode _confirming;

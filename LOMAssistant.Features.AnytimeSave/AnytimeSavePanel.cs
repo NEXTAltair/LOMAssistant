@@ -22,11 +22,11 @@ public partial class AnytimeSave
 	private void UpdateHotkeys()
 	{
 		if (TextInputFocused()) return;
-		if (Input.GetKeyDown(ConfigManager.AnytimePanelKey.Value)) { if (installed) SetPanel(!panel); else panel = !panel; }
+		if (InputGuard.HotkeyDown(ConfigManager.AnytimePanelKey.Value)) { if (installed) SetPanel(!panel); else panel = !panel; }
 		else if (!installed) return;
-		else if (Input.GetKeyDown(ConfigManager.AnytimeSaveKey.Value)) SaveSlot();
-		else if (Input.GetKeyDown(ConfigManager.AnytimeLoadKey.Value)) LoadSlot();
-		else if (Input.GetKeyDown(ConfigManager.AnytimeRollbackKey.Value)) Rollback();
+		else if (InputGuard.HotkeyDown(ConfigManager.AnytimeSaveKey.Value)) SaveSlot();
+		else if (InputGuard.HotkeyDown(ConfigManager.AnytimeLoadKey.Value)) LoadSlot();
+		else if (InputGuard.HotkeyDown(ConfigManager.AnytimeRollbackKey.Value)) Rollback();
 	}
 
 	private static bool TextInputFocused()

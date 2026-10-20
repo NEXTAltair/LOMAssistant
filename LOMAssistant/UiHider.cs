@@ -88,7 +88,7 @@ public class UiHider : MonoBehaviour
 	{
 		Mouse mouse = Mouse.current;
 		bool rightClick = ConfigManager.EnableRightClickHideUI.Value && mouse != null && mouse.rightButton.wasPressedThisFrame;
-		bool key = ConfigManager.HideUIKey.Value != KeyCode.None && Input.GetKeyDown(ConfigManager.HideUIKey.Value);
+		bool key = InputGuard.HotkeyDown(ConfigManager.HideUIKey.Value);
 		return rightClick || key;
 	}
 

@@ -1,209 +1,47 @@
-using System.Globalization;
 using HarmonyLib;
 using LOMAssistant.Config;
+using LOMAssistant.Features.Story;
 using Mortal.Core;
-using Mortal.Pinball;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace LOMAssistant.Features.Extras;
 
 /// <summary>
-/// 游戏内面板（默认 F8）：修炼/锻造/炼丹/决斗开关；天命点；弹珠小游戏中额外显示分数设置；存档/读档界面中可给所选存档写备注。
-/// 修改即时生效并保存到配置文件。
+/// 设置页热键（默认 F8）：打开活侠传拓展窗口的「设置」页（以前的 F8 小面板已经并进设置页）。
+/// 存档备注热键（默认也是 F8）：在存档/读档界面选中了手动存档时，直接给这个存档写备注。
+/// 另外每帧跑倍速、后台运行、对白字号这几个开关，检测到冲突 Mod 时自动打开设置页把提示给玩家看。
 /// </summary>
 public class ModPanel : MonoBehaviour
 {
-	private const int WindowId = 0x4C4F4D; // "LOM"
-
-	private bool _visible;
-	private Rect _windowRect;
-	private float _scale = -1f;
-	private GUIStyle _label;
-	private GUIStyle _toggle;
-	private GUIStyle _button;
-	private GUIStyle _field;
-	private GUIStyle _window;
-	private GUIStyle _warning;
-
-	private GUIStyle _section;
-
-	private GUIStyle _title;
-
-	private PinballManager _boundPinball;
-	private string _totalInput = "";
-	private string _multiplierInput = "";
-	private string _fateInput;
-
-	private int _lastSections;
 	private bool _conflictShown;
 
-	// Last save/load slot the player selected (clicking this IMGUI window can clear the uGUI selection).
+	// 玩家最后选中的存档栏（点 Mod 窗口会清掉 uGUI 的选中，所以记下来）
 	private MonoBehaviour _noteSlot;
 
 	private void Update()
 	{
-		if (Input.GetKeyDown(ConfigManager.PanelKey.Value))
-		{
-			_visible = !_visible;
-		}
 		TrackSelectedSlot();
+		if (!SaveNoteEditor.IsOpen)
+		{
+			// 存档备注键先看：在存档界面选中了手动存档就写备注（和设置页同一个键时，这里优先）
+			MonoBehaviour slot = InputGuard.HotkeyDown(ConfigManager.SaveNoteKey.Value) ? GetNoteSlot() : null;
+			if (slot != null)
+			{
+				SaveNoteEditor.Open(Traverse.Create(slot).Field("_slot").GetValue<string>(), () => Traverse.Create(slot).Method("Setup").GetValue());
+			}
+			else if (InputGuard.HotkeyDown(ConfigManager.PanelKey.Value))
+			{
+				StoryReviewPanel.ToggleSettings();
+			}
+		}
 		GameSpeed.Tick();
 		BackgroundRun.Tick();
 		FontScale.Tick();
-		// 检测到冲突时自动弹出一次面板，玩家不按 F8 也能看到
-		if (ConflictDetector.Warnings.Count > 0 && !_conflictShown)
+		// 检测到冲突时自动打开一次设置页，玩家不按键也能看到
+		if (ConflictDetector.Warnings.Count > 0 && !_conflictShown && StoryReviewPanel.OpenSettings())
 		{
 			_conflictShown = true;
-			_visible = true;
-		}
-	}
-
-	private void OnGUI()
-	{
-		// 隐藏界面看 CG 时本 Mod 的窗口也不画
-		if (UiHider.Active)
-		{
-			return;
-		}
-		if (!_visible)
-		{
-			return;
-		}
-		float scale = Mathf.Min(Screen.width / 1920f, Screen.height / 1080f);
-		if (!Mathf.Approximately(scale, _scale))
-		{
-			BuildStyles(scale);
-			_windowRect = new Rect(Screen.width - 400f * scale - 20f * scale, 20f * scale, 400f * scale, 10f);
-		}
-		// Shrink to content only when a section appears or disappears (pinball, note, action-point hints); resetting
-		// the height on every OnGUI call (Layout/Repaint/mouse events) makes the window flicker.
-		int sections = (PinballManager.Instance != null && PinballManager.Instance.isActiveAndEnabled ? 1 : 0) | (GetNoteSlot() != null ? 2 : 0) | (InGame() ? 8 : 0) | (ConflictDetector.Warnings.Count > 0 ? 16 : 0) | (ActionModePatch.Mode << 5);
-		if (sections != _lastSections && Event.current.type == EventType.Layout)
-		{
-			_lastSections = sections;
-			_windowRect.height = 10f;
-		}
-		_windowRect = GUILayout.Window(WindowId, _windowRect, DrawWindow, "", _window);
-		InputGuard.Report("F8", _windowRect);
-	}
-
-	private void DrawWindow(int id)
-	{
-		// 不用窗口自带标题：它会压住第一行
-		GUILayout.Label("活侠传拓展", _title);
-		foreach (string warning in ConflictDetector.Warnings)
-		{
-			GUILayout.Label("【注意】" + warning, _warning);
-		}
-		// 按用途分组：剧情、养成、决斗，最后是倍速和行动点
-		Section("剧情");
-		Toggle(ConfigManager.EnableEventPicker, "随机事件自选");
-		Toggle(ConfigManager.EnableOneClickUnlock, "锁住选项一键设置");
-		Toggle(ConfigManager.ShowBranchChecks, "剧情分支条件提示");
-		Toggle(ConfigManager.ShowFlagChanges, "剧情旗标变化提示");
-		Section("修炼、锻造、炼丹");
-		Toggle(ConfigManager.CheatUnlimitedTraining, "无限修炼次数");
-		Toggle(ConfigManager.CheatFastTraining, "快速修炼");
-		Toggle(ConfigManager.CheatUnlimitedUpgrade, "无限锻造、炼丹次数");
-		Toggle(ConfigManager.CheatFastUpgrade, "快速锻造、炼丹");
-		Toggle(ConfigManager.CheatFreeUpgradeMoney, "锻造、炼丹不消耗银两");
-		Section("决斗");
-		Toggle(ConfigManager.CheatDuelInvincible, "决斗中无敌");
-		Toggle(ConfigManager.CheatDuelNoDamage, "决斗中造成伤害为0");
-		Section("游戏");
-		Toggle(ConfigManager.EnableBackgroundRun, "后台继续运行（切走时音乐不停）");
-		DrawSpeed();
-		DrawActionMode();
-
-		PinballManager pinball = PinballManager.Instance;
-		if (pinball != null && pinball.isActiveAndEnabled)
-		{
-			DrawPinball(pinball);
-		}
-		DrawFate();
-		DrawNote();
-		GUI.DragWindow();
-	}
-
-	private void DrawPinball(PinballManager pinball)
-	{
-		if (_boundPinball != pinball)
-		{
-			_boundPinball = pinball;
-			_totalInput = GetTotal(pinball).ToString();
-			_multiplierInput = ConfigManager.PinballScoreMultiplier.Value.ToString(CultureInfo.InvariantCulture);
-		}
-
-		GUILayout.Space(8f * _scale);
-		GUILayout.BeginHorizontal();
-		GUILayout.Label($"弹珠总分 {GetTotal(pinball)}", _label, GUILayout.Width(170f * _scale));
-		_totalInput = GUILayout.TextField(_totalInput, 9, _field, GUILayout.Width(100f * _scale));
-		if (GUILayout.Button("设定", _button) && int.TryParse(_totalInput.Trim(), out int value))
-		{
-			SetTotal(pinball, value);
-		}
-		GUILayout.EndHorizontal();
-
-		GUILayout.BeginHorizontal();
-		GUILayout.Label("得分倍率", _label, GUILayout.Width(170f * _scale));
-		_multiplierInput = GUILayout.TextField(_multiplierInput, 6, _field, GUILayout.Width(100f * _scale));
-		if (GUILayout.Button("设定", _button)
-			&& float.TryParse(_multiplierInput.Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out float mult)
-			&& mult >= 0f)
-		{
-			ConfigManager.PinballScoreMultiplier.Value = mult;
-			ConfigManager.SetConfigValue(ConfigManager.PinballScoreMultiplier, mult);
-			FileLogger.Log($"弹珠分数：得分倍率设为 {mult}");
-		}
-		GUILayout.EndHorizontal();
-
-		if (ConfigManager.PinballFixedScore.Value >= 0)
-		{
-			GUILayout.Label($"配置中固定总分 {ConfigManager.PinballFixedScore.Value}，离开时覆盖", _label);
-		}
-	}
-
-	private void DrawSpeed()
-	{
-		GUILayout.Space(8f * _scale);
-		GUILayout.BeginHorizontal();
-		GUILayout.Label("游戏倍速", _label, GUILayout.Width(120f * _scale));
-		float current = ConfigManager.GameSpeed.Value;
-		foreach (float option in GameSpeed.Options)
-		{
-			bool selected = Mathf.Approximately(current, option);
-			bool on = GUILayout.Toggle(selected, option + "x", _button);
-			if (on && !selected)
-			{
-				GameSpeed.Set(option);
-			}
-		}
-		GUILayout.EndHorizontal();
-	}
-
-	private void DrawActionMode()
-	{
-		GUILayout.BeginHorizontal();
-		GUILayout.Label("养成行动点", _label, GUILayout.Width(120f * _scale));
-		int current = ActionModePatch.Mode;
-		foreach (int option in ActionModePatch.Options)
-		{
-			bool selected = current == option;
-			bool on = GUILayout.Toggle(selected, ActionModePatch.Label(option), _button);
-			if (on && !selected)
-			{
-				ActionModePatch.Set(option);
-			}
-		}
-		GUILayout.EndHorizontal();
-		if (current == ActionModePatch.Unlimited)
-		{
-			GUILayout.Label("剩1点后不再消耗；ESC「空过」结束本旬", _label);
-		}
-		if (current != ActionModePatch.Normal)
-		{
-			GUILayout.Label("可能影响剧情触发，请谨慎使用", _warning);
 		}
 	}
 
@@ -223,7 +61,7 @@ public class ModPanel : MonoBehaviour
 		}
 	}
 
-	// The remembered slot, if its screen is still open and it holds a manual save.
+	// 记下的存档栏：所在界面还开着、而且是有内容的手动存档才算
 	private MonoBehaviour GetNoteSlot()
 	{
 		if (_noteSlot == null || !_noteSlot.isActiveAndEnabled)
@@ -236,111 +74,5 @@ public class ModPanel : MonoBehaviour
 			return null;
 		}
 		return _noteSlot;
-	}
-
-	// 天命点（GameStatType.命運），骰子“逆天”时消耗；只在进入存档后（地图/剧情）显示。
-	private static bool InGame()
-	{
-		return (Mortal.Free.FreeManager.Instance != null && Mortal.Free.FreeManager.Instance.isActiveAndEnabled)
-			|| (Mortal.Story.StoryManager.Instance != null && Mortal.Story.StoryManager.Instance.isActiveAndEnabled);
-	}
-
-	private void DrawFate()
-	{
-		if (!InGame())
-		{
-			_fateInput = null;
-			return;
-		}
-		GameStat fate = PlayerStatManagerData.Instance.Stats.Get(GameStatType.命運);
-		if (fate == null)
-		{
-			return;
-		}
-		if (_fateInput == null)
-		{
-			_fateInput = fate.Value.ToString();
-		}
-		GUILayout.Space(8f * _scale);
-		GUILayout.BeginHorizontal();
-		GUILayout.Label($"天命点 {fate.FinalValue}/{fate.Max}", _label, GUILayout.Width(170f * _scale));
-		_fateInput = GUILayout.TextField(_fateInput, 6, _field, GUILayout.Width(100f * _scale));
-		if (GUILayout.Button("设定", _button) && int.TryParse(_fateInput.Trim(), out int value))
-		{
-			int old = fate.Value;
-			fate.SetValue(value);
-			_fateInput = fate.Value.ToString();
-			FileLogger.Log($"天命点：{old} -> {fate.Value}（面板修改）");
-		}
-		GUILayout.EndHorizontal();
-	}
-
-	private void DrawNote()
-	{
-		MonoBehaviour slotPanel = GetNoteSlot();
-		if (slotPanel == null)
-		{
-			return;
-		}
-		string slot = Traverse.Create(slotPanel).Field("_slot").GetValue<string>();
-		string note = SaveNotePatch.GetNote(slot);
-		GUILayout.Space(8f * _scale);
-		GUILayout.BeginHorizontal();
-		GUILayout.Label(note.Length > 0 ? $"存档 {slot}｜{note}" : $"存档 {slot}", _label);
-		if (GUILayout.Button("备注", _button, GUILayout.Width(90f * _scale)))
-		{
-			SaveNoteEditor.Open(slot, () => Traverse.Create(slotPanel).Method("Setup").GetValue());
-		}
-		GUILayout.EndHorizontal();
-	}
-
-	private void Section(string text)
-	{
-		GUILayout.Space(_label.fontSize * 0.4f);
-		GUILayout.Label(text, _section);
-	}
-
-	private void Toggle(ConfigElement<bool> element, string text)
-	{
-		bool value = GUILayout.Toggle(element.Value, " " + text, _toggle);
-		if (value != element.Value)
-		{
-			element.Value = value;
-			ConfigManager.SetConfigValue(element, value);
-			string msg = $"面板：{text} -> {(value ? "开" : "关")}";
-			LOMAssistantPlugin.LogInfo(msg);
-			FileLogger.Log(msg);
-		}
-	}
-
-	private static int GetTotal(PinballManager manager)
-	{
-		return Traverse.Create(manager).Field("_totalScore").GetValue<int>();
-	}
-
-	private static void SetTotal(PinballManager manager, int value)
-	{
-		var tr = Traverse.Create(manager);
-		int old = tr.Field("_totalScore").GetValue<int>();
-		tr.Field("_totalScore").SetValue(value);
-		tr.Method("UpdateTotalText").GetValue();
-		FileLogger.Log($"弹珠分数：总分 {old} -> {value}（面板修改）");
-	}
-
-	private void BuildStyles(float scale)
-	{
-		_scale = scale;
-		int fontSize = Mathf.Max(12, (int)(22f * scale));
-		_label = new GUIStyle(GUI.skin.label) { fontSize = fontSize, wordWrap = true };
-		_toggle = new GUIStyle(GUI.skin.toggle) { fontSize = fontSize };
-		_button = new GUIStyle(GUI.skin.button) { fontSize = fontSize };
-		_field = new GUIStyle(GUI.skin.textField) { fontSize = fontSize };
-		_window = new GUIStyle(GUI.skin.window) { fontSize = fontSize };
-		_warning = new GUIStyle(_label) { fontStyle = FontStyle.Bold };
-		_warning.normal.textColor = new Color(1f, 0.45f, 0.35f);
-		_window.padding.top = (int)(8f * scale);
-		_title = new GUIStyle(_label) { fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
-		_section = new GUIStyle(_label) { fontStyle = FontStyle.Bold };
-		_section.normal.textColor = new Color(0.95f, 0.78f, 0.42f);
 	}
 }
