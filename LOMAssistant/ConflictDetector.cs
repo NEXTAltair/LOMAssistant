@@ -23,6 +23,7 @@ public static class ConflictDetector
 	{
 		// 其他 Mod 可能在 Awake 之后才打补丁，等几秒再查
 		yield return new UnityEngine.WaitForSeconds(5f);
+		StoryWorkbenchCompat.Apply();
 		Check(ours);
 	}
 
@@ -46,7 +47,8 @@ public static class ConflictDetector
 				}
 				foreach (string owner in info.Owners)
 				{
-					if (owner == ours.Id)
+					// 剧情随行：已经做了兼容处理，不算冲突
+					if (owner == ours.Id || owner == StoryWorkbenchCompat.Id)
 					{
 						continue;
 					}

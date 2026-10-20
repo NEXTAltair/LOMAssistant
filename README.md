@@ -178,3 +178,5 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 - **存档备注显示**：移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 许可）及其[汉化版](https://github.com/shiluodeqiou/LOM_SaveSlotExpander-zh)（shiluodeqiou）。
 - **修炼、锻造、炼丹**：参考风灵月影《活侠传》修改器的功能思路（未使用其代码）。
 - 下载包附带的 [BepInEx](https://github.com/BepInEx/BepInEx)、[UnityDoorstop](https://github.com/NeighTools/UnityDoorstop)、[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) 按各自的许可证分发。
+
+也推荐 xiaozhanshang 的 [剧情随行](https://github.com/xiaozhanshang/MortalStoryWorkbench)，可以和本 Mod 同时安装：两边重叠的功能自动用本 Mod 的，它的快捷键改成 Ctrl+F6 / F8 / F9。
