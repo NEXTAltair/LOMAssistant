@@ -4,7 +4,7 @@
 
 《活侠传》（Legend of Mortal）的 BepInEx 6 插件。适配最新版游戏，并加入剧情回顾、分支自选、修改面板、存档优化、随时存档等功能。
 
-**[⬇ 下载最新版](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip)**　·　**[▶ B 站演示视频](https://www.bilibili.com/video/BV1LZJh6YEUy/)**　·　**QQ 群：496887060**
+**[⬇ 下载最新版](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip)**　·　**[夸克网盘下载](https://pan.quark.cn/s/e78c41abcebc)**　·　**[▶ B 站演示视频](https://www.bilibili.com/video/BV1LZJh6YEUy/)**　·　**QQ 群：496887060**
 
 ## 安装
 
