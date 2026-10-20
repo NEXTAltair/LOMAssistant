@@ -24,7 +24,7 @@ public partial class StoryReviewPanel
 	private sealed class NowMission
 	{
 		public string Title = "", Desc = "", Place = "";
-		public bool Ready;
+		public bool Ready, Main;
 	}
 
 	private sealed class NowSnapshot
@@ -121,7 +121,7 @@ public partial class StoryReviewPanel
 			foreach (NowMission m in _now.Missions)
 			{
 				GUILayout.BeginVertical(_card);
-				GUILayout.Label(m.Title + "　" + (m.Ready ? "<color=#2F6B3A>条件已满足" + (m.Place.Length > 0 ? "，去「" + m.Place + "」就会触发" : "") + "</color>" : "<color=#73644F>还差条件</color>"), _rich);
+				GUILayout.Label((m.Main ? "<color=#A3302A><b>主线</b></color>　" : "") + m.Title + "　" + (m.Ready ? "<color=#2F6B3A>条件已满足" + (m.Place.Length > 0 ? "，去「" + m.Place + "」就会触发" : "") + "</color>" : "<color=#73644F>还差条件</color>"), _rich);
 				if (m.Desc.Length > 0)
 				{
 					GUILayout.Label(m.Desc, _rich);
@@ -185,7 +185,21 @@ public partial class StoryReviewPanel
 					}
 				}
 			}
-			var active = MissionManagerData.Instance?.ActiveSubMissions;
+			// 主线当前这一步：游戏判定条件满足时 MainMissionStart 为真，去 MainMissionPosition 就会触发
+			MissionManagerData missions = MissionManagerData.Instance;
+			if (DataHelper.GetMainMission(out MissionCheckData main, out string mainTitle, out string mainDesc))
+			{
+				string place = TextConverter.ToSimplified(main.Position.ToString());
+				now.Missions.Add(new NowMission
+				{
+					Main = true,
+					Title = TextConverter.ToSimplified(mainTitle.Replace("\n", " ")),
+					Desc = OnPaper(TextConverter.ToSimplified(mainDesc).Trim()),
+					Place = place == "無" ? "" : place,
+					Ready = missions != null && missions.MainMissionStart && missions.MainCheckData == main && !string.IsNullOrEmpty(main.StartScript)
+				});
+			}
+			var active = missions?.ActiveSubMissions;
 			foreach (var pair in DataHelper.GetMissions())
 			{
 				MissionCheckData check = pair.Key;
@@ -198,7 +212,10 @@ public partial class StoryReviewPanel
 					Ready = active != null && active.Values.Contains(check) && !string.IsNullOrEmpty(check.StartScript)
 				});
 			}
-			now.Missions.Sort((a, b) => b.Ready.CompareTo(a.Ready));
+			// 主线在最前，其余条件满足的在前；OrderBy 是稳定排序，同组保持游戏里的顺序
+			var sorted = now.Missions.OrderByDescending(m => m.Main).ThenByDescending(m => m.Ready).ToList();
+			now.Missions.Clear();
+			now.Missions.AddRange(sorted);
 		}
 		catch (Exception ex)
 		{

@@ -257,45 +257,64 @@ public static class DataHelper
 		}
 		foreach (MissionData item2 in subMissionsData.List)
 		{
-			string fieldValue = item2.GetFieldValue<string>("_desc");
-			fieldValue = (fieldValue.IsNullOrWhiteSpace() ? item2.Name : fieldValue);
-			fieldValue.Replace("\n", "");
-			string currentKey = item2.CurrentKey;
-			if (currentKey == "clear")
+			if (DescribeMission(item2, out MissionCheckData byKey, out string item, out string desc))
 			{
-				continue;
+				dictionary[byKey] = (item, desc);
 			}
-			MissionCheckData byKey = item2.GetByKey(currentKey);
-			if (byKey == null || !IsValidMission(byKey))
-			{
-				continue;
-			}
-			string fieldValue2 = byKey.GetFieldValue<string>("_desc");
-			fieldValue2 = (fieldValue2.IsNullOrWhiteSpace() ? byKey.name : fieldValue2);
-			string item = fieldValue + " - " + fieldValue2;
-			string text = byKey.Position.ToString();
-			string periodText;
-			bool isInPeriod = GetMissionPeriod(byKey, out periodText);
-			if (!isInPeriod)
-			{
-				continue;
-			}
-			List<string> list = ExtractConditions(byKey, out isInPeriod);
-			if (!isInPeriod)
-			{
-				continue;
-			}
-			StringBuilder stringBuilder = new StringBuilder();
-			stringBuilder.AppendLine("位置：" + text);
-			stringBuilder.AppendLine("时间: " + periodText);
-			stringBuilder.AppendLine("条件:");
-			foreach (string item3 in list)
-			{
-				stringBuilder.AppendLine("    " + item3);
-			}
-			dictionary[byKey] = (item, stringBuilder.ToString());
 		}
 		return dictionary;
+	}
+
+	/// <summary>主线当前这一步：标题、说明（位置、时间、条件），和支线同样的写法。没有可触发的（已完结、不在时间内等）返回 false。</summary>
+	public static bool GetMainMission(out MissionCheckData check, out string title, out string desc)
+	{
+		check = null;
+		title = desc = "";
+		MissionData main = MissionManagerData.Instance?.Main;
+		return main != null && DescribeMission(main, out check, out title, out desc);
+	}
+
+	private static bool DescribeMission(MissionData mission, out MissionCheckData byKey, out string item, out string desc)
+	{
+		byKey = null;
+		item = desc = "";
+		string fieldValue = mission.GetFieldValue<string>("_desc");
+		fieldValue = (fieldValue.IsNullOrWhiteSpace() ? mission.Name : fieldValue);
+		string currentKey = mission.CurrentKey;
+		if (currentKey == "clear")
+		{
+			return false;
+		}
+		byKey = mission.GetByKey(currentKey);
+		if (byKey == null || !IsValidMission(byKey))
+		{
+			return false;
+		}
+		string fieldValue2 = byKey.GetFieldValue<string>("_desc");
+		fieldValue2 = (fieldValue2.IsNullOrWhiteSpace() ? byKey.name : fieldValue2);
+		item = fieldValue + " - " + fieldValue2;
+		string text = byKey.Position.ToString();
+		string periodText;
+		bool isInPeriod = GetMissionPeriod(byKey, out periodText);
+		if (!isInPeriod)
+		{
+			return false;
+		}
+		List<string> list = ExtractConditions(byKey, out isInPeriod);
+		if (!isInPeriod)
+		{
+			return false;
+		}
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.AppendLine("位置：" + text);
+		stringBuilder.AppendLine("时间: " + periodText);
+		stringBuilder.AppendLine("条件:");
+		foreach (string item3 in list)
+		{
+			stringBuilder.AppendLine("    " + item3);
+		}
+		desc = stringBuilder.ToString();
+		return true;
 	}
 
 	private static bool IsValidMission(MissionCheckData checkData)

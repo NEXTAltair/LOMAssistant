@@ -127,7 +127,7 @@ internal static class OptionInfoPatch
 		{
 			HandleDialogChange(_positionCtrl, addSuffix: false);
 		}
-		if (HasTriggerSubMissions(fieldValue, out var missionKey))
+		if (HasTriggerMission(fieldValue, out var missionKey))
 		{
 			HandleDialogChange(__instance, addSuffix: true, "可触发：" + missionKey);
 		}
@@ -223,14 +223,28 @@ internal static class OptionInfoPatch
 	}
 
 	/// <summary>
-	/// 点这个地点会不会触发任务：和游戏点地点时的判断一样（本旬生效的支线里，地点是这里、有开头剧本的那个），
-	/// 主线正在等时点哪都是走主线，不提示。返回任务的名字。
+	/// 点这个地点会不会触发任务，和游戏点地点时的判断一样：主线正在等（有地点）时，只有主线的地点能点，点了走主线；
+	/// 否则是本旬生效的支线里，地点是这里、有开头剧本的那个。返回任务的名字，主线前面加「主线」。
 	/// </summary>
-	private static bool HasTriggerSubMissions(PositionType position, out string missionKey)
+	private static bool HasTriggerMission(PositionType position, out string missionKey)
 	{
 		missionKey = string.Empty;
 		MissionManagerData missions = MissionManagerData.Instance;
-		if (missions?.ActiveSubMissions == null || (missions.MainMissionStart && missions.MainMissionPosition != PositionType.無))
+		if (missions == null)
+		{
+			return false;
+		}
+		if (missions.MainMissionStart && missions.MainMissionPosition != PositionType.無)
+		{
+			MissionCheckData main = missions.MainCheckData;
+			if (position != missions.MainMissionPosition || main == null || string.IsNullOrEmpty(main.StartScript))
+			{
+				return false;
+			}
+			missionKey = "主线「" + MissionName(main, missions.MainMissionKey) + "」";
+			return true;
+		}
+		if (missions.ActiveSubMissions == null)
 		{
 			return false;
 		}
@@ -241,12 +255,18 @@ internal static class OptionInfoPatch
 			{
 				continue;
 			}
-			LOMAssistant.Features.Story.StoryMission known = LOMAssistant.Features.Story.StoryAtlas.Find(check.Key);
-			string desc = TextConverter.ToSimplified(check.GetFieldValue<string>("_desc") ?? "").Split('\n')[0].Trim();
-			missionKey = known != null && known.Title.Length > 0 ? known.Title : desc.Length > 0 ? desc : active.Key;
+			missionKey = MissionName(check, active.Key);
 			return true;
 		}
 		return false;
+	}
+
+	/// <summary>任务的显示名：剧情回顾里整理过的标题，没有就用任务说明的第一行，再没有用编号。</summary>
+	private static string MissionName(MissionCheckData check, string fallback)
+	{
+		LOMAssistant.Features.Story.StoryMission known = LOMAssistant.Features.Story.StoryAtlas.Find(check.Key);
+		string desc = TextConverter.ToSimplified(check.GetFieldValue<string>("_desc") ?? "").Split('\n')[0].Trim();
+		return known != null && known.Title.Length > 0 ? known.Title : desc.Length > 0 ? desc : fallback;
 	}
 
 	private static void LogCheckpoint(string header, IEnumerable<ConditionResultItem> items)
