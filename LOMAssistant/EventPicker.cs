@@ -108,6 +108,11 @@ public class EventPicker : MonoBehaviour
 			{
 				return false;
 			}
+			// 剧情回顾「此刻」页里已经选定了这个池子的事件，就不再问
+			if (Pending != null && PositionEventCache.Instance.GetPositionEvents(pool).Contains(Pending))
+			{
+				return false;
+			}
 			Choices.Clear();
 			foreach (PositionEventData data in PositionEventCache.Instance.GetPositionEvents(pool))
 			{

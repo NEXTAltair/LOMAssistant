@@ -15,7 +15,7 @@ namespace LOMAssistant.Features.Story;
 public partial class StoryReviewPanel : MonoBehaviour
 {
 	private const int WindowId = 584135;
-	private static readonly string[] Tabs = { "路线图", "剧情图", "收录节点", "结局速查" };
+	private static readonly string[] Tabs = { "此刻", "路线图", "剧情图", "收录节点", "结局速查" };
 
 	private bool _visible;
 	private int _tab;
@@ -57,6 +57,9 @@ public partial class StoryReviewPanel : MonoBehaviour
 			{
 				_reading.Clear();
 				_texts.Clear();
+				// 每次打开先看「此刻」，内容重新整理
+				_tab = 0;
+				_now = null;
 				StoryAtlas.ForgetConditions();
 			}
 		}
@@ -206,9 +209,10 @@ public partial class StoryReviewPanel : MonoBehaviour
 		var body = new Rect(pad, S(68), w - pad * 2, _windowRect.height - S(68) - pad);
 		switch (_tab)
 		{
-			case 0: DrawRoute(body); break;
-			case 1: DrawFlow(body); break;
-			case 2: DrawNodes(body); break;
+			case 0: DrawNow(body); break;
+			case 1: DrawRoute(body); break;
+			case 2: DrawFlow(body); break;
+			case 3: DrawNodes(body); break;
 			default: DrawEndings(body); break;
 		}
 		if (_confirming != null && !input)

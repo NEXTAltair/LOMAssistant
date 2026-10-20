@@ -56,7 +56,7 @@ public partial class StoryReviewPanel
 	/// <summary>打开某个任务的剧情图；pickScript 给了就选中含这个剧本的那一段并滚过去。</summary>
 	private void OpenFlow(StoryMission m, string pickScript = null)
 	{
-		_tab = 1;
+		_tab = 2;
 		_flowMission = m;
 		_flow = null;
 		_flowPicked = null;

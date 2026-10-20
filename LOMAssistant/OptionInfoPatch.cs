@@ -19,6 +19,9 @@ internal static class OptionInfoPatch
 
 	private static PositionController _positionCtrl = null;
 
+	/// <summary>最近载入的剧本（解析缓存的键），剧情回顾「此刻」页用它取这一段的选项、判定和事件。</summary>
+	public static string LastScriptKey;
+
 	[HarmonyPrefix]
 	[HarmonyPatch(typeof(LuaEnvironment), "LoadLuaFunction")]
 	public static void LuaEnvironment_LoadLuaFunction_Prefix(string luaString, string friendlyName)
@@ -42,6 +45,12 @@ internal static class OptionInfoPatch
 			}
 			// 选项结果、锁住选项：解析结果存在 LuaParser 里，显示选项文字时取用
 			LuaParser.Instance.ExtractOptionActionsFromLua(key, luaString);
+			LuaParser.Instance.ExtractSwitchCheckFromLua(key, luaString);
+			LuaParser.Instance.ExtractPositionWorkFromLua(key, luaString);
+			if (!friendlyName.StartsWith("tmp.") && !friendlyName.StartsWith("Flowchart.Say.ExecuteLua"))
+			{
+				LastScriptKey = key;
+			}
 			Lap("选项");
 			LuaParser.Instance.ExtractLockedOptions(key, luaString);
 			Lap("锁住选项");
