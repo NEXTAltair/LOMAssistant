@@ -8,6 +8,7 @@ using LOMAssistant.Config;
 using LOMAssistant.Features.Extras;
 using Mortal.Pinball;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace LOMAssistant.Features.Story;
 
@@ -93,7 +94,7 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.EnableOptionInfo, "选项提示、判定记录"),
 				Row(ConfigManager.EnableManualDiceSelection, "骰子手动选择"),
 				Row(ConfigManager.EnableStoryReview, "剧情回顾收录节点"),
-				Row(ConfigManager.EnableRightClickHideUI, "右键隐藏界面看 CG"),
+				Row(ConfigManager.EnableRightClickHideUI, "隐藏界面看 CG"),
 				Row(ConfigManager.FontScale, "对白文字大小（%）", 50f, 200f),
 				Row(ConfigManager.FlagNoticeSeconds, "旗标提示停留（秒）", 0f, 30f),
 				Row(ConfigManager.BranchPanelAutoHide, "分支小窗自动收起（秒）", 0f, 600f),
@@ -138,7 +139,7 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.DebugPanelKey, "数值页"),
 				Row(ConfigManager.PanelKey, "设置页"),
 				Row(ConfigManager.SaveNoteKey, "存档备注"),
-				Row(ConfigManager.HideUIKey, "隐藏界面（同右键）"),
+				Row(ConfigManager.HideUIKey, "隐藏界面看 CG"),
 				Row(ConfigManager.AnytimePanelKey, "随时存档面板"),
 				Row(ConfigManager.AnytimeSaveKey, "随时存档：存"),
 				Row(ConfigManager.AnytimeLoadKey, "随时存档：读"),
@@ -159,7 +160,10 @@ public partial class StoryReviewPanel
 			StopCapture();
 			return false;
 		}
-		KeyCode key = e.type == EventType.KeyDown ? e.keyCode : KeyCode.None;
+		// 鼠标右键、中键、侧键也能绑（左键要用来点界面，不算）
+		KeyCode key = e.type == EventType.KeyDown ? e.keyCode
+			: e.type == EventType.MouseDown && e.button >= 1 && e.button <= 4 ? KeyCode.Mouse0 + e.button
+			: KeyCode.None;
 		if (key == KeyCode.None)
 		{
 			return false;
@@ -171,6 +175,26 @@ public partial class StoryReviewPanel
 		StopCapture();
 		e.Use();
 		return true;
+	}
+
+	// 等新热键时按了鼠标右键、中键、侧键：直接读鼠标（这几个键不一定会作为界面事件送到窗口里）
+	private void CaptureMouse()
+	{
+		Mouse mouse = Mouse.current;
+		if (_capturing == null || mouse == null)
+		{
+			return;
+		}
+		KeyCode key = mouse.rightButton.wasPressedThisFrame ? KeyCode.Mouse1
+			: mouse.middleButton.wasPressedThisFrame ? KeyCode.Mouse2
+			: mouse.backButton.wasPressedThisFrame ? KeyCode.Mouse3
+			: mouse.forwardButton.wasPressedThisFrame ? KeyCode.Mouse4
+			: KeyCode.None;
+		if (key != KeyCode.None)
+		{
+			AssignKey(_capturing, key);
+			StopCapture();
+		}
 	}
 
 	// 设置页热键和存档备注默认同一个键，在不同界面起作用，不算冲突
@@ -196,7 +220,7 @@ public partial class StoryReviewPanel
 					if (other != row && other.Element.BoxedValue is KeyCode used && used == key && !SharedOnPurpose(row.Element, other.Element))
 					{
 						other.Element.BoxedValue = old;
-						Notice($"{key} 原是「{other.Name}」的键，两个已对调");
+						Notice($"{InputGuard.KeyName(key)} 原是「{other.Name}」的键，两个已对调");
 					}
 				}
 			}
@@ -280,7 +304,7 @@ public partial class StoryReviewPanel
 		{
 			bool waiting = _capturing == row;
 			// 只认左键点：右键点这个框会被当成「按了新键」绑上，不能再顺手开始下一次改键
-			if (GUILayout.Button(waiting ? "按新键…" : key == KeyCode.None ? "未绑定" : key.ToString(), waiting ? _primary : _button, GUILayout.Width(S(130)), Ctl()) && Event.current.button == 0)
+			if (GUILayout.Button(waiting ? "按新键…" : InputGuard.KeyName(key), waiting ? _primary : _button, GUILayout.Width(S(130)), Ctl()) && Event.current.button == 0)
 			{
 				if (waiting)
 				{
@@ -293,7 +317,7 @@ public partial class StoryReviewPanel
 					GUIUtility.keyboardControl = 0;
 				}
 			}
-			// 改成什么都能一键回到默认键
+			// 改成什么都能一键回到默认键（比如换走了鼠标右键想换回来）
 			GUI.enabled = !waiting && !Equals(key, element.DefaultValue);
 			if (GUILayout.Button("默认", _button, GUILayout.Width(S(60)), Ctl()))
 			{

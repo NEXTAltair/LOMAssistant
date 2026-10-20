@@ -9,8 +9,8 @@ using UnityEngine.UI;
 namespace LOMAssistant;
 
 /// <summary>
-/// 隐藏界面看 CG（类似 galgame 的右键隐藏）：剧情里按鼠标右键（或配置的热键）隐藏对话框、标题等文字界面和本 Mod 的窗口，
-/// 只留背景、CG 和立绘，方便截图；再按右键（或热键）恢复，其它按键（如 F12 截图）不会把界面叫回来，隐藏期间的点击也不会推进对话。
+/// 隐藏界面看 CG（类似 galgame 的右键隐藏）：剧情里按热键（默认鼠标右键，可改成别的键）隐藏对话框、标题等文字界面和本 Mod 的窗口，
+/// 只留背景、CG 和立绘，方便截图；再按一次恢复，其它按键（如 F12 截图）不会把界面叫回来，隐藏期间的点击也不会推进对话。
 /// 判断哪些界面要藏：画布里有文字或按钮的藏，只有图片的（背景、CG、立绘）留着。
 /// </summary>
 public class UiHider : MonoBehaviour
@@ -46,10 +46,10 @@ public class UiHider : MonoBehaviour
 		return SceneManager.GetActiveScene().name == "Story";
 	}
 
-	/// <summary>这次右键是拿来隐藏界面的：游戏的输入回调不要再处理它（右键先于本组件的 Update 送到游戏）。</summary>
+	/// <summary>这次右键是拿来隐藏界面的（热键是鼠标右键时）：游戏的输入回调不要再处理它（右键先于本组件的 Update 送到游戏）。</summary>
 	public static bool ClaimsRightClick(InputControl control)
 	{
-		return _instance != null && !Active && ConfigManager.EnableRightClickHideUI.Value && InStory()
+		return _instance != null && !Active && ConfigManager.EnableRightClickHideUI.Value && ConfigManager.HideUIKey.Value == KeyCode.Mouse1 && InStory()
 			&& control != null && Mouse.current != null && control == Mouse.current.rightButton && !EventPicker.IsWaiting && !LogOpen() && !InputGuard.ModWindowOpen;
 	}
 
@@ -86,10 +86,7 @@ public class UiHider : MonoBehaviour
 
 	private static bool TogglePressed()
 	{
-		Mouse mouse = Mouse.current;
-		bool rightClick = ConfigManager.EnableRightClickHideUI.Value && mouse != null && mouse.rightButton.wasPressedThisFrame;
-		bool key = InputGuard.HotkeyDown(ConfigManager.HideUIKey.Value);
-		return rightClick || key;
+		return ConfigManager.EnableRightClickHideUI.Value && InputGuard.HotkeyDown(ConfigManager.HideUIKey.Value);
 	}
 
 	private static bool TextInputFocused()

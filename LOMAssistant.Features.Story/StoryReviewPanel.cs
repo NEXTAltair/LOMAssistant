@@ -53,6 +53,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 		{
 			StopCapture();
 		}
+		CaptureMouse();
 		if (GUIUtility.keyboardControl == 0 && InputGuard.HotkeyDown(ConfigManager.StoryReviewKey.Value))
 		{
 			_visible = !_visible;

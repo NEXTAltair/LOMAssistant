@@ -51,10 +51,36 @@ public class InputGuard : MonoBehaviour
 		}
 	}
 
-	/// <summary>本 Mod 的热键按下了（没绑定、正在改键时都算没按）。</summary>
+	/// <summary>本 Mod 的热键按下了（没绑定、正在改键时都算没按）。鼠标右键、中键、侧键也可以当热键。</summary>
 	public static bool HotkeyDown(KeyCode key)
 	{
-		return key != KeyCode.None && !CapturingKey && Input.GetKeyDown(key);
+		if (key == KeyCode.None || CapturingKey)
+		{
+			return false;
+		}
+		Mouse mouse = Mouse.current;
+		switch (key)
+		{
+			case KeyCode.Mouse1: return mouse != null && mouse.rightButton.wasPressedThisFrame;
+			case KeyCode.Mouse2: return mouse != null && mouse.middleButton.wasPressedThisFrame;
+			case KeyCode.Mouse3: return mouse != null && mouse.backButton.wasPressedThisFrame;
+			case KeyCode.Mouse4: return mouse != null && mouse.forwardButton.wasPressedThisFrame;
+			default: return Input.GetKeyDown(key);
+		}
+	}
+
+	/// <summary>热键给玩家看的名字。</summary>
+	public static string KeyName(KeyCode key)
+	{
+		switch (key)
+		{
+			case KeyCode.None: return "未绑定";
+			case KeyCode.Mouse1: return "鼠标右键";
+			case KeyCode.Mouse2: return "鼠标中键";
+			case KeyCode.Mouse3: return "鼠标后退键";
+			case KeyCode.Mouse4: return "鼠标前进键";
+			default: return key.ToString();
+		}
 	}
 
 	public static void Ensure()

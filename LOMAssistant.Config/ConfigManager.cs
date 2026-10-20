@@ -112,6 +112,37 @@ public static class ConfigManager
 		CreateConfigElements();
 		LoadConfig();
 		MigrateStoryReviewKey();
+		MigrateHideUIKey();
+	}
+
+	/// <summary>
+	/// 隐藏界面看 CG 从「右键开关 + 另配热键（默认不绑）」改成「开关 + 一个按键（默认右键）」：
+	/// 老配置里热键没绑就补成右键；以前关了右键但绑了别的键的，开关打开、只用那个键。只换一次。
+	/// </summary>
+	private static void MigrateHideUIKey()
+	{
+		try
+		{
+			string mark = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(ConfigManager).Assembly.Location) ?? ".", "StoryReview", "hide-ui-key");
+			if (System.IO.File.Exists(mark))
+			{
+				return;
+			}
+			if (HideUIKey.Value == KeyCode.None)
+			{
+				HideUIKey.Value = KeyCode.Mouse1;
+			}
+			else if (!EnableRightClickHideUI.Value)
+			{
+				EnableRightClickHideUI.Value = true;
+			}
+			System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(mark));
+			System.IO.File.WriteAllText(mark, "");
+		}
+		catch (Exception ex)
+		{
+			DicePlugin.LogError("隐藏界面热键迁移失败: " + ex.Message);
+		}
 	}
 
 	/// <summary>
@@ -219,8 +250,8 @@ public static class ConfigManager
 		FlagNoticeSeconds = new ConfigElement<float>("FlagNoticeSeconds", "剧情旗标变化提示在屏幕上停留几秒（按真实时间，开倍速也一样；原版 1 秒）。0=按游戏原样", 4f);
 		FontScale = new ConfigElement<int>("FontScale", "剧情对白的文字大小（百分比，只放大对白框里的字，不放大界面）。100=原样，120=大两成", 100);
 		EnableBackgroundRun = new ConfigElement<bool>("EnableBackgroundRun", "后台继续运行：切到别的窗口时游戏不暂停，背景音乐也不停。true=开，false=关（游戏原本的做法：切走就停）", defaultValue: true);
-		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "剧情里按鼠标右键隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次右键恢复。true=开，false=关", defaultValue: true);
-		HideUIKey = new ConfigElement<KeyCode>("HideUIKey", "隐藏界面看 CG 的热键（和右键效果一样），None=不绑定", KeyCode.None);
+		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "隐藏界面看 CG：剧情里按热键（HideUIKey，默认鼠标右键）隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次恢复。true=开，false=关", defaultValue: true);
+		HideUIKey = new ConfigElement<KeyCode>("HideUIKey", "隐藏界面看 CG 的按键，默认鼠标右键（Mouse1）；习惯右键做别的事可以改成键盘上的键，如 H", KeyCode.Mouse1);
 		EnableStoryReview = new ConfigElement<bool>("EnableStoryReview", "剧情回顾：走到大节点（任务、事件的开头，以及会改变剧情走向的选项）时，在存档文件夹里收录这一段开头的进度（LOMStory_ 开头，跟着 Steam 云同步），以后可以从这里重玩。true=开，false=关", defaultValue: true);
 		StoryReviewKey = new ConfigElement<KeyCode>("StoryReviewKey", "活侠传拓展窗口（此刻、路线图、剧情图、收录节点、结局速查、数值、设置）的热键", KeyCode.Tab);
 		ShowBranchChecks = new ConfigElement<bool>("ShowBranchChecks", "剧情走到分支判断时在屏幕上列出各分支条件（满足为绿、不满足为红，可能剧透）。true=开，false=关", defaultValue: false);
