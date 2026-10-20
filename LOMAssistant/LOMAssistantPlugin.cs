@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace LOMAssistant;
 
-[BepInPlugin("LOMAssistant", "活侠传拓展", "2.1.0")]
+[BepInPlugin("LOMAssistant", "活侠传拓展", "2.1.1")]
 public class LOMAssistantPlugin : BaseUnityPlugin
 {
 	private Harmony _harmony;
