@@ -84,12 +84,14 @@ public sealed class StoryEndingWay
 }
 
 /// <summary>
-/// 把全部剧本和任务读一遍，整理成时间线和结局速查。第一次打开时开始，分很多帧做完，不卡游戏；
-/// 读过、走过的标记按生成那一刻算，面板上可以重新生成。
+/// 把全部剧本和任务读一遍，整理成时间线和结局速查。进游戏后在后台提前开始（或第一次打开时），分很多帧做完，不卡游戏；
+/// 读过、走过的标记每次打开窗口按当前进度重算，面板上也可以重新生成。
 /// </summary>
 public static class StoryAtlas
 {
+	// 每帧最多花多少毫秒：平时在后台读，少占一点；窗口开着、有人在等时多占一点，读得快
 	private const double FrameBudgetMs = 5;
+	private const double HurryBudgetMs = 25;
 
 	public static readonly List<StoryMission> Missions = new List<StoryMission>();
 	public static readonly List<StoryEnding> Endings = new List<StoryEnding>();
@@ -148,17 +150,18 @@ public static class StoryAtlas
 		_steps = Build();
 	}
 
-	/// <summary>每帧调用：在时间预算内往下做几步。</summary>
-	public static void Tick()
+	/// <summary>每帧调用：在时间预算内往下做几步；hurry=窗口开着在等，预算放大。</summary>
+	public static void Tick(bool hurry = false)
 	{
 		if (_steps == null)
 		{
 			return;
 		}
 		var clock = Stopwatch.StartNew();
+		double budget = hurry ? HurryBudgetMs : FrameBudgetMs;
 		try
 		{
-			while (clock.Elapsed.TotalMilliseconds < FrameBudgetMs)
+			while (clock.Elapsed.TotalMilliseconds < budget)
 			{
 				if (!_steps.MoveNext())
 				{
@@ -195,6 +198,8 @@ public static class StoryAtlas
 		Achievements.Clear();
 		// 全部剧本：读一遍，记下大概，文字马上放掉
 		TextAsset[] assets = Resources.LoadAll<TextAsset>("story/chinesetraditional");
+		// 这一步没法拆到多帧里，记下用时（后台提前读时会在这里顿一下）
+		FileLogger.Log($"[剧情回顾] 载入 {assets.Length} 个剧本文件用时 {timer.ElapsedMilliseconds} 毫秒");
 		var names = new List<string>();
 		for (int i = 0; i < assets.Length; i++)
 		{

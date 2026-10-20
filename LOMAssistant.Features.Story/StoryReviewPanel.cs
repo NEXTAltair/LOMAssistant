@@ -54,6 +54,37 @@ public partial class StoryReviewPanel : MonoBehaviour
 		}
 	}
 
+	private string _prewarmScene = "";
+	private float _prewarmSince;
+
+	/// <summary>
+	/// 进了养成地图、安顿下来几秒后，在后台把全部剧本读好：第一次打开路线图、剧情图、结局速查时不用再等。
+	/// 只在养成地图上做（载入剧本文件那一下没法拆开，剧情对话里会觉得顿），随时存档恢复时不做。
+	/// 读过一次（或失败过）就不再自动开始，失败了在面板上点「重新生成」。
+	/// </summary>
+	private void Prewarm()
+	{
+		if (StoryAtlas.Ready || StoryAtlas.Building || StoryAtlas.Status.Length > 0)
+		{
+			return;
+		}
+		string scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+		if (scene != _prewarmScene)
+		{
+			_prewarmScene = scene;
+			_prewarmSince = Time.realtimeSinceStartup;
+			return;
+		}
+		Mortal.Core.SceneController controller = Mortal.Core.SceneController.Instance;
+		if (scene == "Free" && Time.realtimeSinceStartup - _prewarmSince > 5f && !_visible
+			&& !LOMAssistant.Features.AnytimeSave.AnytimeSave.Replaying && !LOMAssistant.Features.AnytimeSave.AnytimeSave.Restoring
+			&& controller != null && !controller.IsLoading && !controller.IsPrepare && Mortal.Core.PlayerStatManagerData.Instance != null)
+		{
+			FileLogger.Log("[剧情回顾] 进游戏后在后台提前读取剧本");
+			StoryAtlas.Start();
+		}
+	}
+
 	public static void Ensure(GameObject host)
 	{
 		Instance = host.GetComponent<StoryReviewPanel>() ?? host.AddComponent<StoryReviewPanel>();
@@ -61,7 +92,9 @@ public partial class StoryReviewPanel : MonoBehaviour
 
 	private void Update()
 	{
-		StoryAtlas.Tick();
+		Prewarm();
+		// 窗口开着时多半是在等剧本读完（读完后台词索引也一样），读快一点
+		StoryAtlas.Tick(_visible && !UiHider.Active);
 		// 等新热键时面板被关掉或切走了：不再等，免得热键一直失灵
 		if (_capturing != null && (!_visible || _tab != SettingsTab || UiHider.Active))
 		{
