@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using LOMAssistant.Config;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace LOMAssistant.Features.Story;
 
@@ -40,6 +41,18 @@ public partial class StoryReviewPanel : MonoBehaviour
 
 	internal static StoryReviewPanel Instance { get; private set; }
 
+	private int _escFrame = -10;
+
+	/// <summary>窗口开着（或刚被 Esc 关掉的这一两帧）：Esc 归窗口用，不交给游戏。</summary>
+	public static bool OwnsEscape
+	{
+		get
+		{
+			StoryReviewPanel panel = Instance;
+			return panel != null && ((panel._visible && !UiHider.Active) || Time.frameCount - panel._escFrame <= 1);
+		}
+	}
+
 	public static void Ensure(GameObject host)
 	{
 		Instance = host.GetComponent<StoryReviewPanel>() ?? host.AddComponent<StoryReviewPanel>();
@@ -54,6 +67,23 @@ public partial class StoryReviewPanel : MonoBehaviour
 			StopCapture();
 		}
 		CaptureMouse();
+		// Esc：先关确认框，再关窗口（游戏那边的 Esc 由输入隔离挡下，不会同时打开暂停菜单）。
+		// 正在等新热键时 Esc 是取消改键，交给设置页
+		Keyboard keyboard = Keyboard.current;
+		if (_visible && !UiHider.Active && _capturing == null && keyboard != null && keyboard.escapeKey.wasPressedThisFrame)
+		{
+			_escFrame = Time.frameCount;
+			if (_confirming != null)
+			{
+				_confirming = null;
+			}
+			else
+			{
+				_visible = false;
+				GUIUtility.keyboardControl = 0;
+			}
+			return;
+		}
 		if (GUIUtility.keyboardControl == 0 && InputGuard.HotkeyDown(ConfigManager.StoryReviewKey.Value))
 		{
 			_visible = !_visible;

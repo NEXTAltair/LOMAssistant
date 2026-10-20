@@ -173,8 +173,13 @@ public class InputGuard : MonoBehaviour
 			return true;
 		}
 		InputDevice device = context.control != null ? context.control.device : null;
-		if (device is Keyboard)
+		if (device is Keyboard keyboard)
 		{
+			// 活侠传拓展窗口开着时，Esc 用来关窗口，不打开游戏的暂停菜单
+			if (context.control == keyboard.escapeKey && LOMAssistant.Features.Story.StoryReviewPanel.OwnsEscape)
+			{
+				return true;
+			}
 			return BlockKeyboard;
 		}
 		if (device is UnityEngine.InputSystem.Pointer)
