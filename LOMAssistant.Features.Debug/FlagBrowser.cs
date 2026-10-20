@@ -66,6 +66,8 @@ public class FlagBrowser : MonoBehaviour
 		}
 		_testPanel = testPanel;
 		_rows = testPanel.GetComponentsInChildren<TestFlagStatPanel>(includeInactive: true);
+		_plainColors.Clear();
+		_tipHome.Clear();
 		_original = _rows.Select(r => Traverse.Create(r).Field("_stat").GetValue<FlagData>()).ToArray();
 		_query = "";
 		_applied = null;
@@ -73,6 +75,16 @@ public class FlagBrowser : MonoBehaviour
 		_page = 0;
 		_font = _rows.Select(r => r.GetComponentInChildren<Text>(true)).FirstOrDefault(x => x != null && x.font != null)?.font;
 		_scale = -1f;
+		// 旗标说明的小框不接鼠标：原版靠鼠标进出文字来开关它，小框弹出后会盖住旁边几行，
+		// 鼠标移到下一行时还停在上一行的小框上，看到的说明就和要加减的那行对不上
+		_tips = _rows.Select(r => Traverse.Create(r).Field("_tip").GetValue<GameObject>()).ToArray();
+		foreach (GameObject tip in _tips.Where(t => t != null))
+		{
+			foreach (Graphic graphic in tip.GetComponentsInChildren<Graphic>(includeInactive: true))
+			{
+				graphic.raycastTarget = false;
+			}
+		}
 		FileLogger.Log($"旗标搜索：F9 旗标列共 {_rows.Length} 行");
 	}
 
@@ -143,6 +155,126 @@ public class FlagBrowser : MonoBehaviour
 		Vector2 min = RectTransformUtility.WorldToScreenPoint(cam, corners[0]);
 		Vector2 max = RectTransformUtility.WorldToScreenPoint(cam, corners[2]);
 		return new Rect(min.x, Screen.height - max.y, max.x - min.x, max.y - min.y);
+	}
+
+	private GameObject[] _tips = new GameObject[0];
+
+	/// <summary>
+	/// 旗标说明按鼠标所在的整行来显示：鼠标在哪一行（名字、数值、加减按钮都算），就只显示那一行的说明。
+	/// 放在 LateUpdate，盖过原版鼠标进出事件的开关。
+	/// </summary>
+	private void LateUpdate()
+	{
+		if (!PanelVisible || _tips.Length != _rows.Length)
+		{
+			return;
+		}
+		Canvas canvas = _testPanel.GetComponentInParent<Canvas>();
+		Camera cam = canvas != null && canvas.renderMode != RenderMode.ScreenSpaceOverlay ? canvas.worldCamera : null;
+		Vector2 mouse = Input.mousePosition;
+		// 行本身的范围比看到的宽（左列的行会伸到右列底下），所以按每行看得见的名字、数值和加减按钮来算范围
+		// 两列的范围仍可能重叠，几行都盖住鼠标时取左边缘离鼠标最近的那行（就是鼠标所在那一列）
+		int hovered = -1;
+		float bestLeft = float.MinValue;
+		for (int i = 0; i < _rows.Length; i++)
+		{
+			if (!_rows[i].gameObject.activeInHierarchy)
+			{
+				continue;
+			}
+			Rect? bounds = null;
+			foreach (Graphic graphic in _rows[i].GetComponentsInChildren<Graphic>())
+			{
+				if (_tips[i] != null && graphic.transform.IsChildOf(_tips[i].transform))
+				{
+					continue;
+				}
+				Rect r = ScreenRect(graphic.rectTransform, cam);
+				bounds = bounds == null ? r : Rect.MinMaxRect(Mathf.Min(bounds.Value.xMin, r.xMin), Mathf.Min(bounds.Value.yMin, r.yMin), Mathf.Max(bounds.Value.xMax, r.xMax), Mathf.Max(bounds.Value.yMax, r.yMax));
+			}
+			if (bounds != null && bounds.Value.Contains(mouse) && bounds.Value.xMin > bestLeft)
+			{
+				hovered = i;
+				bestLeft = bounds.Value.xMin;
+			}
+		}
+		for (int i = 0; i < _tips.Length; i++)
+		{
+			bool on = i == hovered;
+			if (_tips[i] != null && _tips[i].activeSelf != on)
+			{
+				_tips[i].SetActive(on);
+			}
+			Highlight(i, on);
+		}
+		if (hovered >= 0 && _tips[hovered] != null)
+		{
+			KeepOnScreen(_tips[hovered].transform as RectTransform, cam);
+		}
+	}
+
+	// 说明框原本的位置；说明很长时框会伸出屏幕，挪回屏幕里
+	private readonly Dictionary<RectTransform, Vector3> _tipHome = new Dictionary<RectTransform, Vector3>();
+
+	private void KeepOnScreen(RectTransform tip, Camera cam)
+	{
+		if (tip == null)
+		{
+			return;
+		}
+		if (!_tipHome.TryGetValue(tip, out Vector3 home))
+		{
+			_tipHome[tip] = home = tip.localPosition;
+		}
+		tip.localPosition = home;
+		Canvas.ForceUpdateCanvases();
+		Rect r = ScreenRect(tip, cam);
+		float dx = r.xMin < 0 ? -r.xMin : r.xMax > Screen.width ? Screen.width - r.xMax : 0f;
+		float dy = r.yMax > Screen.height ? Screen.height - r.yMax : r.yMin < 0 ? -r.yMin : 0f;
+		if (dx == 0f && dy == 0f || !(tip.parent is RectTransform parent))
+		{
+			return;
+		}
+		// 屏幕上的位移换算成父节点里的位移
+		if (RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, r.center, cam, out Vector2 from)
+			&& RectTransformUtility.ScreenPointToLocalPointInRectangle(parent, r.center + new Vector2(dx, dy), cam, out Vector2 to))
+		{
+			tip.localPosition = home + (Vector3)(to - from);
+		}
+	}
+
+	private static Rect ScreenRect(RectTransform rt, Camera cam)
+	{
+		var corners = new Vector3[4];
+		rt.GetWorldCorners(corners);
+		Vector2 a = RectTransformUtility.WorldToScreenPoint(cam, corners[0]);
+		Vector2 b = RectTransformUtility.WorldToScreenPoint(cam, corners[2]);
+		return Rect.MinMaxRect(Mathf.Min(a.x, b.x), Mathf.Min(a.y, b.y), Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
+	}
+
+	// 鼠标所在的那行，名字和数值改成金色，说明框指的是哪行一眼就能看出来
+	private static readonly Color HoverColor = new Color(0.95f, 0.78f, 0.42f, 1f);
+	private readonly Dictionary<Text, Color> _plainColors = new Dictionary<Text, Color>();
+
+	private void Highlight(int row, bool on)
+	{
+		var tr = Traverse.Create(_rows[row]);
+		foreach (Text text in new[] { tr.Field("_nameText").GetValue<Text>(), tr.Field("_valueText").GetValue<Text>() })
+		{
+			if (text == null)
+			{
+				continue;
+			}
+			if (!_plainColors.TryGetValue(text, out Color plain))
+			{
+				_plainColors[text] = plain = text.color;
+			}
+			Color want = on ? HoverColor : plain;
+			if (text.color != want)
+			{
+				text.color = want;
+			}
+		}
 	}
 
 	private bool PanelVisible => _testPanel != null && _testPanel.activeInHierarchy && _rows != null && _rows.Length > 0;
