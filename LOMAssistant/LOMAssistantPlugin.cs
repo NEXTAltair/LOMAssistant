@@ -168,6 +168,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			UiHider.Ensure(base.gameObject);
 			SkipReadToggle.Ensure(base.gameObject);
 			TryPatchAll(typeof(StatLimitPatch));
+			TryPatchAll(typeof(TitlePatch));
 			ConfigManager.BreakStatLimit.OnValueChanged += _ => StatLimitPatch.Apply();
 			StatLimitPatch.Apply();
 			FastStartup.Install(this);

@@ -158,6 +158,14 @@ public partial class StoryReviewPanel
 			{
 				continue;
 			}
+			if (title == "称号")
+			{
+				if (query.Length == 0)
+				{
+					DrawTitles(player);
+				}
+				continue;
+			}
 			var shown = rows.Where(row => Matches(query, row.Name, row.Id, row.Note)).ToList();
 			if (shown.Count == 0)
 			{
@@ -284,6 +292,8 @@ public partial class StoryReviewPanel
 			("武功与学识", Martial.Select(t => StatRowOf(player, t)).Where(x => x != null).ToList()),
 			("门派", Sect.Select(t => StatRowOf(player, t)).Where(x => x != null).ToList()),
 			("其他数值", Other.Concat(UnlistedStats(player)).Select(t => StatRowOf(player, t)).Where(x => x != null).ToList()),
+			// 称号单独画（选游戏称号的按钮、自定义输入框），这里只占一个分组
+			("称号", new List<StatRow>()),
 		};
 		// 好感：游戏里所有人，原版测试面板没列的（龙渊、石公远……）也在
 		var favor = new List<StatRow>();
