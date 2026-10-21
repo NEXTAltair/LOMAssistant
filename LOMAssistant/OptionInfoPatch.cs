@@ -248,7 +248,7 @@ internal static class OptionInfoPatch
 	}
 
 	// 地点对白后面接的「(可触发：…)」：游戏是繁体时接的是繁体
-	private static bool IsTriggerHint(string text) => text.Contains("可触发：") || text.Contains("可觸發：");
+	private static bool IsTriggerHint(string text) => text.Contains("可触发：") || text.Contains("可觸發：") || text.Contains("발생 가능:") || text.Contains("発生可能：");
 
 	private static void HandleDialogChange(PositionController instance, bool addSuffix, string suffix = "")
 	{

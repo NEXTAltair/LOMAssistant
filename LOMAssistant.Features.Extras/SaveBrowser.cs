@@ -62,7 +62,7 @@ public class SaveBrowser : MonoBehaviour
 	}
 
 	private bool _isLoad;
-	private bool _traditional; // 界面建起来时游戏是不是繁体
+	private string _language; // 界面建起来时游戏的语言
 	private MonoBehaviour _panel;
 	private RectTransform _root, _listContent, _detail;
 	private ScrollRect _scroll;
@@ -158,8 +158,8 @@ public class SaveBrowser : MonoBehaviour
 			SaveBrowser browser = panel.GetComponent<SaveBrowser>() ?? panel.gameObject.AddComponent<SaveBrowser>();
 			browser._isLoad = load;
 			browser._panel = panel;
-			// 游戏换了语言：字体（游戏按语言换的）和文字（简繁）都要重来，整个界面重建
-			if (browser._root != null && browser._traditional != TextConverter.Traditional)
+			// 游戏换了语言：字体（游戏按语言换的）和文字（简繁、韩语）都要重来，整个界面重建
+			if (browser._root != null && browser._language != TextConverter.DisplayLanguage)
 			{
 				Destroy(browser._root.gameObject);
 				browser._root = null;
@@ -181,7 +181,7 @@ public class SaveBrowser : MonoBehaviour
 
 	private bool Build()
 	{
-		_traditional = TextConverter.Traditional;
+		_language = TextConverter.DisplayLanguage;
 		Transform container = _panel.transform.Find("Container");
 		if (container == null)
 		{
@@ -1276,10 +1276,10 @@ public class SaveBrowser : MonoBehaviour
 
 	// ---------------- 小工具 ----------------
 
-	/// <summary>游戏是繁体时，把界面上的文字转成繁体（写的都是简体）；备注框里玩家打的字不动。</summary>
+	/// <summary>界面语言不是简体时，把界面上的文字转成繁体或换成韩语、日语（写的都是简体）；备注框里玩家打的字不动。</summary>
 	private void Localize(Transform root)
 	{
-		if (!_traditional || root == null)
+		if (root == null || _language == null || _language == "ChineseSimplified")
 		{
 			return;
 		}
@@ -1287,7 +1287,7 @@ public class SaveBrowser : MonoBehaviour
 		{
 			if (_noteBox == null || t != _noteBox.textComponent)
 			{
-				t.text = TextConverter.ToTraditional(t.text);
+				t.text = TextConverter.ForDisplay(t.text);
 			}
 		}
 	}

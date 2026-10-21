@@ -254,7 +254,8 @@ public partial class StoryReviewPanel
 	private void DrawSettings(Rect r)
 	{
 		_settingSections ??= BuildSettingSections();
-		string query = SearchBox(new Rect(r.x, r.y, S(420), S(36)), ref _settingsSearch);		var area = new Rect(r.x, r.y + S(46), r.width, r.height - S(46));
+		string query = SearchBox(new Rect(r.x, r.y, S(420), S(36)), ref _settingsSearch);
+		DrawLanguage(new Rect(r.x + S(450), r.y, r.width - S(450), S(36)));		var area = new Rect(r.x, r.y + S(46), r.width, r.height - S(46));
 		DragScroll("settings", area, ref _settingsScroll);
 		GUILayout.BeginArea(area);
 		_settingsScroll = GUILayout.BeginScrollView(_settingsScroll);
@@ -267,7 +268,7 @@ public partial class StoryReviewPanel
 		DrawPinballScore(rowWidth);
 		foreach (var (title, rows) in _settingSections)
 		{
-			var shown = rows.Where(row => Matches(query, row.Name, row.Element.Name, row.Element.Description)).ToList();
+			var shown = rows.Where(row => Matches(query, row.Name, TextConverter.ForDisplay(row.Name), row.Element.Name, row.Element.Description)).ToList();
 			if (shown.Count == 0)
 			{
 				continue;
@@ -294,19 +295,43 @@ public partial class StoryReviewPanel
 		GUILayout.EndArea();
 	}
 
+	// 各语言用自己的写法，不跟着界面语言翻译
+	private static readonly string[] Languages = { "跟随游戏", "简体中文", "繁體中文", "한국어", "日本語" };
+
+	/// <summary>界面语言：搜索框右边一排按钮。</summary>
+	private void DrawLanguage(Rect r)
+	{
+		GUIStyle line = Middle(_label);
+		string label = "界面语言";
+		float x = r.x, labelWidth = line.CalcSize(new GUIContent(label)).x;
+		GUI.Label(new Rect(x, r.y, labelWidth, r.height), label, line);
+		x += labelWidth + S(12);
+		int current = ConfigManager.UiLanguage.Value;
+		for (int i = 0; i < Languages.Length; i++)
+		{
+			GUIStyle style = i == current ? _primary : _button;
+			float w = Mathf.Max(S(96), style.CalcSize(new GUIContent(Languages[i])).x + S(20));
+			if (GUI.Button(new Rect(x, r.y, w, r.height), Languages[i], style))
+			{
+				ConfigManager.UiLanguage.Value = i;
+			}
+			x += w + S(6);
+		}
+	}
+
 	private void DrawSettingRow(SettingRow row, float width)
 	{
 		IConfigElement element = row.Element;
 		GUILayout.BeginHorizontal(_card, GUILayout.Width(width - S(10)));
 		GUIStyle line = Middle(_label);
 		float nameWidth = S(232);
-		GUILayout.Label(Fit(row.Name, line, nameWidth), line, GUILayout.Width(nameWidth), Ctl());
+		GUILayout.Label(Fit(TextConverter.ForDisplay(row.Name), line, nameWidth), line, GUILayout.Width(nameWidth), Ctl());
 		Rect nameRect = GUILayoutUtility.GetLastRect();
 		if (row.Restart)
 		{
 			GUILayout.Label("重启生效", Middle(_muted), GUILayout.Width(S(76)), Ctl());
 		}
-		Hover(nameRect, Describe(element.Description));
+		Hover(nameRect, UiDescriptions.Get(element.Name, TextConverter.DisplayLanguage) ?? Describe(element.Description));
 		GUILayout.FlexibleSpace();
 		object value = element.BoxedValue;
 		if (value is bool on)

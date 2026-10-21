@@ -565,7 +565,7 @@ public static class StoryAtlas
 				SeriesTitle = main ? "主线" : title,
 				Main = main,
 				Desc = FirstLine(TextConverter.ToSimplified(check.GetFieldValue<string>("_desc") ?? ""), 30),
-				Place = check.Position.ToString() == "無" ? "" : TextConverter.ToSimplified(check.Position.ToString()),
+				Place = PlaceName(check.Position),
 				StartScript = check.StartScript ?? "",
 				Conditions = check.GetFieldValue<ConditionResultItem[]>("_conditions") ?? new ConditionResultItem[0],
 				Inactive = !active
@@ -611,6 +611,35 @@ public static class StoryAtlas
 	public static string DateText(int rounds) => $"第{rounds / 36 + 1}年{rounds % 36 / 3 + 1}月{StageText(rounds % 3 + 1)}";
 
 	public static StoryMission Find(string key) => Missions.FirstOrDefault(m => m.Key == key);
+
+	/// <summary>地点名：游戏地图上显示的名字（Position/Name/Kitchen 这类，跟着游戏语言）；取不到用地点类型的名字。</summary>
+	private static string PlaceName(PositionType position)
+	{
+		string name = position.ToString();
+		if (name == "無")
+		{
+			return "";
+		}
+		try
+		{
+			// 地点类型上标着 [StringValue("Kitchen")]，就是本地化用的键
+			object attribute = typeof(PositionType).GetField(name)?.GetCustomAttributes(false).FirstOrDefault(a => a.GetType().Name == "StringValueAttribute");
+			string key = attribute?.GetType().GetProperties().Select(p => p.GetValue(attribute, null) as string).FirstOrDefault(v => !string.IsNullOrEmpty(v));
+			if (key != null)
+			{
+				string text = LibraryText("Position/Name/" + key, "");
+				if (text.Length > 0)
+				{
+					return text;
+				}
+			}
+		}
+		catch (Exception e)
+		{
+			FileLogger.Log("地点名取不到 " + name + ": " + e.Message);
+		}
+		return TextConverter.ToSimplified(name);
+	}
 
 	private static string LibraryText(string key, string fallback)
 	{
