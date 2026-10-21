@@ -103,7 +103,7 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.BranchPanelAutoHide, "分支小窗自动收起（秒）", 0f, 600f),
 				Row(ConfigManager.PopupOpacity, "分支小窗不透明度", 0f, 1f),
 			}),
-			("养成与战斗", new List<SettingRow>
+			("养成", new List<SettingRow>
 			{
 				new SettingRow { Element = ConfigManager.ActionMode, Name = "行动点", Choices = new[] { "正常", "不消耗", "每旬N点" }, Choose = ActionModePatch.Set },
 				Row(ConfigManager.ActionsPerRound, "每旬N点的 N", 1f, 5f),
@@ -111,15 +111,19 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.CheatUnlimitedTraining, "无限修炼次数"),
 				Row(ConfigManager.CheatUnlimitedUpgrade, "无限锻造、炼丹"),
 				Row(ConfigManager.CheatFreeUpgradeMoney, "锻造、炼丹不花银两"),
+				Row(ConfigManager.PinballScoreMultiplier, "弹珠得分倍率", 0f, 100f),
+				Row(ConfigManager.PinballFixedScore, "弹珠固定总分（-1=关）", -1f, 9999999f),
+				Row(ConfigManager.EnableSkipAction, "养成「空过」按钮"),
+			}),
+			("战斗", new List<SettingRow>
+			{
 				Row(ConfigManager.CheatDuelInvincible, "决斗我方无敌"),
 				Row(ConfigManager.CheatDuelNoDamage, "决斗敌方不受伤"),
 				Row(ConfigManager.CheatBattleInvincible, "团战我方不受伤"),
 				Row(ConfigManager.CheatBattleNoCooldown, "团战绝招无冷却"),
-				Row(ConfigManager.PinballScoreMultiplier, "弹珠得分倍率", 0f, 100f),
-				Row(ConfigManager.PinballFixedScore, "弹珠固定总分（-1=关）", -1f, 9999999f),
-				Row(ConfigManager.EnableSkipAction, "养成「空过」按钮"),
 				Row(ConfigManager.EnableCombatAssist, "决斗直接获胜按钮"),
 				Row(ConfigManager.EnableBattleWin, "团战直接获胜按钮"),
+				Row(ConfigManager.EnableFastDuelRounds, "决斗回合间不干等"),
 				Row(ConfigManager.EnableSkillColumns, "技能表全显示"),
 			}),
 			("其他", new List<SettingRow>
@@ -130,7 +134,6 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.EnableBackgroundRun, "后台继续运行"),
 				Row(ConfigManager.EnableFastStartup, "开游戏更快"),
 				Row(ConfigManager.EnableFlowSpeedup, "流程提速"),
-				Row(ConfigManager.EnableFastDuelRounds, "决斗回合间不干等"),
 				Row(ConfigManager.EnableLibraryDisplay, "讲经堂解锁显示"),
 				Row(ConfigManager.EnableShopAllItems, "四师兄卖全部物品"),
 				Row(ConfigManager.EnableShopAllBooks, "四师兄卖全部功法"),
