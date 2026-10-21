@@ -68,6 +68,39 @@ internal static class MenuButtonHelper
 	}
 
 	/// <summary>
+	/// 把游戏的按钮复制到别的父节点下（新版存档界面用），去掉按键绑定和文字本地化，换文字、清空点击。
+	/// </summary>
+	public static Button CloneInto(Button template, Transform parent, string label, string objectName)
+	{
+		GameObject clone = Object.Instantiate(template.gameObject, parent, worldPositionStays: false);
+		clone.name = objectName;
+		foreach (MonoBehaviour mb in clone.GetComponentsInChildren<MonoBehaviour>(includeInactive: true))
+		{
+			if (mb != null && TextLocalizers.Contains(mb.GetType().Name))
+			{
+				Object.DestroyImmediate(mb);
+			}
+		}
+		foreach (InputButton ib in clone.GetComponentsInChildren<InputButton>(includeInactive: true))
+		{
+			Object.DestroyImmediate(ib);
+		}
+		foreach (Text t in clone.GetComponentsInChildren<Text>(includeInactive: true))
+		{
+			t.text = label;
+		}
+		foreach (TMP_Text t in clone.GetComponentsInChildren<TMP_Text>(includeInactive: true))
+		{
+			t.text = label;
+		}
+		Button button = clone.GetComponent<Button>();
+		button.onClick = new Button.ButtonClickedEvent();
+		button.interactable = true;
+		clone.SetActive(true);
+		return button;
+	}
+
+	/// <summary>
 	/// The menus stack buttons in a VerticalLayoutGroup laid out for the original count;
 	/// an extra button pushes the last one off screen. Shrink the spacing so the stack
 	/// keeps the height it had before the new button was added.

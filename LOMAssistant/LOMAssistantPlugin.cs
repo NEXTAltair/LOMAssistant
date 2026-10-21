@@ -159,6 +159,10 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			TryPatchAll(typeof(AutoSaveHistoryPatch));
 			TryPatchAll(typeof(SaveDataCache));
 			TryPatchAll(typeof(SaveDataCache.GetSaveDataPatch));
+			if (ConfigManager.EnableSaveBrowser.Value)
+			{
+				TryPatchAll(typeof(SaveBrowser));
+			}
 			TryPatchAll(typeof(ActionModePatch));
 			TryPatchAll(typeof(FlagNotifyPatch));
 			TryPatchAll(typeof(LuaLoadTiming));

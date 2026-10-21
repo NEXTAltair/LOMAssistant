@@ -93,6 +93,8 @@ public static class ConfigManager
 
 	public static ConfigElement<int> AutoSaveHistory;
 
+	public static ConfigElement<bool> EnableSaveBrowser;
+
 	public static ConfigElement<bool> EnableShopAllItems;
 
 	public static ConfigElement<bool> EnableShopAllBooks;
@@ -293,6 +295,7 @@ public static class ConfigManager
 		EnableFlowSpeedup = new ConfigElement<bool>("EnableFlowSpeedup", "流程提速：切场景不再写多余的全局存档副本、读档时旗标查表、回想关着时不重排、快进时指令不空等、数值变化后的停顿缩到 0.2 秒（没显示的不停顿）、养成地图上行动后的等待和转场加快 3 倍。默认开；只有怀疑它导致问题时才关。true=开，false=关", defaultValue: true);
 		SaveSlotCount = new ConfigElement<int>("SaveSlotCount", "手动存档栏位数量（原版 20，小于 20 时按 20）", 100);
 		AutoSaveHistory = new ConfigElement<int>("AutoSaveHistory", "每类自动存档（养成/剧情/战斗）额外保留的旧档数量，0=不保留", 5);
+		EnableSaveBrowser = new ConfigElement<bool>("EnableSaveBrowser", "新版存档、读档界面：左边列表（心上人头像、备注、备注和删除按钮），右边详情（心上人立绘、任务、读档后的对白）。true=开（默认），false=用游戏原来的界面，改后重启生效", defaultValue: true);
 		EnableShopAllBooks = new ConfigElement<bool>("EnableShopAllBooks", "四师兄商店售卖全部功法（包括各门派、线路限定、平时买不到的功法秘笈；没拥有的才卖；不卖《证类本草》和剧情里拿不到的松风剑法、天师剑法、四平枪谱）。true=开，false=关", defaultValue: false);
 		EnableShopAllItems = new ConfigElement<bool>("EnableShopAllItems", "四师兄商店售卖全部物品（书籍、杂物、特殊物品；不卖《证类本草》，提前买会导致六月后山事件出 bug）。true=开，false=关", defaultValue: false);
 		EnableDebugPanel = new ConfigElement<bool>("EnableDebugPanel", "是否启用数值面板热键（F9 打开「数值」页：属性、好感、门派、天赋、旗标）。true=开，false=关", defaultValue: true);

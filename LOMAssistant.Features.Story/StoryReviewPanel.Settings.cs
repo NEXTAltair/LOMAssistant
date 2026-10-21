@@ -142,6 +142,7 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.AnytimeSaveLimit, "随时存档最多保留几个", 1f, 999f),
 				Row(ConfigManager.SaveSlotCount, "手动存档栏位", 20f, 999f),
 				Row(ConfigManager.AutoSaveHistory, "自动存档多留旧档", 0f, 50f),
+				Row(ConfigManager.EnableSaveBrowser, "新版存档、读档界面"),
 			}),
 			("热键", new List<SettingRow>
 			{

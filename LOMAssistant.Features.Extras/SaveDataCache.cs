@@ -69,6 +69,18 @@ public static class SaveDataCache
 		_panelDepth++;
 	}
 
+	/// <summary>在这个范围里读存档也走缓存（新版存档界面一次列出全部存档时用）。</summary>
+	internal static IDisposable Scope()
+	{
+		EnterPanel();
+		return new ScopeExit();
+	}
+
+	private sealed class ScopeExit : IDisposable
+	{
+		public void Dispose() => LeavePanel();
+	}
+
 	private static void LeavePanel()
 	{
 		if (_panelDepth > 0)
