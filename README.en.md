@@ -79,7 +79,7 @@ Edit stats, martial arts, sect values, relationships, talents, training points, 
 ### Other
 
 - **Gamepad**: the window can be used entirely with a gamepad (typing into the search and number boxes still needs a keyboard). Press the left stick (L3) to open the window; inside it the left stick or d-pad moves the pointer, A clicks, the right stick scrolls, LB / RB switch tabs and B closes it. The game ignores the gamepad while the window is open. PlayStation and Switch controllers get their own button names (× / ○, L1 / R1 and so on).
-- **Languages**: the mod follows the game language (Simplified Chinese, Traditional Chinese, Korean). With the [Japanese patch](https://github.com/Dlaqe2334/LOM-JPMOD) installed it shows Japanese. You can also choose 「界面语言」 at the top of the settings page. Korean and Japanese currently cover the common UI text; the rest is still Chinese.
+- **Languages**: the mod follows the game language (Simplified Chinese, Traditional Chinese, Korean). With the [Japanese patch](https://dlaqe2334.github.io/LOM-JPMOD/) installed it shows Japanese. You can also choose 「界面语言」 at the top of the settings page. Korean and Japanese currently cover the common UI text; the rest is still Chinese.
 - **Export diagnostics**: ESC → settings → 「导出诊断」 packs logs, config and the plugin list onto the desktop (no saves).
 - **Conflict detection**: if a conflicting old mod is installed, the settings page opens and names it.
 
