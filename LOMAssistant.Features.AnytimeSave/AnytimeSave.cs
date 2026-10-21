@@ -460,6 +460,9 @@ public partial class AnytimeSave : MonoBehaviour
 		Faulted = false; Restoring = true; Replaying = false; Time.timeScale = 1;
 		DiceManualSelectionPatch.IsClicked = false;
 		foreach (var env in UObject.FindObjectsOfType<LuaEnvironment>()) env.StopAllCoroutines();
+		// 已读记录（对话变黄）只在内存里，换场景时游戏会从磁盘重新读一遍；原版读档前会先存一次，这里也先存，
+		// 不然这一段刚读过的对话（比如存档后选了一个选项看完）读回来又都成了没读过
+		SaveSystem.Instance.SaveUniverseData();
 		SceneController.Instance.LoadTitle();
 		float start = Time.realtimeSinceStartup;
 		while (SceneName != "Title" || SceneController.Instance.IsPrepare || SceneController.Instance.IsLoading)
