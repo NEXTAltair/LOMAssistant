@@ -40,6 +40,8 @@ public class SaveFile
 	// 存档时台上看得见的角色（读档快进时清场特效可能没跑，读档后把不在名单里的隐藏）
 	public List<string> visibleCharacters;
 	public int target;
+	/// <summary>存档时的游戏日期（第几年几月几旬），列表里显示用；以前的存档没有。</summary>
+	public string gameTime;
 	public List<Entry> trace = new List<Entry>();
 	public List<ScriptStamp> scripts = new List<ScriptStamp>();
 	public DiceState dice;
@@ -85,7 +87,7 @@ public partial class AnytimeSave : MonoBehaviour
 	private List<Entry> trace = new List<Entry>();
 	private List<ScriptStamp> stamps = new List<ScriptStamp>();
 	private string rootScript, scriptPrefix, coreHash, storyHash, message = "";
-	private int active = -1, cursor, target, replyIndex = -1, slot = 1;
+	private int active = -1, cursor, target, replyIndex = -1;
 	private bool panel, busy, installed, pendingLoad;
 	private string compatibilityFailure;
 	private float messageUntil, replayStarted;
@@ -107,6 +109,7 @@ public partial class AnytimeSave : MonoBehaviour
 		compatibilityFailure = CheckCompatibility();
 		if (compatibilityFailure != null)
 		{
+			Unavailable = compatibilityFailure;
 			LOMAssistantPlugin.LogError(compatibilityFailure);
 			FileLogger.LogError("[随时存档] " + compatibilityFailure);
 			return;
@@ -149,7 +152,9 @@ public partial class AnytimeSave : MonoBehaviour
 	internal void Fail(string s)
 	{
 		Faulted = true; Replaying = false; Restoring = false; pendingLoad = false; active = -1;
-		Time.timeScale = 0; panel = true; Notice("恢复已停止：" + s + "。请从标题界面重新读档。", 9999);
+		Time.timeScale = 0; Notice("恢复已停止：" + s + "。请从标题界面重新读档。", 9999);
+		// 打开咖啡伴侣窗口的随时存档页，那里有「返回标题」
+		LOMAssistant.Features.Story.StoryReviewPanel.ShowAnytime();
 		LOMAssistantPlugin.LogError("随时存档：" + s);
 	}
 
@@ -374,7 +379,7 @@ public partial class AnytimeSave : MonoBehaviour
 				gameJson = SaveSystem.Instance.GetCurrentSaveData(), randomJson = JsonUtility.ToJson(UnityEngine.Random.state),
 				music = CurrentSound("_currentMusic"), envSound = CurrentSound("_currentEnvSound"),
 				visibleCharacters = VisibleCharacters(),
-				target = active, preview = Preview(),
+				target = active, preview = Preview(), gameTime = GameTimeText(),
 				dice = CaptureDice(),
 				freeRng = SceneName == "Free" ? CaptureFreeRng() : null,
 				trace = SceneName == "Story" ? trace.Take(active + 1).ToList() : new List<Entry>(),
@@ -383,18 +388,19 @@ public partial class AnytimeSave : MonoBehaviour
 			string payload = JsonConvert.SerializeObject(data);
 			string text = JsonConvert.SerializeObject(new Envelope { payload = payload, sha256 = Hash(payload) });
 			Directory.CreateDirectory(StoreRoot);
-			string path = SlotPath(slot), tmp = path + ".tmp", bak = path + ".bak";
+			// 每次都存成一个新文件，先写临时文件、读回来校验过再改名
+			string name = NextFile(out int number);
+			string path = Path.Combine(StoreRoot, name), tmp = path + ".tmp";
 			using (var f = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.None))
 			{ byte[] bytes = Encoding.UTF8.GetBytes(text); f.Write(bytes, 0, bytes.Length); f.Flush(true); }
 			ReadSave(tmp);
-			if (File.Exists(path)) File.Replace(tmp, path, bak); else File.Move(tmp, path);
+			File.Move(tmp, path);
 			ReadSave(path);
-			Notice("已保存到随时存档 " + slot);
+			Remember(data, name);
+			Notice("已保存到随时存档 #" + number);
 		}
-		catch (Exception ex) { Notice("保存失败，旧存档仍保留：" + ex.Message); LOMAssistantPlugin.LogError("随时存档保存失败: " + ex); }
+		catch (Exception ex) { Notice("保存失败：" + ex.Message); LOMAssistantPlugin.LogError("随时存档保存失败: " + ex); }
 	}
-
-	private static string SlotPath(int n) => Path.Combine(StoreRoot, "Slot_" + n.ToString("00") + ".json");
 
 	private string Preview()
 	{
@@ -409,7 +415,7 @@ public partial class AnytimeSave : MonoBehaviour
 	{
 		// 选项文字在 Story/ 下；只读文本，不用 LuaManager.GetStoryText（它会改已读记录）
 		var texts = Regex.Matches(label ?? "", @"O_[A-Za-z0-9_]+").Cast<Match>().Take(3)
-			.Select(m => TextConverter.ToSimplified(LocalizationManager.Instance.LocaleResolver.GetStoryText(m.Value)));
+			.Select(m => LOMAssistant.Features.Story.StoryScripts.OptionText(m.Value));
 		return "选项：" + string.Join(" / ", texts.ToArray());
 	}
 
@@ -424,24 +430,28 @@ public partial class AnytimeSave : MonoBehaviour
 		return d;
 	}
 
-	public void LoadSlot()
+	/// <summary>读一个随时存档（文件名，在存档目录的 AnytimeSave 下）。</summary>
+	public void LoadFile(string name)
 	{
 		if (!installed) { Notice(compatibilityFailure ?? "随时存档尚未初始化"); return; }
 		if (Replaying || Restoring || pendingLoad) { Notice("正在恢复，请稍候"); return; }
 		if (SceneController.Instance == null || SceneController.Instance.IsPrepare || SceneController.Instance.IsLoading) { Notice("场景切换中，暂不能读取"); return; }
 		if (SceneName != "Story" && SceneName != "Free" && SceneName != "Title") { Notice("请在标题、剧情或养成界面读取"); return; }
 		SaveFile data;
-		try { data = ReadSave(SlotPath(slot)); }
+		try { data = ReadSave(Path.Combine(StoreRoot, name)); }
 		catch (Exception ex) { Notice("无法读取：" + ex.Message); return; }
 		ClearRollback();
-		restoreLabel = "已读取随时存档 " + slot;
+		SaveSummary summary = Saves().FirstOrDefault(x => x.file == name);
+		restoreLabel = "已读取随时存档 " + (summary != null ? DisplayName(summary) : name);
 		LoadFrom(data);
 	}
 
 	private void LoadFrom(SaveFile data)
 	{
 		loading = data;
-		SetPanel(false); pendingLoad = true; StartCoroutine(LoadRoutine());
+		SetPanel(false); pendingLoad = true;
+		LOMAssistant.Features.Story.StoryReviewPanel.Hide();
+		StartCoroutine(LoadRoutine());
 	}
 
 	private IEnumerator LoadRoutine()

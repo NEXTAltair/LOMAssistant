@@ -30,7 +30,7 @@ public partial class StoryReviewPanel
 		public bool Restart => Element.Description.Contains("重启生效");
 	}
 
-	private const int SettingsTab = 6;
+	private const int SettingsTab = 7;
 
 	/// <summary>F8：打开面板并切到「设置」页；已经在这一页就关掉。</summary>
 	public static void ToggleSettings()
@@ -135,6 +135,7 @@ public partial class StoryReviewPanel
 			("存档", new List<SettingRow>
 			{
 				Row(ConfigManager.EnableAnytimeSave, "随时存档"),
+				Row(ConfigManager.AnytimeSaveLimit, "随时存档最多保留几个", 1f, 999f),
 				Row(ConfigManager.SaveSlotCount, "手动存档栏位", 20f, 999f),
 				Row(ConfigManager.AutoSaveHistory, "自动存档多留旧档", 0f, 50f),
 			}),
@@ -145,9 +146,9 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.PanelKey, "设置页"),
 				Row(ConfigManager.SaveNoteKey, "存档备注"),
 				Row(ConfigManager.HideUIKey, "隐藏界面看 CG"),
-				Row(ConfigManager.AnytimePanelKey, "随时存档面板"),
-				Row(ConfigManager.AnytimeSaveKey, "随时存档：存"),
-				Row(ConfigManager.AnytimeLoadKey, "随时存档：读"),
+				Row(ConfigManager.AnytimePanelKey, "随时存档页"),
+				Row(ConfigManager.AnytimeSaveKey, "随时存档：存新档"),
+				Row(ConfigManager.AnytimeLoadKey, "随时存档：读最近的"),
 				Row(ConfigManager.AnytimeRollbackKey, "回退到判定前"),
 			}),
 		};

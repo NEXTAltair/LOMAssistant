@@ -105,6 +105,8 @@ public static class ConfigManager
 
 	public static ConfigElement<KeyCode> AnytimeSaveKey;
 
+	public static ConfigElement<int> AnytimeSaveLimit;
+
 	public static ConfigElement<KeyCode> AnytimeLoadKey;
 
 	public static ConfigElement<KeyCode> AnytimePanelKey;
@@ -279,10 +281,11 @@ public static class ConfigManager
 		EnableShopAllItems = new ConfigElement<bool>("EnableShopAllItems", "四师兄商店售卖全部物品（书籍、杂物、特殊物品；不卖《证类本草》，提前买会导致六月后山事件出 bug）。true=开，false=关", defaultValue: false);
 		EnableDebugPanel = new ConfigElement<bool>("EnableDebugPanel", "是否启用数值面板热键（F9 打开「数值」页：属性、好感、门派、天赋、旗标）。true=开，false=关", defaultValue: true);
 		DebugPanelKey = new ConfigElement<KeyCode>("DebugPanelKey", "打开数值面板的热键，如 F9 / P 等", KeyCode.F9);
-		EnableAnytimeSave = new ConfigElement<bool>("EnableAnytimeSave", "是否启用随时存档（剧情台词、选项、掷骰和养成界面都能存，存在独立的 8 个槽位，不占原版存档栏）。true=开，false=关，改后重启生效", defaultValue: true);
-		AnytimeSaveKey = new ConfigElement<KeyCode>("AnytimeSaveKey", "随时存档：保存到当前槽位的热键", KeyCode.F5);
-		AnytimeLoadKey = new ConfigElement<KeyCode>("AnytimeLoadKey", "随时存档：读取当前槽位的热键", KeyCode.F7);
-		AnytimePanelKey = new ConfigElement<KeyCode>("AnytimePanelKey", "随时存档面板（选槽位、存、读）的热键", KeyCode.F6);
+		EnableAnytimeSave = new ConfigElement<bool>("EnableAnytimeSave", "是否启用随时存档（剧情台词、选项、掷骰和养成界面都能存，每次存一个新档，不占原版存档栏）。true=开，false=关，改后重启生效", defaultValue: true);
+		AnytimeSaveLimit = new ConfigElement<int>("AnytimeSaveLimit", "随时存档最多保留几个，超过就自动删最旧的", 100);
+		AnytimeSaveKey = new ConfigElement<KeyCode>("AnytimeSaveKey", "随时存档：存一个新的随时存档的热键", KeyCode.F5);
+		AnytimeLoadKey = new ConfigElement<KeyCode>("AnytimeLoadKey", "随时存档：读取最近一个随时存档的热键", KeyCode.F7);
+		AnytimePanelKey = new ConfigElement<KeyCode>("AnytimePanelKey", "打开咖啡伴侣窗口的随时存档页（列表、读取、备注、删除）的热键", KeyCode.F6);
 		AnytimeRollbackKey = new ConfigElement<KeyCode>("AnytimeRollbackKey", "回退到剧情判定前一句的热键（只在内存里保留最近几个判定点，切场景后清空）", KeyCode.F4);
 		LogToFile = new ConfigElement<bool>("LogToFile", "是否写入独立日志文件。日志位置：BepInEx\\plugins\\LOMAssistant\\logs\\", defaultValue: true);
 	}

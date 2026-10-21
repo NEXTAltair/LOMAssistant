@@ -106,7 +106,7 @@ public partial class StoryReviewPanel
 		panel._statInputs.Clear();
 	}
 
-	private const int StatsTab = 5;
+	private const int StatsTab = 6;
 
 	private void DrawStats(Rect r)
 	{
