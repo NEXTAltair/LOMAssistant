@@ -46,6 +46,10 @@ internal static class Program
 			{
 				autoLog = args[i + 1]; // 测试用：自动安装，把日志写到这个文件后退出
 			}
+			else if (args[i] == "--shot")
+			{
+				InstallerForm.ShotArg = args[i + 1]; // 测试用：等联网检查完，把窗口画成图片存到这个文件后退出
+			}
 		}
 		Application.Run(new InstallerForm(game, autoLog));
 	}
@@ -64,7 +68,7 @@ internal class InstallerForm : Form
 		new[] { "ControlMyDestiny", "知天命" },
 		new[] { "ZhaoHuoSystem", "赵活系统" },
 		new[] { "DiceMaster", "骰子大师" },
-		new[] { "MortalAnytimeSave", "随时存档（独立版，本 Mod 已内置）" },
+		new[] { "MortalAnytimeSave", "随时存档独立版，已内置" },
 		new[] { "骰子", "骰子大师" },
 		new[] { "LOMAssistant", "活侠传助手 / 本 Mod 的旧版" },
 		new[] { "活侠传助手", "活侠传助手" },
@@ -80,14 +84,21 @@ internal class InstallerForm : Form
 
 	private readonly string _payload = AppDomain.CurrentDomain.BaseDirectory;
 	private readonly TextBox _gameBox = new TextBox { ReadOnly = true, Dock = DockStyle.Fill, BorderStyle = BorderStyle.FixedSingle };
-	private readonly Label _versions = new Label { AutoSize = true, Padding = new Padding(0, 6, 0, 0) };
+	private readonly Label _versionFrom = new Label { AutoSize = true, Font = new Font("Microsoft YaHei UI", 18f, FontStyle.Bold), ForeColor = Color.FromArgb(120, 110, 98), Margin = new Padding(0) };
+	private readonly Label _versionTo = new Label { AutoSize = true, Font = new Font("Microsoft YaHei UI", 18f, FontStyle.Bold), ForeColor = Color.FromArgb(140, 47, 38), Margin = new Padding(0) };
+	private readonly Label _versionNote = new Label { AutoSize = true, ForeColor = Color.FromArgb(120, 110, 98), Margin = new Padding(0, 2, 0, 0) };
+	private readonly RichTextBox _notes = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, BorderStyle = BorderStyle.None, DetectUrls = false, ScrollBars = RichTextBoxScrollBars.Vertical };
+	private readonly Button _tabNotes = new Button { Text = "更新内容", AutoSize = true, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(0, 0, 4, 0), Padding = new Padding(8, 2, 8, 2) };
+	private readonly Button _tabLog = new Button { Text = "日志", AutoSize = true, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(0), Padding = new Padding(8, 2, 8, 2) };
+	private string _changelog = ReadResource("Installer.CHANGELOG.md") ?? "";
+	private readonly Label _pluginsHint = new Label { AutoSize = true, ForeColor = Color.FromArgb(120, 110, 98), Text = "勾选的移到「已停用的Mod」，不删除" };
 	private readonly Label _pluginsNone = new Label { AutoSize = true, Text = "没有发现其他 Mod。", ForeColor = Color.FromArgb(120, 110, 98) };
-	private readonly CheckedListBox _plugins = new CheckedListBox { Dock = DockStyle.Fill, CheckOnClick = true, IntegralHeight = false, BorderStyle = BorderStyle.FixedSingle, Height = 84 };
+	private readonly CheckedListBox _plugins = new CheckedListBox { Dock = DockStyle.Fill, CheckOnClick = true, IntegralHeight = false, HorizontalScrollbar = true, BorderStyle = BorderStyle.FixedSingle, Height = 110 };
 	private readonly TextBox _log = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, BorderStyle = BorderStyle.None };
-	private readonly CheckBox _skipLogo = new CheckBox { Text = "跳过游戏开头Logo（取消勾选恢复Logo）", AutoSize = true, Checked = true, Margin = new Padding(0, 4, 0, 6) };
+	private readonly CheckBox _skipLogo = new CheckBox { Text = "跳过游戏开头 Logo（想恢复就取消勾选再安装一次）", AutoSize = true, Checked = true, Margin = new Padding(0, 4, 0, 6) };
 	private readonly Button _install = new Button { Text = "一键安装 / 更新", Dock = DockStyle.Fill, Height = 46, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-	private readonly Button _uninstall = new Button { Text = "卸载本 Mod", Dock = DockStyle.Fill, Height = 34, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-	private readonly Button _export = new Button { Text = "导出诊断（Mod 不生效时用，打包日志发给作者）", Dock = DockStyle.Fill, Height = 34, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+	private readonly Button _uninstall = new Button { Text = "卸载本 Mod", Dock = DockStyle.Fill, Height = 40, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+	private readonly Button _export = new Button { Text = "导出诊断（Mod 不生效时用，打包日志发给作者）", Dock = DockStyle.Fill, Height = 40, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 	private readonly Button _browse = new Button { Text = "选择…", AutoSize = true, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 	private readonly List<string> _pluginPaths = new List<string>();
 
@@ -98,6 +109,10 @@ internal class InstallerForm : Form
 
 	private readonly string _autoLog;
 	internal static string DiagLogArg;
+	internal static string ShotArg;
+
+	[System.Runtime.InteropServices.DllImport("user32.dll")]
+	private static extern bool PrintWindow(IntPtr hwnd, IntPtr hdc, uint flags);
 	private readonly string _diagLog = DiagLogArg;
 
 	public InstallerForm(string game, string autoLog)
@@ -106,81 +121,113 @@ internal class InstallerForm : Form
 		Text = "咖啡伴侣 安装器";
 		Font = new Font("Microsoft YaHei UI", 10f);
 		AutoScaleMode = AutoScaleMode.Dpi;
-		ClientSize = new Size(640, 760);
-		MinimumSize = new Size(560, 680);
+		ClientSize = new Size(1280, 900);
+		MinimumSize = new Size(900, 680);
 		StartPosition = FormStartPosition.CenterScreen;
 		BackColor = Paper;
 
-		// 标题栏
-		var header = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, FlowDirection = FlowDirection.TopDown, WrapContents = false, BackColor = Ink, Padding = new Padding(18, 12, 18, 12) };
-		var title = new Label { Text = "咖啡伴侣", AutoSize = true, ForeColor = Color.White, Font = new Font("Microsoft YaHei UI", 18f, FontStyle.Bold), Margin = new Padding(0) };
-		var subtitle = new Label { Text = "一键安装 / 更新 · 自动检测冲突 Mod · 不会覆盖你的设置", AutoSize = true, ForeColor = Color.FromArgb(201, 191, 175), Margin = new Padding(2, 4, 0, 0) };
-		header.Controls.Add(title);
-		header.Controls.Add(subtitle);
+		// 顶部：banner（从 README 头图裁的一条），铺满宽度、上下多出来的裁掉，不留黑边
+		Image bannerImage = LoadBanner();
+		var banner = new Panel { Dock = DockStyle.Top, Height = 280, BackColor = Ink };
+		banner.Paint += (sender, e) =>
+		{
+			if (bannerImage == null)
+			{
+				return;
+			}
+			float scale = Math.Max((float)banner.Width / bannerImage.Width, (float)banner.Height / bannerImage.Height);
+			float w = bannerImage.Width * scale, h = bannerImage.Height * scale;
+			e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+			e.Graphics.DrawImage(bannerImage, (banner.Width - w) / 2, (banner.Height - h) / 2, w, h);
+		};
+		banner.Resize += delegate { banner.Invalidate(); };
 
-		var body = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20, 14, 20, 16), ColumnCount = 2, BackColor = Paper };
-		body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-		body.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-
-		var logCard = new Panel { Dock = DockStyle.Fill, BackColor = Card, Padding = new Padding(8) };
-		logCard.Controls.Add(_log);
+		// 左栏：游戏目录、版本、其他 Mod、安装按钮
+		var left = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, BackColor = Paper, Margin = new Padding(0, 0, 14, 0) };
+		left.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+		var dirRow = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, AutoSize = true, Margin = new Padding(0) };
+		dirRow.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+		dirRow.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+		dirRow.Controls.Add(_gameBox, 0, 0);
+		dirRow.Controls.Add(_browse, 1, 0);
+		var buttons = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, AutoSize = true, Margin = new Padding(0, 8, 0, 0) };
+		buttons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+		buttons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
+		_export.Text = "导出诊断";
+		_export.Margin = new Padding(0, 0, 6, 0);
+		_uninstall.Margin = new Padding(6, 0, 0, 0);
+		buttons.Controls.Add(_export, 0, 0);
+		buttons.Controls.Add(_uninstall, 1, 0);
 		Control[] rows =
 		{
 			Heading("游戏目录"),
-			null, // 目录框 + 选择按钮
-			_versions,
+			dirRow,
+			VersionCard(),
 			Heading("其他 Mod"),
-			new Label { AutoSize = true, ForeColor = Muted, Text = "勾选的会在安装时移到「BepInEx\\已停用的Mod」，不会删除；标了「已知冲突」的建议勾选。" },
+			_pluginsHint,
 			_pluginsNone,
 			_plugins,
-			new Panel { Height = 12, Dock = DockStyle.Fill },
+			new Panel { Dock = DockStyle.Fill, Margin = new Padding(0) }, // 把下面的压到底部
 			_skipLogo,
 			_install,
-			_export,
-			_uninstall,
-			Heading("日志"),
-			logCard,
+			buttons,
 		};
-		body.RowCount = rows.Length;
+		left.RowCount = rows.Length;
 		for (int i = 0; i < rows.Length; i++)
 		{
-			body.RowStyles.Add(i == rows.Length - 1 ? new RowStyle(SizeType.Percent, 100f) : new RowStyle(SizeType.AutoSize));
-			if (rows[i] == null)
-			{
-				body.Controls.Add(_gameBox, 0, i);
-				body.Controls.Add(_browse, 1, i);
-			}
-			else
-			{
-				body.Controls.Add(rows[i], 0, i);
-				body.SetColumnSpan(rows[i], 2);
-			}
+			left.RowStyles.Add(i == rows.Length - 4 ? new RowStyle(SizeType.Percent, 100f) : new RowStyle(SizeType.AutoSize));
+			left.Controls.Add(rows[i], 0, i);
 		}
+
+		// 右栏：「更新内容」「日志」两页
+		var tabs = new FlowLayoutPanel { Dock = DockStyle.Top, AutoSize = true, WrapContents = false, Margin = new Padding(0), Padding = new Padding(0, 6, 0, 0) };
+		tabs.Controls.Add(_tabNotes);
+		tabs.Controls.Add(_tabLog);
+		var card = new Panel { Dock = DockStyle.Fill, BackColor = Card, Padding = new Padding(14, 10, 8, 10) };
+		card.Controls.Add(_notes);
+		card.Controls.Add(_log);
+		var right = new Panel { Dock = DockStyle.Fill, BackColor = Paper, Margin = new Padding(0) };
+		right.Controls.Add(card);
+		right.Controls.Add(tabs);
+		_tabNotes.Click += delegate { ShowTab(true); };
+		_tabLog.Click += delegate { ShowTab(false); };
+
+		var body = new TableLayoutPanel { Dock = DockStyle.Fill, Padding = new Padding(20, 10, 20, 18), ColumnCount = 2, RowCount = 1, BackColor = Paper };
+		body.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 600f));
+		body.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+		body.RowStyles.Add(new RowStyle(SizeType.Percent, 100f));
+		body.Controls.Add(left, 0, 0);
+		body.Controls.Add(right, 1, 0);
 
 		_log.BackColor = Card;
 		_log.ForeColor = Color.FromArgb(70, 62, 55);
+		_notes.BackColor = Card;
+		_notes.ForeColor = Color.FromArgb(55, 48, 42);
 		_gameBox.BackColor = Card;
 		_plugins.BackColor = Card;
 		_install.BackColor = Accent;
 		_install.ForeColor = Color.White;
-		_install.Font = new Font("Microsoft YaHei UI", 12f, FontStyle.Bold);
+		_install.Font = new Font("Microsoft YaHei UI", 13f, FontStyle.Bold);
+		_install.Height = 52;
 		_install.FlatAppearance.BorderSize = 0;
 		_install.FlatAppearance.MouseOverBackColor = AccentHover;
 		_install.FlatAppearance.MouseDownBackColor = Ink;
-		_export.BackColor = Card;
-		_export.ForeColor = Ink;
-		_export.Margin = new Padding(0, 6, 0, 0);
-		_export.FlatAppearance.BorderColor = Color.FromArgb(200, 190, 175);
-		_uninstall.BackColor = Card;
-		_uninstall.ForeColor = Muted;
-		_uninstall.Margin = new Padding(0, 6, 0, 0);
-		_uninstall.FlatAppearance.BorderColor = Color.FromArgb(200, 190, 175);
-		_browse.BackColor = Card;
-		_browse.FlatAppearance.BorderColor = Color.FromArgb(200, 190, 175);
-		_browse.Margin = new Padding(8, 3, 0, 3);
+		foreach (Button b in new[] { _export, _uninstall, _browse })
+		{
+			b.BackColor = Card;
+			b.ForeColor = Ink;
+			b.FlatAppearance.BorderColor = Color.FromArgb(200, 190, 175);
+		}
+		_browse.Margin = new Padding(8, 0, 0, 0);
+		foreach (Button b in new[] { _tabNotes, _tabLog })
+		{
+			b.FlatAppearance.BorderSize = 0;
+			b.FlatAppearance.MouseOverBackColor = Color.FromArgb(236, 229, 216);
+		}
+		ShowTab(true);
 
 		Controls.Add(body);
-		Controls.Add(header);
+		Controls.Add(banner);
 
 		_gameBox.TabStop = false;
 		ActiveControl = _install;
@@ -196,6 +243,17 @@ internal class InstallerForm : Form
 			Log("没有自动找到游戏目录，请点「选择…」手动选择游戏目录（里面有 Mortal.exe）。");
 		}
 		CheckOnline();
+		// 小屏幕（1366x768 笔记本）放不下就缩到屏幕工作区里，不让下面的按钮跑到任务栏底下
+		Load += delegate
+		{
+			Rectangle area = Screen.FromControl(this).WorkingArea;
+			if (Width > area.Width || Height > area.Height)
+			{
+				MinimumSize = new Size(Math.Min(MinimumSize.Width, area.Width), Math.Min(MinimumSize.Height, area.Height));
+				Size = new Size(Math.Min(Width, area.Width), Math.Min(Height, area.Height));
+				Location = area.Location + new Size((area.Width - Width) / 2, (area.Height - Height) / 2);
+			}
+		};
 		if (_autoLog != null)
 		{
 			Shown += delegate { StartInstall(); };
@@ -204,6 +262,194 @@ internal class InstallerForm : Form
 		{
 			Shown += delegate { ExportDiagnostics(); };
 		}
+		else if (ShotArg != null)
+		{
+			var timer = new System.Windows.Forms.Timer { Interval = 500 };
+			int waited = 0;
+			timer.Tick += delegate
+			{
+				waited += 500;
+				if (!_onlineDone && waited < 12000)
+				{
+					return;
+				}
+				timer.Stop();
+				// PrintWindow 才画得出富文本框（DrawToBitmap 画出来是空的）
+				using (var bitmap = new Bitmap(Width, Height))
+				{
+					using (Graphics g = Graphics.FromImage(bitmap))
+					{
+						IntPtr hdc = g.GetHdc();
+						PrintWindow(Handle, hdc, 2);
+						g.ReleaseHdc(hdc);
+					}
+					bitmap.Save(ShotArg, System.Drawing.Imaging.ImageFormat.Png);
+				}
+				Close();
+			};
+			Shown += delegate { timer.Start(); };
+		}
+	}
+
+	private static string ReadResource(string name)
+	{
+		try
+		{
+			using (Stream stream = typeof(InstallerForm).Assembly.GetManifestResourceStream(name))
+			{
+				if (stream == null)
+				{
+					return null;
+				}
+				using (var reader = new StreamReader(stream, Encoding.UTF8))
+				{
+					return reader.ReadToEnd().Replace("\r\n", "\n");
+				}
+			}
+		}
+		catch
+		{
+			return null;
+		}
+	}
+
+	private static Image LoadBanner()
+	{
+		try
+		{
+			Stream stream = typeof(InstallerForm).Assembly.GetManifestResourceStream("Installer.banner.jpg");
+			return stream == null ? null : Image.FromStream(stream);
+		}
+		catch
+		{
+			return null;
+		}
+	}
+
+	// 版本对比：已安装 → 将安装，大字
+	private Control VersionCard()
+	{
+		var card = new TableLayoutPanel { Dock = DockStyle.Fill, AutoSize = true, ColumnCount = 3, BackColor = Card, Padding = new Padding(14, 8, 14, 8), Margin = new Padding(0, 10, 0, 2) };
+		card.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+		card.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+		card.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
+		var fromCaption = new Label { Text = "已安装", AutoSize = true, ForeColor = Muted, Margin = new Padding(0) };
+		var toCaption = new Label { Text = "将安装", AutoSize = true, ForeColor = Muted, Margin = new Padding(0) };
+		var arrow = new Label { Text = "→", AutoSize = true, ForeColor = Muted, Font = new Font("Microsoft YaHei UI", 16f), Margin = new Padding(14, 10, 14, 0) };
+		card.Controls.Add(fromCaption, 0, 0);
+		card.Controls.Add(toCaption, 2, 0);
+		card.Controls.Add(_versionFrom, 0, 1);
+		card.Controls.Add(arrow, 1, 1);
+		card.Controls.Add(_versionTo, 2, 1);
+		card.Controls.Add(_versionNote, 0, 2);
+		card.SetColumnSpan(_versionNote, 3);
+		return card;
+	}
+
+	private void ShowTab(bool notes)
+	{
+		_notes.Visible = notes;
+		_log.Visible = !notes;
+		_tabNotes.BackColor = notes ? Card : Paper;
+		_tabLog.BackColor = notes ? Paper : Card;
+		_tabNotes.ForeColor = notes ? Accent : Muted;
+		_tabLog.ForeColor = notes ? Muted : Accent;
+		_tabNotes.Font = new Font(Font, notes ? FontStyle.Bold : FontStyle.Regular);
+		_tabLog.Font = new Font(Font, notes ? FontStyle.Regular : FontStyle.Bold);
+	}
+
+	// ---------------- 更新内容 ----------------
+
+	private static readonly Regex VersionHeading = new Regex(@"^## ([0-9.]+)(.*)$");
+
+	/// <summary>CHANGELOG 里比已安装版本新、不超过将安装版本的那几段；已是最新（或没装）就只放将安装的那一版。</summary>
+	private void RenderNotes(Version installed, Version target)
+	{
+		var sections = new List<(Version Version, string Title, List<string> Lines)>();
+		foreach (string line in _changelog.Split('\n'))
+		{
+			Match m = VersionHeading.Match(line);
+			if (m.Success)
+			{
+				Version v;
+				if (Version.TryParse(m.Groups[1].Value, out v))
+				{
+					sections.Add((v, m.Groups[1].Value + m.Groups[2].Value, new List<string>()));
+				}
+				continue;
+			}
+			if (sections.Count > 0)
+			{
+				sections[sections.Count - 1].Lines.Add(line);
+			}
+		}
+		var shown = sections.Where(x => (target == null || x.Version <= target) && installed != null && x.Version > installed && Short(x.Version) != Short(installed)).ToList();
+		string heading;
+		if (shown.Count > 0)
+		{
+			heading = "从 " + Short(installed) + " 更新到 " + Short(shown[0].Version) + " 的新内容";
+		}
+		else
+		{
+			shown = sections.Where(x => target == null || x.Version <= target).Take(1).ToList();
+			heading = shown.Count > 0 ? Short(shown[0].Version) + " 的更新内容" : "更新内容";
+		}
+		_notes.Clear();
+		Append(heading + "\n", new Font("Microsoft YaHei UI", 13f, FontStyle.Bold), Ink);
+		if (shown.Count == 0)
+		{
+			Append("\n没有找到更新说明。", Font, Muted);
+			return;
+		}
+		foreach (var section in shown)
+		{
+			Append("\n" + section.Title + "\n", new Font("Microsoft YaHei UI", 11.5f, FontStyle.Bold), Accent);
+			foreach (string raw in section.Lines)
+			{
+				string line = raw.TrimEnd();
+				if (line.Length == 0)
+				{
+					continue;
+				}
+				string indent = "";
+				if (line.StartsWith("  - ") || line.StartsWith("    - "))
+				{
+					indent = "      ◦ ";
+					line = line.TrimStart().Substring(2);
+				}
+				else if (line.StartsWith("- "))
+				{
+					indent = "  • ";
+					line = line.Substring(2);
+				}
+				Append(indent, Font, Muted);
+				AppendInline(line);
+				Append("\n", Font, Ink);
+			}
+		}
+		_notes.SelectionStart = 0;
+		_notes.ScrollToCaret();
+	}
+
+	// 行内的 **粗体**、[文字](链接)、`代码` 去掉标记
+	private void AppendInline(string line)
+	{
+		line = Regex.Replace(line, @"\[([^\]]+)\]\([^)]+\)", "$1");
+		line = line.Replace("`", "");
+		string[] parts = line.Split(new[] { "**" }, StringSplitOptions.None);
+		for (int i = 0; i < parts.Length; i++)
+		{
+			Append(parts[i], i % 2 == 1 ? new Font(Font, FontStyle.Bold) : Font, Color.FromArgb(55, 48, 42));
+		}
+	}
+
+	private void Append(string text, Font font, Color color)
+	{
+		_notes.SelectionStart = _notes.TextLength;
+		_notes.SelectionLength = 0;
+		_notes.SelectionFont = font;
+		_notes.SelectionColor = color;
+		_notes.AppendText(text);
 	}
 
 	private Label Heading(string text)
@@ -216,28 +462,35 @@ internal class InstallerForm : Form
 	{
 		Version installed = _game != null ? DllVersion(Path.Combine(_game, ModDll)) : null;
 		Version bundled = BundledVersion();
-		string target;
+		Version target = null;
+		string note;
 		if (!_onlineDone)
 		{
-			target = "正在检查 GitHub…";
+			target = bundled;
+			note = "正在检查 GitHub 上的最新版…";
 		}
 		else if (_latest != null && (bundled == null || _latest > bundled && Short(_latest) != Short(bundled)))
 		{
-			target = Short(_latest) + "（从 GitHub 下载）";
+			target = _latest;
+			note = "将从 GitHub 下载最新版";
 		}
 		else if (bundled != null)
 		{
-			target = Short(bundled) + (_latest != null ? "（已是最新）" : "（压缩包自带，GitHub 连不上）");
+			target = bundled;
+			note = _latest != null ? "压缩包里的就是最新版" : "GitHub 连不上，安装压缩包自带的版本";
 		}
 		else
 		{
-			target = "无（连不上 GitHub，且这个安装器不在解压后的压缩包里）";
+			note = "连不上 GitHub，这个安装器也不在解压后的压缩包里";
 		}
-		if (installed != null && !target.StartsWith("正在") && target.StartsWith(Short(installed) + "（"))
+		if (installed != null && target != null && (Short(installed) == Short(target) || installed > target))
 		{
-			target = Short(installed) + "（已是最新）";
+			note = "已经是最新版";
 		}
-		_versions.Text = "已安装：" + (_game == null ? "-" : installed != null ? Short(installed) : "未安装") + "　　将安装：" + target;
+		_versionFrom.Text = _game == null ? "-" : installed != null ? Short(installed) : "未安装";
+		_versionTo.Text = target != null ? Short(target) : "-";
+		_versionNote.Text = note;
+		RenderNotes(installed, target);
 	}
 
 	private void Log(string message)
@@ -409,6 +662,7 @@ internal class InstallerForm : Form
 		}
 		_plugins.Visible = _pluginPaths.Count > 0;
 		_pluginsNone.Visible = _pluginPaths.Count == 0;
+		_pluginsHint.Visible = _pluginPaths.Count > 0; // 没发现别的 Mod 时这句用不着，省一行
 	}
 
 	private void CollectPlugins(string plugins)
@@ -430,8 +684,14 @@ internal class InstallerForm : Form
 					break;
 				}
 			}
+			// 「DiceMaster\DiceMaster.dll」这种文件夹和文件同名的只显示一次，省地方给冲突说明
+			string name = Path.GetDirectoryName(rel);
+			if (string.IsNullOrEmpty(name) || !string.Equals(Path.GetFileName(name), Path.GetFileNameWithoutExtension(rel), StringComparison.OrdinalIgnoreCase))
+			{
+				name = rel;
+			}
 			_pluginPaths.Add(dll);
-			_plugins.Items.Add(rel + (known != null ? "　【已知冲突：" + known + "】" : ""), known != null);
+			_plugins.Items.Add(name + (known != null ? " （已知冲突：" + known + "）" : ""), known != null);
 		}
 	}
 
@@ -557,6 +817,27 @@ internal class InstallerForm : Form
 				{
 					_latest = new Version(tag.Groups[1].Value);
 					_latestUrl = url.Groups[1].Value;
+				}
+				try
+				{
+					var notes = (HttpWebRequest)WebRequest.Create("https://api.github.com/repos/" + Repo + "/contents/CHANGELOG.md");
+					notes.UserAgent = "LOMAssistant-Installer";
+					notes.Accept = "application/vnd.github.raw";
+					notes.Timeout = 8000;
+					notes.ReadWriteTimeout = 8000;
+					using (var response = notes.GetResponse())
+					using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+					{
+						string text = reader.ReadToEnd().Replace("\r\n", "\n");
+						if (text.Contains("\n## "))
+						{
+							_changelog = text;
+						}
+					}
+				}
+				catch
+				{
+					// 取不到就用安装器里自带的那份
 				}
 			}
 			catch (Exception e)

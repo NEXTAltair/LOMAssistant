@@ -14,5 +14,6 @@ for n in mscorlib System System.Core System.Drawing System.Windows.Forms System.
 done
 mkdir -p bin
 "$DOTNET" "$CSC" -nologo -noconfig -nostdlib+ -target:winexe -platform:anycpu -langversion:12 -optimize+ -deterministic \
-	-win32manifest:app.manifest -out:"bin/咖啡伴侣安装器.exe" "${refs[@]}" *.cs
+	-win32manifest:app.manifest -out:"bin/咖啡伴侣安装器.exe" "${refs[@]}" \
+	-resource:banner.jpg,Installer.banner.jpg -resource:../CHANGELOG.md,Installer.CHANGELOG.md *.cs
 echo "Built Installer/bin/咖啡伴侣安装器.exe"
