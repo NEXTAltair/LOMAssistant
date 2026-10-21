@@ -106,7 +106,8 @@ public static class StoryAtlas
 	public static bool Ready { get; private set; }
 	public static bool Building => _steps != null;
 	public static string Status { get; private set; } = "";
-	public static string CurrentMain { get; private set; } = "";
+	/// <summary>主线现在到哪一步（路线图上的「今」）：每次都读游戏当前的值，不用读剧本时存下的（游戏推进、换存档都要跟着变）。</summary>
+	public static string CurrentMain => MissionManagerData.Instance?.Main?.CurrentKey ?? "";
 	/// <summary>每次生成完加一，面板据此重新排版。</summary>
 	public static int Version { get; private set; }
 
@@ -228,7 +229,6 @@ public static class StoryAtlas
 			Status = "读档进入游戏后再生成";
 			yield break;
 		}
-		CurrentMain = data.Main != null ? data.Main.CurrentKey : "";
 		AddSeries(data.Main, true);
 		SubMissionsData subs = data.GetFieldValue<SubMissionsData>("_subMissions");
 		if (subs != null)
