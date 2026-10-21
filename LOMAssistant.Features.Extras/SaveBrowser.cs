@@ -62,6 +62,7 @@ public class SaveBrowser : MonoBehaviour
 	}
 
 	private bool _isLoad;
+	private bool _traditional; // 界面建起来时游戏是不是繁体
 	private MonoBehaviour _panel;
 	private RectTransform _root, _listContent, _detail;
 	private ScrollRect _scroll;
@@ -157,6 +158,12 @@ public class SaveBrowser : MonoBehaviour
 			SaveBrowser browser = panel.GetComponent<SaveBrowser>() ?? panel.gameObject.AddComponent<SaveBrowser>();
 			browser._isLoad = load;
 			browser._panel = panel;
+			// 游戏换了语言：字体（游戏按语言换的）和文字（简繁）都要重来，整个界面重建
+			if (browser._root != null && browser._traditional != TextConverter.Traditional)
+			{
+				Destroy(browser._root.gameObject);
+				browser._root = null;
+			}
 			if (browser._root == null && !browser.Build())
 			{
 				return;
@@ -174,6 +181,7 @@ public class SaveBrowser : MonoBehaviour
 
 	private bool Build()
 	{
+		_traditional = TextConverter.Traditional;
 		Transform container = _panel.transform.Find("Container");
 		if (container == null)
 		{
@@ -478,6 +486,7 @@ public class SaveBrowser : MonoBehaviour
 			SetNavigation();
 			_selected = Mathf.Clamp(_selected, 0, Mathf.Max(0, _rows.Count - 1));
 			Show(_rows.Count > 0 ? _rows[_selected].Entry : null);
+			Localize(_root);
 			Reselect();
 			if (timer.ElapsedMilliseconds >= 50)
 			{
@@ -864,6 +873,7 @@ public class SaveBrowser : MonoBehaviour
 		SetButtonText(_primaryButton, e.Caption == NewGame ? "开始新游戏" : _isLoad ? "读取" : data == null ? "存到这里" : "覆盖这一栏");
 		_deleteButton.gameObject.SetActive(e.CanDelete && data != null);
 		ShowPortrait(data == null ? -1 : lover);
+		Localize(_detail);
 	}
 
 	/// <summary>读档后从哪个剧本开始：游戏读档时用的是 StartStoryScript（CurrentStoryScript 存档里常是空的）。</summary>
@@ -1265,6 +1275,22 @@ public class SaveBrowser : MonoBehaviour
 	}
 
 	// ---------------- 小工具 ----------------
+
+	/// <summary>游戏是繁体时，把界面上的文字转成繁体（写的都是简体）；备注框里玩家打的字不动。</summary>
+	private void Localize(Transform root)
+	{
+		if (!_traditional || root == null)
+		{
+			return;
+		}
+		foreach (Text t in root.GetComponentsInChildren<Text>(includeInactive: true))
+		{
+			if (_noteBox == null || t != _noteBox.textComponent)
+			{
+				t.text = TextConverter.ToTraditional(t.text);
+			}
+		}
+	}
 
 	private Button MakeButton(Transform parent, string label, int fontSize, float x, float y, float w, float h)
 	{

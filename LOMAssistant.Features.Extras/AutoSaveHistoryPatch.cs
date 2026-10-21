@@ -170,7 +170,7 @@ public static class AutoSaveHistoryPatch
 		}
 		foreach (UnityEngine.UI.Text t in tr.Field("_titleText").GetValue<UnityEngine.UI.Text[]>() ?? new UnityEngine.UI.Text[0])
 		{
-			t.text += "｜旧档" + index;
+			t.text += TextConverter.ForDisplay("｜旧档") + index;
 		}
 	}
 

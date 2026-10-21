@@ -25,6 +25,7 @@ internal static class MenuButtonHelper
 	/// </summary>
 	public static Button CloneButton(Button template, string label, string objectName)
 	{
+		label = TextConverter.ForDisplay(label);
 		Transform parent = template.transform.parent;
 		Transform existing = parent.Find(objectName);
 		if (existing != null)
@@ -72,6 +73,7 @@ internal static class MenuButtonHelper
 	/// </summary>
 	public static Button CloneInto(Button template, Transform parent, string label, string objectName)
 	{
+		label = TextConverter.ForDisplay(label);
 		GameObject clone = Object.Instantiate(template.gameObject, parent, worldPositionStays: false);
 		clone.name = objectName;
 		foreach (MonoBehaviour mb in clone.GetComponentsInChildren<MonoBehaviour>(includeInactive: true))

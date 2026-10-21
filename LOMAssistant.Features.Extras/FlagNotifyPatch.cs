@@ -142,7 +142,7 @@ public static class FlagNotifyPatch
 			string name = LocalizationManager.Instance.LocaleResolver.GetString(key);
 			if (!string.IsNullOrEmpty(name) && name != key)
 			{
-				add.text = "(" + TextConverter.ToSimplified(name) + ")";
+				add.text = "(" + TextConverter.ForDisplay(TextConverter.ToSimplified(name)) + ")";
 			}
 		}
 		catch

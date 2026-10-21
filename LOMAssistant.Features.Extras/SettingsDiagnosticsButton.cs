@@ -115,6 +115,7 @@ public static class SettingsDiagnosticsButton
 
 	private static void SetText(Button button, string text)
 	{
+		text = TextConverter.ForDisplay(text);
 		foreach (Text t in button.GetComponentsInChildren<Text>(includeInactive: true))
 		{
 			t.text = text;

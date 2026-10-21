@@ -40,7 +40,7 @@ public static class LibraryDisplayPatch
 			}
 			if (data.Count == 0 && text != null)
 			{
-				text.text += "(未解锁)";
+				text.text += TextConverter.ForDisplay("(未解锁)");
 			}
 			FileLogger.Log("讲经堂显示：Setup_Postfix 被调用，data=" + ((data != null) ? data.name : "null"));
 		}

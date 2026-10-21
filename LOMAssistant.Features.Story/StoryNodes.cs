@@ -566,7 +566,7 @@ public static class StoryNodes
 	{
 		if (text != null && slot == ReplaySlot)
 		{
-			text.text = "剧情回顾";
+			text.text = TextConverter.ForDisplay("剧情回顾");
 		}
 	}
 

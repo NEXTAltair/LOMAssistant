@@ -335,7 +335,7 @@ internal static class OneClickUnlockPatch
 		label.color = new Color(0.94f, 0.95f, 0.96f, 1f);
 		label.raycastTarget = false;
 		label.font = line.font;
-		label.text = "一键设置";
+		label.text = TextConverter.ForDisplay("一键设置");
 		var rect = (RectTransform)labelObject.transform;
 		rect.anchorMin = Vector2.zero;
 		rect.anchorMax = Vector2.one;

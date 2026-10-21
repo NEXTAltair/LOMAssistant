@@ -53,7 +53,7 @@ public static class CombatAssistPatch
 		Text[] componentsInChildren2 = gameObject.GetComponentsInChildren<Text>(includeInactive: true);
 		for (int i = 0; i < componentsInChildren2.Length; i++)
 		{
-			componentsInChildren2[i].text = "直接获胜";
+			componentsInChildren2[i].text = TextConverter.ForDisplay("直接获胜");
 		}
 		Button.ButtonClickedEvent onClick = gameObject.GetComponent<Button>().onClick;
 		onClick.SetPersistentListenerState(0, UnityEventCallState.Off);

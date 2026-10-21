@@ -151,7 +151,7 @@ internal static class OptionInfoPatch
 					: "";
 				if (!condition.IsNullOrWhiteSpace())
 				{
-					__result = __result + "\n<size=16>(" + condition + (effects.IsNullOrWhiteSpace() ? "" : "；解锁后：" + effects) + ")</size>";
+					__result = __result + TextConverter.ForDisplay("\n<size=16>(" + condition + (effects.IsNullOrWhiteSpace() ? "" : "；解锁后：" + effects) + ")</size>");
 				}
 				return;
 			}
@@ -178,7 +178,7 @@ internal static class OptionInfoPatch
 				if (!text.IsNullOrWhiteSpace())
 				{
 					string text2 = RichText.Strip(text);
-					__result = __result + "\n<size=16>(" + text2 + ")</size>";
+					__result = __result + TextConverter.ForDisplay("\n<size=16>(" + text2 + ")</size>");
 				}
 			}
 		}
@@ -247,6 +247,9 @@ internal static class OptionInfoPatch
 		LogCheckpoint("触发剧情分支检查点:", fieldValue);
 	}
 
+	// 地点对白后面接的「(可触发：…)」：游戏是繁体时接的是繁体
+	private static bool IsTriggerHint(string text) => text.Contains("可触发：") || text.Contains("可觸發：");
+
 	private static void HandleDialogChange(PositionController instance, bool addSuffix, string suffix = "")
 	{
 		DicePlugin.LogInfo($"HandleDialogChange called, addSuffix: {addSuffix}, suffix: {suffix}");
@@ -256,7 +259,7 @@ internal static class OptionInfoPatch
 			string text = dialog.GetFieldValue<string>("_dialog");
 			if (addSuffix)
 			{
-				if (text.Contains("可触发："))
+				if (IsTriggerHint(text))
 				{
 					int num = text.LastIndexOf("(");
 					if (num > 0)
@@ -271,10 +274,10 @@ internal static class OptionInfoPatch
 				{
 					text2 = text;
 				}
-				dialog.SetPrivateField("_dialog", text2 + "(" + suffix + ")");
+				dialog.SetPrivateField("_dialog", text2 + "(" + TextConverter.ForDisplay(suffix) + ")");
 				return;
 			}
-			if (!string.IsNullOrEmpty(_originalDialogKey) && _originalDialogKey.Contains("可触发："))
+			if (!string.IsNullOrEmpty(_originalDialogKey) && IsTriggerHint(_originalDialogKey))
 			{
 				int num2 = _originalDialogKey.LastIndexOf("(");
 				if (num2 > 0)
