@@ -21,7 +21,7 @@ public partial class StoryReviewPanel
 		_changelogScroll = Vector2.zero;
 	}
 
-	private GUIStyle _hintStyle;
+	private GUIStyle _hintStyle, _barStyle; // _barStyle：单行但要显示红字（Middle 出来的单行样式关了富文本）
 	private float _hintScale;
 
 	/// <summary>
@@ -33,6 +33,7 @@ public partial class StoryReviewPanel
 		if (_hintStyle == null || _hintScale != _scale)
 		{
 			_hintScale = _scale;
+			_barStyle = null;
 			_hintStyle = new GUIStyle(Middle(_muted)) { alignment = TextAnchor.MiddleCenter };
 		}
 		string text = "v" + UpdateInfo.Current + " · " + (UpdateInfo.HasNewer ? "有新版本 " + UpdateInfo.Latest : "更新内容");
@@ -78,7 +79,7 @@ public partial class StoryReviewPanel
 			Fill(bar, new Color(Cinnabar.r, Cinnabar.g, Cinnabar.b, 0.1f));
 			float bw = S(150);
 			GUI.Label(new Rect(bar.x + S(12), bar.y, bar.width - bw * 2 - S(40), bar.height),
-				Red("有新版本 " + UpdateInfo.Latest) + "：退出游戏后运行新版的「咖啡伴侣安装器.exe」更新，存档和设置不受影响。", Middle(_label));
+				Red("有新版本 " + UpdateInfo.Latest) + "：退出游戏后运行新版的「咖啡伴侣安装器.exe」更新，存档和设置不受影响。", _barStyle ??= new GUIStyle(Middle(_label)) { richText = true });
 			if (GUI.Button(new Rect(bar.xMax - bw * 2 - S(18), bar.y + S(4), bw, bar.height - S(8)), "GitHub 下载", _button))
 			{
 				Application.OpenURL(UpdateInfo.DownloadPage);

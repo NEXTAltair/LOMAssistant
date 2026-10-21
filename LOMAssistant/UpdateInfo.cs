@@ -12,7 +12,7 @@ namespace LOMAssistant;
 
 /// <summary>
 /// 更新内容和新版本检查：更新内容来自嵌在 DLL 里的 CHANGELOG.md；新版本看 GitHub 最新发布的版本号，
-/// 每次启动只发这一个请求（几 KB），有新版就把那次发布的说明加在最前面。在后台做，失败了不提示，只记日志。
+/// 每次启动只发这一个请求（几 KB）；有新版时再取一次最近的发布列表，把还没装的每一版说明都加在最前面。在后台做，失败了不提示，只记日志。
 /// </summary>
 public static class UpdateInfo
 {
@@ -53,43 +53,89 @@ public static class UpdateInfo
 		{
 			yield break;
 		}
-		// 进游戏后等一会儿再查，不和读取抢
-		yield return new WaitForSecondsRealtime(20f);
 		string json = null;
 		yield return Get("https://api.github.com/repos/" + Repo + "/releases/latest", text => json = text);
+		JObject latestRelease = null;
 		try
 		{
-			JObject release = json == null ? null : JObject.Parse(json);
-			string tag = ((string)release?["tag_name"] ?? "").TrimStart('v', 'V');
-			if (!Version.TryParse(tag, out Version latest))
+			latestRelease = json == null ? null : JObject.Parse(json);
+			if (ReleaseVersion(latestRelease) is Version latest)
 			{
-				yield break;
-			}
-			Latest = Trim(latest);
-			FileLogger.Log($"[更新检查] 当前 {Current}，最新 {Latest}");
-			// 新版的更新内容内置的 CHANGELOG 里还没有：用这次发布的说明（同一个请求里带着），去掉末尾安装说明那些固定的话
-			if (Latest > Current && !Entries.Exists(e => e.Version == Latest))
-			{
-				string body = ((string)release["body"] ?? "").Replace("\r", "");
-				int boilerplate = body.IndexOf("**安装 / 更新**", StringComparison.Ordinal);
-				if (boilerplate >= 0)
-				{
-					body = body.Substring(0, boilerplate);
-				}
-				body = Regex.Replace(body, @"^\*\*咖啡伴侣[^\n]*\n", "");
-				string date = DateTime.TryParse((string)release["published_at"], out DateTime published) ? "（" + published.ToString("yyyy-MM-dd") + "）" : "";
-				List<Entry> parsed = Parse("## " + Latest + date + "\n" + body);
-				if (parsed.Count > 0)
-				{
-					Entries = new List<Entry>(Entries);
-					Entries.Insert(0, parsed[0]);
-				}
+				Latest = latest;
+				FileLogger.Log($"[更新检查] 当前 {Current}，最新 {Latest}");
 			}
 		}
 		catch (Exception ex)
 		{
 			FileLogger.Log("[更新检查] 读取发布信息失败: " + ex.Message);
 		}
+		if (!HasNewer)
+		{
+			yield break;
+		}
+		// 有新版时再取最近几次发布：中间漏装的每一版都列出来（平时不发这个请求）
+		string list = null;
+		yield return Get("https://api.github.com/repos/" + Repo + "/releases?per_page=20", text => list = text);
+		var releases = new List<JToken>();
+		try
+		{
+			if (list != null)
+			{
+				releases.AddRange(JArray.Parse(list));
+			}
+		}
+		catch (Exception ex)
+		{
+			FileLogger.Log("[更新检查] 读取发布列表失败: " + ex.Message);
+		}
+		if (releases.Count == 0)
+		{
+			releases.Add(latestRelease);
+		}
+		var added = new List<Entry>();
+		foreach (JToken release in releases)
+		{
+			try
+			{
+				Version version = ReleaseVersion(release);
+				if (version != null && version > Current && (bool?)release["draft"] != true && (bool?)release["prerelease"] != true
+					&& !Entries.Exists(e => e.Version == version) && !added.Exists(e => e.Version == version))
+				{
+					added.Add(FromRelease(release, version));
+				}
+			}
+			catch (Exception ex)
+			{
+				FileLogger.Log("[更新检查] 读取一次发布失败: " + ex.Message);
+			}
+		}
+		if (added.Count > 0)
+		{
+			added.AddRange(Entries);
+			added.Sort((a, b) => b.Version.CompareTo(a.Version));
+			Entries = added;
+		}
+	}
+
+	private static Version ReleaseVersion(JToken release)
+	{
+		string tag = ((string)release?["tag_name"] ?? "").TrimStart('v', 'V');
+		return Version.TryParse(tag, out Version v) ? Trim(v) : null;
+	}
+
+	/// <summary>内置 CHANGELOG 里还没有的版本：用那次发布的说明，去掉开头的标题和末尾安装说明那些固定的话。</summary>
+	private static Entry FromRelease(JToken release, Version version)
+	{
+		string body = ((string)release["body"] ?? "").Replace("\r", "");
+		int boilerplate = body.IndexOf("**安装 / 更新**", StringComparison.Ordinal);
+		if (boilerplate >= 0)
+		{
+			body = body.Substring(0, boilerplate);
+		}
+		body = Regex.Replace(body, @"^\*\*咖啡伴侣[^\n]*\n", "");
+		string date = DateTime.TryParse((string)release["published_at"], out DateTime published) ? "（" + published.ToString("yyyy-MM-dd") + "）" : "";
+		List<Entry> parsed = Parse("## " + version + date + "\n" + body);
+		return parsed.Count > 0 ? parsed[0] : new Entry { Version = version, Title = version + date, Body = "" };
 	}
 
 	private static IEnumerator Get(string url, Action<string> done)
