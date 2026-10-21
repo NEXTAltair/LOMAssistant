@@ -258,7 +258,9 @@ internal static class OneClickUnlockPatch
 			if (!LuaParser.Instance.LockedOptions.TryGetValue(key, out var locked) || string.IsNullOrEmpty(locked.Unlocked)) return;
 			ConditionResultData data = ConditionSolver.Find(locked.Condition);
 			List<ConditionSolver.Write> writes = data != null ? ConditionSolver.Satisfy(data) : null;
-			if (writes == null || writes.Count == 0)
+			// 条件已经满足（一项都不用改）但选项还锁着也要给按钮：读随时存档时游戏在快进回放中途决定锁不锁，
+			// 那一刻的数值和停下时不同，会出现「当前已满足、选项却锁着」，点了直接解开
+			if (writes == null)
 			{
 				if (old != null) old.gameObject.SetActive(false);
 				return;
