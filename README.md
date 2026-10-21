@@ -4,7 +4,7 @@
 
 《活侠传》（Legend of Mortal）的 BepInEx 6 插件，原名「活侠传拓展」。适配最新版游戏，并加入剧情回顾、分支自选、修改面板、存档优化、随时存档等功能。
 
-**[⬇ 下载最新版](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip)**　·　**[夸克网盘下载](https://pan.quark.cn/s/e78c41abcebc)**　·　**[▶ B 站演示视频](https://www.bilibili.com/video/BV1Tunw6qEyC/)**　·　**QQ 群：496887060**
+[![下载最新版](https://img.shields.io/github/v/release/kevinnie2003/LOMAssistant?label=%E4%B8%8B%E8%BD%BD%E6%9C%80%E6%96%B0%E7%89%88&color=A3302A&logo=github)](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip) [![夸克网盘](https://img.shields.io/badge/%E5%A4%B8%E5%85%8B%E7%BD%91%E7%9B%98-%E4%B8%8B%E8%BD%BD-4C6EF5)](https://pan.quark.cn/s/e78c41abcebc) [![B站演示视频](https://img.shields.io/badge/B%E7%AB%99-%E6%BC%94%E7%A4%BA%E8%A7%86%E9%A2%91-FB7299?logo=bilibili&logoColor=white)](https://www.bilibili.com/video/BV1Tunw6qEyC/) [![QQ群 496887060](https://img.shields.io/badge/QQ%E7%BE%A4-496887060-12B7F5?logo=tencentqq&logoColor=white)](https://qm.qq.com/q/22cO11mHBq) [![下载次数](https://img.shields.io/github/downloads/kevinnie2003/LOMAssistant/total?label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&color=555)](https://github.com/kevinnie2003/LOMAssistant/releases)
 
 ## 安装
 
@@ -155,7 +155,7 @@
 
 ## 常见问题
 
-**遇到 bug 怎么办？** 先重新运行一次安装器，确认已是最新版。还有问题的话，用「导出诊断」把桌面上生成的压缩包发到 QQ 群或 [Issues](https://github.com/kevinnie2003/LOMAssistant/issues)，并说明是怎么出现的。
+**遇到 bug 怎么办？** 先重新运行一次安装器，确认已是最新版。还有问题的话，用「导出诊断」把桌面上生成的压缩包发到 [QQ 群](https://qm.qq.com/q/22cO11mHBq)或 [Issues](https://github.com/kevinnie2003/LOMAssistant/issues)，并说明是怎么出现的。
 
 **装了没反应？** 从托盘完全退出 Steam 再打开游戏。还不行就用安装器里的「导出诊断」看看缺了什么。
 
