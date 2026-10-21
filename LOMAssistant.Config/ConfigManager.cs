@@ -105,6 +105,10 @@ public static class ConfigManager
 
 	public static ConfigElement<KeyCode> AnytimeSaveKey;
 
+	public static ConfigElement<KeyCode> SkipReadKey;
+
+	public static ConfigElement<bool> EnableSkipRead;
+
 	public static ConfigElement<int> AnytimeSaveLimit;
 
 	public static ConfigElement<KeyCode> AnytimeLoadKey;
@@ -264,6 +268,8 @@ public static class ConfigManager
 		FontScale = new ConfigElement<int>("FontScale", "剧情对白的文字大小（百分比，只放大对白框里的字，不放大界面）。100=原样，120=大两成", 100);
 		EnableBackgroundRun = new ConfigElement<bool>("EnableBackgroundRun", "后台继续运行：切到别的窗口时游戏不暂停，背景音乐也不停。true=开，false=关（游戏原本的做法：切走就停）", defaultValue: true);
 		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "隐藏界面看 CG：剧情里按热键（HideUIKey，默认鼠标右键）隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次恢复。true=开，false=关", defaultValue: true);
+		EnableSkipRead = new ConfigElement<bool>("EnableSkipRead", "一键快进已读对话：剧情里按一下热键（默认 F2）一直跳过读过的对话，再按一下停，碰到没读过的对话自己停。true=开，false=关", defaultValue: true);
+		SkipReadKey = new ConfigElement<KeyCode>("SkipReadKey", "一键快进的热键：剧情里按一下一直跳过读过的对话（像一直按着 Ctrl），再按一下停；碰到没读过的对话会自己停", KeyCode.F2);
 		HideUIKey = new ConfigElement<KeyCode>("HideUIKey", "隐藏界面看 CG 的按键，默认鼠标右键（Mouse1）；习惯右键做别的事可以改成键盘上的键，如 H", KeyCode.Mouse1);
 		EnableStoryReview = new ConfigElement<bool>("EnableStoryReview", "剧情回顾：走到大节点（任务、事件的开头，以及会改变剧情走向的选项）时，在存档文件夹里收录这一段开头的进度（LOMStory_ 开头，跟着 Steam 云同步），以后可以从这里重玩。true=开，false=关", defaultValue: true);
 		StoryReviewKey = new ConfigElement<KeyCode>("StoryReviewKey", "咖啡伴侣窗口（此刻、路线图、剧情图、节点存档、随时存档、结局速查、数值、设置）的热键", KeyCode.Tab);
