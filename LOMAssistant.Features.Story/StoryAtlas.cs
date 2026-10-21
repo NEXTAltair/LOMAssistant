@@ -477,7 +477,8 @@ public static class StoryAtlas
 		try
 		{
 			string text = LocalizationManager.Instance.LocaleResolver.GetStoryText(key);
-			return string.IsNullOrWhiteSpace(text) || text == key ? "" : TextConverter.ToSimplified(System.Text.RegularExpressions.Regex.Replace(text, "<[^>]+>", "")).Replace("\n", " ");
+			// 去掉格式标记：<color=…> 这种，还有 {size=50}…{/size} 这种
+			return string.IsNullOrWhiteSpace(text) || text == key ? "" : TextConverter.ToSimplified(System.Text.RegularExpressions.Regex.Replace(text, @"<[^>]+>|\{/?[a-zA-Z]+(=[^}]*)?\}", "")).Replace("\n", " ").Trim();
 		}
 		catch
 		{
