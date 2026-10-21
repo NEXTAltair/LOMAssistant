@@ -188,6 +188,34 @@ internal static class OptionInfoPatch
 		}
 	}
 
+	/// <summary>
+	/// 骰子菜单的线路文字框很窄、行距很小：后面接的结果说明一长就折成两行，两行叠在一起看不清。
+	/// 这里的文字框改成不折行，结果说明一行往右写完（右边是空的）。
+	/// </summary>
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(DiceMenuDialog), "OnEnable")]
+	public static void DiceMenuDialog_OnEnable_Postfix(DiceMenuDialog __instance)
+	{
+		try
+		{
+			foreach (UnityEngine.UI.Button button in __instance.CachedButtons ?? new UnityEngine.UI.Button[0])
+			{
+				if (button == null)
+				{
+					continue;
+				}
+				foreach (UnityEngine.UI.Text text in button.GetComponentsInChildren<UnityEngine.UI.Text>(includeInactive: true))
+				{
+					text.horizontalOverflow = HorizontalWrapMode.Overflow;
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			FileLogger.LogWarning("骰子菜单文字不折行设置失败: " + ex.Message);
+		}
+	}
+
 	[HarmonyPrefix]
 	[HarmonyPatch(typeof(PositionController), "OnPositionEnter")]
 	public static void PositionController_OnPositionEnter_Prefix(PositionController __instance)
