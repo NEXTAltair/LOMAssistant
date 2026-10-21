@@ -1,6 +1,6 @@
 ![Coffee Companion](media/banner.en.webp)
 
-# 咖啡伴侣
+# Coffee Companion
 
 [简体中文](README.md) · [繁體中文](README.zh-Hant.md) · **English** · [日本語](README.ja.md) · [한국어](README.ko.md)
 

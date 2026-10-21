@@ -1,6 +1,6 @@
 ![珈琲のおとも](media/banner.ja.webp)
 
-# 咖啡伴侣
+# 珈琲のおとも
 
 [简体中文](README.md) · [繁體中文](README.zh-Hant.md) · [English](README.en.md) · **日本語** · [한국어](README.ko.md)
 

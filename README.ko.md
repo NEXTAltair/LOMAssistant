@@ -1,6 +1,6 @@
 ![커피 동반자](media/banner.ko.webp)
 
-# 咖啡伴侣
+# 커피 동반자
 
 [简体中文](README.md) · [繁體中文](README.zh-Hant.md) · [English](README.en.md) · [日本語](README.ja.md) · **한국어**
 
