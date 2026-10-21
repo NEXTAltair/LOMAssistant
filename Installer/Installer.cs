@@ -674,8 +674,10 @@ internal class InstallerForm : Form
 			Logo();
 			Finish(true, "安装完成，当前版本 " + Short(now) + "。\n\n正常启动游戏即可，游戏里按 F8 打开设置，Tab 打开咖啡伴侣窗口。");
 		}
-		catch (UnauthorizedAccessException)
+		catch (UnauthorizedAccessException e)
 		{
+			// 写进日志是哪个文件被拒绝（只读、杀毒软件拦截、文件夹权限），导出诊断时看得到
+			Log("写入被拒绝：" + e.Message);
 			BeginInvoke(new Action(AskElevate));
 		}
 		catch (Exception e)
@@ -834,6 +836,12 @@ internal class InstallerForm : Form
 			}
 			string target = Path.Combine(dest, rel);
 			Directory.CreateDirectory(Path.GetDirectoryName(target));
+			// 目标文件是只读的话覆盖会被拒绝：先去掉只读
+			if (File.Exists(target) && (File.GetAttributes(target) & FileAttributes.ReadOnly) != 0)
+			{
+				File.SetAttributes(target, File.GetAttributes(target) & ~FileAttributes.ReadOnly);
+				Log("已去掉只读属性：" + rel);
+			}
 			File.Copy(file, target, overwrite: true);
 			count++;
 		}
@@ -863,23 +871,20 @@ internal class InstallerForm : Form
 		}));
 	}
 
+	/// <summary>
+	/// 写不进游戏目录。以前会自己用 runas 重新打开成管理员，但在一些玩家电脑上不起作用（一直重复弹窗），
+	/// 手动右键「以管理员身份运行」才行：所以直接告诉玩家怎么做。已经是管理员还写不进去，多半是杀毒软件拦的。
+	/// </summary>
 	private void AskElevate()
 	{
 		_install.Enabled = true;
 		_browse.Enabled = true;
-		Log("没有写入游戏目录的权限。");
-		if (MessageBox.Show(this, "没有写入游戏目录的权限（游戏可能装在 Program Files 里）。\n\n要以管理员身份重新打开安装器吗？", "需要管理员权限", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
-		{
-			return;
-		}
-		try
-		{
-			Process.Start(new ProcessStartInfo(Application.ExecutablePath, "--game \"" + _game + "\"") { Verb = "runas", UseShellExecute = true });
-			Close();
-		}
-		catch (Win32Exception)
-		{
-			Log("已取消以管理员身份运行。");
-		}
+		bool admin = new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent())
+			.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
+		Log("没有写入游戏目录的权限（安装器" + (admin ? "已经是" : "不是") + "以管理员身份运行）。");
+		string message = admin
+			? "已经以管理员身份运行，还是写不进游戏目录。\n\n多半是杀毒软件拦住了：先退出 360、火绒、电脑管家等杀毒软件（或把游戏目录加进信任），再点一次「一键安装 / 更新」。\n\n还不行的话，点「导出诊断」把桌面上的压缩包发到 QQ 群。"
+			: "没有写入游戏目录的权限（游戏可能装在 Program Files 里，或者被杀毒软件拦住了）。\n\n请关掉安装器，右键「咖啡伴侣安装器.exe」→「以管理员身份运行」，再点「一键安装 / 更新」。\n\n还不行的话，先退出 360、火绒、电脑管家等杀毒软件（或把游戏目录加进信任）再试。";
+		MessageBox.Show(this, message, "没有写入权限", MessageBoxButtons.OK, MessageBoxIcon.Warning);
 	}
 }
