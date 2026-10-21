@@ -216,7 +216,7 @@ public partial class StoryReviewPanel
 		GUIStyle line = Middle(_label);
 		GUIStyle muted = Middle(_muted);
 		// 心相一行在加减按钮前面多一个锁：附加值那一栏（如「(+5)」）让出位置，后面的按钮和别的行对齐
-		float nameWidth = S(120), extraWidth = row.LockStat != null ? S(80) - S(36) - _button.margin.horizontal : S(80);
+		float nameWidth = S(120), extraWidth = row.LockStat != null ? S(80) - S(36) - _button.margin.left : S(80);
 		GUILayout.Label(Fit(row.Name, line, nameWidth), line, GUILayout.Width(nameWidth), Ctl());
 		Rect nameRect = GUILayoutUtility.GetLastRect();
 		int value = row.Get();
