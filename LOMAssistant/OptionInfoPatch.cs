@@ -10,6 +10,7 @@ using LOMAssistant.LuaParse;
 using Mortal.Core;
 using Mortal.Free;
 using Mortal.Story;
+using UnityEngine;
 
 namespace LOMAssistant;
 
@@ -21,6 +22,70 @@ internal static class OptionInfoPatch
 
 	/// <summary>最近载入的剧本（解析缓存的键），剧情回顾「此刻」页用它取这一段的选项、判定和事件。</summary>
 	public static string LastScriptKey;
+
+	/// <summary>
+	/// 游戏里最近一次弹出的选项菜单是哪几个选项（选项编号）。剧本的 choose 先取选项文字（GetStoryText）再加按钮（AddOption），
+	/// 加按钮时传的就是取到的那段文字：取文字时记下「文字 → 编号」，加按钮时按文字查回编号（中间还会取别的文字，不能按顺序对）。
+	/// 「此刻」页据此标出现在这一组。
+	/// </summary>
+	public static readonly List<string> MenuKeys = new List<string>();
+	private static readonly Dictionary<string, string> _textKeys = new Dictionary<string, string>();
+	private static int _menuFrame = -1;
+
+	/// <summary>为真时取选项文字不经过下面的结果说明（本 Mod 自己取原文用）。</summary>
+	public static bool Raw;
+
+	/// <summary>掷骰转盘下面那几行：选项表每项是「选项编号|范围」，开始掷骰时记下这一组。</summary>
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(DiceMenuDialog), "ExecuteRoll")]
+	public static void DiceMenuDialog_ExecuteRoll_Prefix(string[] __0)
+	{
+		if (__0 == null)
+		{
+			return;
+		}
+		MenuKeys.Clear();
+		foreach (string entry in __0)
+		{
+			if (!string.IsNullOrEmpty(entry))
+			{
+				MenuKeys.Add(entry.Split('|')[0]);
+			}
+		}
+		_menuFrame = Time.frameCount;
+	}
+
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(CustomMenuDialog), "AddOption")]
+	public static void CustomMenuDialog_AddOption_Prefix(string __0)
+	{
+		if (Time.frameCount != _menuFrame)
+		{
+			MenuKeys.Clear();
+			_menuFrame = Time.frameCount;
+		}
+		if (__0 != null && _textKeys.TryGetValue(__0, out string key))
+		{
+			MenuKeys.Add(key);
+		}
+	}
+
+	/// <summary>记下每段取过的文字是哪个编号（在结果说明接好以后，和加按钮时传的文字一致）。</summary>
+	[HarmonyPostfix]
+	[HarmonyPriority(Priority.Last)]
+	[HarmonyPatch(typeof(LeanLocalizationResolver), "GetStoryText")]
+	public static void LeanLocalizationResolver_GetStoryText_Remember(string key, string __result)
+	{
+		if (Raw || __result == null)
+		{
+			return;
+		}
+		if (_textKeys.Count > 500)
+		{
+			_textKeys.Clear();
+		}
+		_textKeys[__result] = key;
+	}
 
 	[HarmonyPrefix]
 	[HarmonyPatch(typeof(LuaEnvironment), "LoadLuaFunction")]
@@ -70,6 +135,11 @@ internal static class OptionInfoPatch
 	[HarmonyPatch(typeof(LeanLocalizationResolver), "GetStoryText")]
 	public static void LeanLocalizationResolver_GetStoryText_Postfix(string key, ref string __result)
 	{
+		// 本 Mod 自己取选项原文（剧情回顾里显示）时不加结果说明，也不算游戏弹出的菜单
+		if (Raw)
+		{
+			return;
+		}
 		try
 		{
 			// 被锁的选项（「解锁条件：？？？」「银两不足」这类）：写出真正的解锁条件和当前值，以及解锁后的效果

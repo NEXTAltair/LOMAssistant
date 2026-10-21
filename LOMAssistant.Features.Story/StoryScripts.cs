@@ -405,6 +405,8 @@ public static class StoryScripts
 	/// <summary>选项、掷骰结果的文字（游戏里显示的那句）。</summary>
 	public static string OptionText(string key)
 	{
+		// 只要选项原文：不要选项提示接在后面的结果说明
+		OptionInfoPatch.Raw = true;
 		try
 		{
 			string text = LocalizationManager.Instance.LocaleResolver.GetStoryText(key);
@@ -415,6 +417,10 @@ public static class StoryScripts
 		}
 		catch
 		{
+		}
+		finally
+		{
+			OptionInfoPatch.Raw = false;
 		}
 		return key;
 	}

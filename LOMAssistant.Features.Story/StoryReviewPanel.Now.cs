@@ -73,20 +73,36 @@ public partial class StoryReviewPanel
 		if (_now.Options.Count > 0)
 		{
 			any = true;
-			GUILayout.Label("这一段的选项", _heading);
-			foreach (var (key, option, result) in _now.Options)
+			// 游戏里正在显示的那一组放最上面；其余按剧本里第几次选择分组（一段剧情里常有好几轮选择）
+			var showing = new HashSet<string>(OptionInfoPatch.MenuKeys);
+			var current = _now.Options.Where(o => showing.Contains(o.Key)).ToList();
+			if (current.Count > 0)
 			{
-				GUILayout.BeginVertical(_card);
-				// 选了以后接下去的剧情读过多少（和剧情图里一样）
-				string mark = _now.StoryScript == null ? "" : string.Concat(_now.StoryScript.Exits.Where(e => e.Path.Count > 0 && e.Path[0].Key == key).Select(ReadMark).Distinct().ToArray());
-				GUILayout.Label(option + (mark.Length > 0 ? "　<color=#A3302A>" + mark + "</color>" : ""), _rich);
-				if (result.Length > 0)
+				GUILayout.Label("现在可以选的", _heading);
+				foreach (var option in current)
 				{
-					GUILayout.Label(result, _muted);
+					DrawNowOption(option.Key, option.Option, option.Result);
 				}
-				GUILayout.EndVertical();
+				GUILayout.Space(S(10));
 			}
-			GUILayout.Space(S(10));
+			var rest = _now.Options.Where(o => !showing.Contains(o.Key)).ToList();
+			if (rest.Count > 0)
+			{
+				GUILayout.Label(current.Count > 0 ? "这一段的其他选项" : "这一段的选项", _heading);
+				var groups = rest.GroupBy(o => MenuOf(o.Key)).OrderBy(g => g.Key < 0 ? int.MaxValue + g.Key : g.Key).ToList();
+				foreach (var group in groups)
+				{
+					if (groups.Count > 1)
+					{
+						GUILayout.Label(group.Key == -2 ? "掷骰" : group.Key < 0 ? "其他" : "第 " + (group.Key + 1) + " 次选择", _muted);
+					}
+					foreach (var option in group)
+					{
+						DrawNowOption(option.Key, option.Option, option.Result);
+					}
+				}
+				GUILayout.Space(S(10));
+			}
 		}
 		if (_now.Ways.Count > 0)
 		{
@@ -153,6 +169,41 @@ public partial class StoryReviewPanel
 		GUILayout.EndScrollView();
 		GUILayout.EndArea();
 	}
+
+	/// <summary>这个选项是剧本里第几次选择（从 0 数）；掷骰的结果是 -2，找不到是 -1。</summary>
+	private int MenuOf(string key)
+	{
+		StoryScript script = _now.StoryScript;
+		if (script == null)
+		{
+			return -1;
+		}
+		int menu = script.Menus.FindIndex(m => m.Any(step => step.Key == key));
+		if (menu >= 0)
+		{
+			return menu;
+		}
+		return script.Exits.Any(e => e.Path.Any(step => step.Kind == StoryStep.Dice && step.Key == key)) ? -2 : -1;
+	}
+
+	private void DrawNowOption(string key, string option, string result)
+	{
+		GUILayout.BeginVertical(_card);
+		// 选了以后接下去的剧情读过多少（和剧情图里一样）
+		string mark = _now.StoryScript == null ? "" : string.Concat(_now.StoryScript.Exits.Where(e => e.Path.Count > 0 && e.Path[0].Key == key).Select(ReadMark).Distinct().ToArray());
+		GUILayout.Label(option + (mark.Length > 0 ? "　<color=#A3302A>" + mark + "</color>" : ""), _rich);
+		if (result.Length > 0)
+		{
+			GUILayout.Label(Cached((key, "result"), () => ColorDeltas(result)), _muted);
+		}
+		GUILayout.EndVertical();
+	}
+
+	private static readonly System.Text.RegularExpressions.Regex Delta = new System.Text.RegularExpressions.Regex(@"(?<![\w.])([+-])(\d+(?:\.\d+)?)");
+
+	/// <summary>数值变化上色：加的绿、减的红。</summary>
+	private static string ColorDeltas(string text) =>
+		Delta.Replace(text, m => (m.Groups[1].Value == "+" ? "<color=#2F6B3A>" : "<color=#A3302A>") + m.Value + "</color>");
 
 	private static NowSnapshot BuildNow()
 	{
