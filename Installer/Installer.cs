@@ -815,6 +815,9 @@ internal class InstallerForm : Form
 		}
 	}
 
+	private static readonly string[] PayloadFiles = { "winhttp.dll", "doorstop_config.ini", ".doorstop_version", "changelog.txt" };
+	private static readonly string[] PayloadFolders = { @"BepInEx\core", @"BepInEx\plugins\LOMAssistant" };
+
 	private int CopyTree(string source, string dest)
 	{
 		if (SamePath(source, dest))
@@ -822,18 +825,29 @@ internal class InstallerForm : Form
 			Log("安装文件已经在游戏目录里，跳过复制。");
 			return 0;
 		}
-		string self = Path.GetFileName(Application.ExecutablePath);
+		// 只复制安装包里本 Mod 的东西：加载器的几个文件、BepInEx\core、BepInEx\plugins\LOMAssistant。
+		// 安装器所在的文件夹里可能还有别的东西（有人把压缩包解压到 D 盘根目录、下载文件夹），绝不能整个拷进游戏目录
+		var files = new List<string>();
+		foreach (string name in PayloadFiles)
+		{
+			string path = Path.Combine(source, name);
+			if (File.Exists(path))
+			{
+				files.Add(path);
+			}
+		}
+		foreach (string dir in PayloadFolders)
+		{
+			string path = Path.Combine(source, dir);
+			if (Directory.Exists(path))
+			{
+				files.AddRange(Directory.GetFiles(path, "*", SearchOption.AllDirectories));
+			}
+		}
 		int count = 0;
-		foreach (string file in Directory.GetFiles(source, "*", SearchOption.AllDirectories))
+		foreach (string file in files)
 		{
 			string rel = file.Substring(source.TrimEnd('\\').Length + 1);
-			if (rel.Equals(self, StringComparison.OrdinalIgnoreCase)
-				|| rel.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && rel.IndexOf('\\') < 0
-				|| rel.Equals("使用说明.txt", StringComparison.OrdinalIgnoreCase)
-				|| rel.StartsWith(@"BepInEx\config\", StringComparison.OrdinalIgnoreCase))
-			{
-				continue;
-			}
 			string target = Path.Combine(dest, rel);
 			Directory.CreateDirectory(Path.GetDirectoryName(target));
 			// 目标文件是只读的话覆盖会被拒绝：先去掉只读
