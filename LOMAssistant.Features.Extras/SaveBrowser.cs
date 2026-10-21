@@ -73,8 +73,12 @@ public class SaveBrowser : MonoBehaviour
 
 	// 详情栏
 	private Image _portrait;
-	private Text _loverCaption, _loverName, _date, _info, _mission, _section, _lines, _noteText;
-	private Button _noteBox, _primaryButton, _deleteButton;
+	private Text _loverCaption, _loverName, _date, _info, _mission, _section, _lines;
+	private InputField _noteBox;
+	private Button _primaryButton, _deleteButton;
+	private readonly Dictionary<Entry, Text> _rowNotes = new Dictionary<Entry, Text>();
+	private float _noteEditedAt = -10f;
+	private static SaveBrowser _current;
 
 	public static bool Active(MonoBehaviour panel) => panel != null && panel.GetComponent<SaveBrowser>() is SaveBrowser b && b._root != null;
 
@@ -377,17 +381,27 @@ public class SaveBrowser : MonoBehaviour
 		Image noteBack = note.gameObject.AddComponent<Image>();
 		noteBack.color = new Color(0f, 0f, 0f, 0.3f);
 		Border(note, new Color(Gold.r, Gold.g, Gold.b, 0.25f));
-		_noteBox = note.gameObject.AddComponent<Button>();
-		_noteBox.transition = Selectable.Transition.ColorTint;
+		// 备注直接在这里写：点进去打字，回车或点别处就存
+		Text noteText = NewText(note, "Text", _serif, 23, Gold, TextAnchor.MiddleLeft);
+		Place(noteText.rectTransform, 16f, 0f, w - 80f, 68f);
+		Text placeholder = NewText(note, "Placeholder", _serif, 21, new Color(0.42f, 0.39f, 0.35f, 1f), TextAnchor.MiddleLeft);
+		Place(placeholder.rectTransform, 16f, 0f, w - 80f, 68f);
+		placeholder.text = "点这里写备注，回车保存";
+		_noteBox = note.gameObject.AddComponent<InputField>();
+		_noteBox.textComponent = noteText;
+		_noteBox.placeholder = placeholder;
 		_noteBox.targetGraphic = noteBack;
+		_noteBox.lineType = InputField.LineType.SingleLine;
+		_noteBox.characterLimit = 30;
+		_noteBox.caretColor = Gold;
+		_noteBox.customCaretColor = true;
+		_noteBox.selectionColor = new Color(Gold.r, Gold.g, Gold.b, 0.35f);
+		_noteBox.transition = Selectable.Transition.ColorTint;
 		_noteBox.colors = new ColorBlock { normalColor = Color.white, highlightedColor = new Color(1.6f, 1.5f, 1.3f, 1f), selectedColor = new Color(1.6f, 1.5f, 1.3f, 1f), pressedColor = Color.white, disabledColor = Color.white, colorMultiplier = 1f };
-		_noteBox.onClick.AddListener(() => EditNote(_shown));
-		_noteText = NewText(note, "Text", _serif, 23, Gold, TextAnchor.MiddleLeft);
-		Place(_noteText.rectTransform, 16f, 0f, w - 80f, 68f);
-		_noteText.horizontalOverflow = HorizontalWrapMode.Wrap;
+		_noteBox.onEndEdit.AddListener(SaveNote);
 
 		_primaryButton = MakeButton(_detail, "读取", 30, 24f, h - 88f, 260f, 62f);
-		_primaryButton.onClick.AddListener(() => _shown?.Primary?.Invoke());
+		_primaryButton.onClick.AddListener(() => Act(_shown));
 		_deleteButton = MakeButton(_detail, "删除", 26, 304f, h - 88f, 140f, 62f);
 		_deleteButton.onClick.AddListener(() => Delete(_shown));
 	}
@@ -414,6 +428,8 @@ public class SaveBrowser : MonoBehaviour
 			}
 			_listContent.DetachChildren();
 			_rows.Clear();
+			_rowNotes.Clear();
+			_current = this;
 			if (_isLoad && _tab == 1)
 			{
 				string group = null;
@@ -631,7 +647,7 @@ public class SaveBrowser : MonoBehaviour
 		back.color = new Color(0, 0, 0, 0);
 		Button button = rt.gameObject.AddComponent<Button>();
 		button.transition = Selectable.Transition.None;
-		button.onClick.AddListener(() => e.Primary?.Invoke());
+		button.onClick.AddListener(() => Act(e));
 		RectTransform accent = NewRect("Accent", rt);
 		Place(accent, 0f, 8f, 3f, height - 16f);
 		Image accentImage = accent.gameObject.AddComponent<Image>();
@@ -680,8 +696,9 @@ public class SaveBrowser : MonoBehaviour
 				Text noteText = NewText(rt, "Note", _serif, 21, note.Length > 0 ? Gold : new Color(0.42f, 0.39f, 0.35f, 1f), TextAnchor.UpperLeft);
 				Place(noteText.rectTransform, x - 6f, 80f, 0f, 30f);
 				noteText.rectTransform.anchorMax = new Vector2(1f, 1f);
-				noteText.rectTransform.offsetMax = new Vector2(-140f, noteText.rectTransform.offsetMax.y);
+				noteText.rectTransform.offsetMax = new Vector2(-80f, noteText.rectTransform.offsetMax.y);
 				noteText.text = note.Length > 0 ? "【" + note + "】" : (e.CanNote ? "（无备注）" : "");
+				_rowNotes[e] = noteText;
 			}
 		}
 		// 右边的小按钮：备注、删除
@@ -692,12 +709,6 @@ public class SaveBrowser : MonoBehaviour
 			AnchorRight((RectTransform)delete.transform, right, e.Compact ? 20f : 44f, 60f, 36f);
 			delete.onClick.AddListener(() => Delete(e));
 			right += 64f;
-		}
-		if (e.CanNote && e.Data != null)
-		{
-			Button note = TextButton(rt, "备注");
-			AnchorRight((RectTransform)note.transform, right, e.Compact ? 20f : 44f, 60f, 36f);
-			note.onClick.AddListener(() => EditNote(e));
 		}
 		return button;
 	}
@@ -764,6 +775,11 @@ public class SaveBrowser : MonoBehaviour
 
 		public void OnPointerEnter(PointerEventData eventData)
 		{
+			// 正在写备注时鼠标划过别的存档不切换，免得打到一半被打断
+			if (Typing)
+			{
+				return;
+			}
 			if (EventSystem.current != null && EventSystem.current.currentSelectedGameObject != gameObject)
 			{
 				EventSystem.current.SetSelectedGameObject(gameObject, eventData);
@@ -816,8 +832,7 @@ public class SaveBrowser : MonoBehaviour
 		var linesSize = _lines.rectTransform.sizeDelta;
 		_lines.rectTransform.sizeDelta = new Vector2(linesSize.x, _linesHeight + (_noteBox.gameObject.activeSelf ? 0f : 84f));
 		string note = e.CanNote && data != null ? SaveNotePatch.GetNote(e.Slot) : "";
-		_noteText.text = note.Length > 0 ? note : "<color=#6B6359>没有备注，点这里写一条</color>";
-		_noteText.supportRichText = true;
+		_noteBox.SetTextWithoutNotify(note);
 		SetButtonText(_primaryButton, e.Caption == NewGame ? "开始新游戏" : _isLoad ? "读取" : data == null ? "存到这里" : "覆盖这一栏");
 		_deleteButton.gameObject.SetActive(e.CanDelete && data != null);
 		ShowPortrait(data == null ? -1 : lover);
@@ -885,6 +900,18 @@ public class SaveBrowser : MonoBehaviour
 
 	// ---------------- 动作 ----------------
 
+	/// <summary>读档、存档、开新游戏。备注框刚关掉的半秒内不算：那一下点击是给「保存」的，不能落到后面的存档上。</summary>
+	private static void Act(Entry e)
+	{
+		// 刚写完备注按的回车也不能落到存档上
+		float noteEdited = _current != null ? _current._noteEditedAt : -10f;
+		if (e == null || SaveNoteEditor.IsOpen || Typing || Time.unscaledTime - SaveNoteEditor.ClosedAt < 0.5f || Time.unscaledTime - noteEdited < 0.5f)
+		{
+			return;
+		}
+		e.Primary?.Invoke();
+	}
+
 	private void Delete(Entry e)
 	{
 		if (e == null || !e.CanDelete || e.Data == null || !_isLoad)
@@ -901,13 +928,36 @@ public class SaveBrowser : MonoBehaviour
 		((LoadGamePanel)_panel).OpenDeletePanel(e.Slot);
 	}
 
-	private void EditNote(Entry e)
+	/// <summary>备注框写完（回车或点别处）：存下来，左边这一行的备注跟着改。</summary>
+	private void SaveNote(string text)
 	{
+		_noteEditedAt = Time.unscaledTime;
+		Entry e = _shown;
 		if (e == null || !e.CanNote || e.Data == null)
 		{
 			return;
 		}
-		SaveNoteEditor.Open(e.Slot, Refresh);
+		text = (text ?? "").Trim();
+		if (text == SaveNotePatch.GetNote(e.Slot))
+		{
+			return;
+		}
+		SaveNotePatch.SetNote(e.Slot, text);
+		if (_rowNotes.TryGetValue(e, out Text row) && row != null)
+		{
+			row.text = text.Length > 0 ? "【" + text + "】" : "（无备注）";
+			row.color = text.Length > 0 ? Gold : new Color(0.42f, 0.39f, 0.35f, 1f);
+		}
+	}
+
+	/// <summary>正在备注框里打字：本 Mod 的热键不响应。</summary>
+	public static bool Typing
+	{
+		get
+		{
+			GameObject selected = EventSystem.current != null ? EventSystem.current.currentSelectedGameObject : null;
+			return selected != null && selected.GetComponent<InputField>() is InputField field && field.isFocused;
+		}
 	}
 
 	private bool _pendingReselect;
@@ -986,7 +1036,7 @@ public class SaveBrowser : MonoBehaviour
 			tab.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnDown = first, selectOnLeft = _tabs[0], selectOnRight = _tabs[_tabs.Count - 1] };
 		}
 		Selectable back = _rows.Count > 0 ? _rows[Mathf.Clamp(_selected, 0, _rows.Count - 1)].Button : null;
-		foreach (Button b in new[] { _primaryButton, _deleteButton, _noteBox })
+		foreach (Selectable b in new Selectable[] { _primaryButton, _deleteButton, _noteBox })
 		{
 			b.navigation = new Navigation { mode = Navigation.Mode.Explicit, selectOnLeft = back };
 		}

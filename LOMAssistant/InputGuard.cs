@@ -54,7 +54,8 @@ public class InputGuard : MonoBehaviour
 	/// <summary>本 Mod 的热键按下了（没绑定、正在改键时都算没按）。鼠标右键、中键、侧键也可以当热键。</summary>
 	public static bool HotkeyDown(KeyCode key)
 	{
-		if (key == KeyCode.None || CapturingKey)
+		// 在新版存档界面的备注框里打字时，字母、数字键不能当热键
+		if (key == KeyCode.None || CapturingKey || LOMAssistant.Features.Extras.SaveBrowser.Typing)
 		{
 			return false;
 		}

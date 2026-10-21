@@ -68,6 +68,7 @@ public class SaveNoteEditor : MonoBehaviour
 			}
 		}
 		_slot = null;
+		ClosedAt = Time.unscaledTime;
 		_onSaved = null;
 		Input.imeCompositionMode = _prevIme;
 		if (_pausedEventSystem != null)
@@ -82,7 +83,7 @@ public class SaveNoteEditor : MonoBehaviour
 	private System.Collections.IEnumerator ResumeEventSystem(EventSystem eventSystem)
 	{
 		yield return null;
-		while (Input.GetMouseButton(0) || Input.GetMouseButton(1) || Input.GetKey(KeyCode.Return) || Input.GetKey(KeyCode.KeypadEnter))
+		while (StillHeld())
 		{
 			yield return null;
 		}
@@ -99,6 +100,29 @@ public class SaveNoteEditor : MonoBehaviour
 		}
 		eventSystem.enabled = true;
 	}
+
+	// 游戏用的是新输入系统，旧的 Input.GetMouseButton 一直读到「没按」，等不到松手；两套都看
+	private static bool StillHeld()
+	{
+		var mouse = UnityEngine.InputSystem.Mouse.current;
+		var keyboard = UnityEngine.InputSystem.Keyboard.current;
+		if ((mouse != null && (mouse.leftButton.isPressed || mouse.rightButton.isPressed))
+			|| (keyboard != null && (keyboard.enterKey.isPressed || keyboard.numpadEnterKey.isPressed)))
+		{
+			return true;
+		}
+		try
+		{
+			return Input.GetMouseButton(0) || Input.GetMouseButton(1) || Input.GetKey(KeyCode.Return) || Input.GetKey(KeyCode.KeypadEnter);
+		}
+		catch (InvalidOperationException)
+		{
+			return false;
+		}
+	}
+
+	/// <summary>备注框上次关掉的时间（不受游戏倍速影响）：刚关掉的那一下不算点到后面的存档上。</summary>
+	public static float ClosedAt { get; private set; } = -10f;
 
 	private void OnGUI()
 	{
