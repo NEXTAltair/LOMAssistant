@@ -318,10 +318,12 @@ internal static class OptionInfoPatch
 		{
 			return false;
 		}
+		// 刚做完的支线在「本旬生效」的列表里还会留一阵；和「此刻」页一样，只算任务当前这一步（做完的已经是 clear，不在里面）
+		Dictionary<MissionCheckData, (string, string)> current = DataHelper.GetMissions();
 		foreach (KeyValuePair<string, MissionCheckData> active in missions.ActiveSubMissions)
 		{
 			MissionCheckData check = active.Value;
-			if (check.Position != position || string.IsNullOrEmpty(check.StartScript))
+			if (check.Position != position || string.IsNullOrEmpty(check.StartScript) || !current.ContainsKey(check))
 			{
 				continue;
 			}
