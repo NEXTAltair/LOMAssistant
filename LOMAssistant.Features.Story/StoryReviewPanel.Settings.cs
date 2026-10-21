@@ -152,6 +152,7 @@ public partial class StoryReviewPanel
 			("热键", new List<SettingRow>
 			{
 				Row(ConfigManager.StoryReviewKey, "本窗口"),
+				new SettingRow { Element = ConfigManager.GamepadPanelButton, Name = "手柄开关本窗口", Choices = new[] { "L3", "R3", "LB+RB" } },
 				Row(ConfigManager.DebugPanelKey, "数值页"),
 				Row(ConfigManager.PanelKey, "设置页"),
 				Row(ConfigManager.SaveNoteKey, "存档备注"),
@@ -368,9 +369,11 @@ public partial class StoryReviewPanel
 		}
 		else if (row.Choices != null && value is int choice)
 		{
-			for (int i = 0; i < row.Choices.Length; i++)
+			// 手柄键名按接着的手柄型号写（Xbox / PS / Switch）
+			string[] choices = element == ConfigManager.GamepadPanelButton ? GamepadCursor.ToggleNames : row.Choices;
+			for (int i = 0; i < choices.Length; i++)
 			{
-				if (GUILayout.Button(row.Choices[i], i == choice ? _primary : _button, GUILayout.Width(S(88)), Ctl()))
+				if (GUILayout.Button(choices[i], i == choice ? _primary : _button, GUILayout.Width(S(88)), Ctl()))
 				{
 					if (row.Choose != null)
 					{

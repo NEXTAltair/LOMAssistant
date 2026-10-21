@@ -176,6 +176,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			TryPatchAll(typeof(StatLimitPatch));
 			TryPatchAll(typeof(TitlePatch));
 			TryPatchAll(typeof(DisplayTextPatch));
+			TryPatchAll(typeof(GamepadControlsChangedGate));
 			TryPatchAll(typeof(MoodLockPatch));
 			ConfigManager.BreakStatLimit.OnValueChanged += _ => StatLimitPatch.Apply();
 			StatLimitPatch.Apply();

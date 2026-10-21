@@ -183,6 +183,11 @@ public class InputGuard : MonoBehaviour
 			}
 			return BlockKeyboard;
 		}
+		// 咖啡伴侣窗口开着时手柄归窗口用（移动指针、点击、切页、B 关窗口），不交给游戏
+		if (device is Gamepad && LOMAssistant.Features.Story.StoryReviewPanel.OwnsEscape)
+		{
+			return true;
+		}
 		if (device is UnityEngine.InputSystem.Pointer)
 		{
 			// 右键用来关咖啡伴侣窗口，鼠标不在窗口上时也不交给游戏
@@ -360,9 +365,9 @@ public static class InputGuardDialogGate
 	private static bool GetButtonDown(string button) => !InputGuard.BlockKeyboard && Input.GetButtonDown(button);
 }
 
-/// <summary>在 Mod 的输入框里打字时，方向键 / 回车不让游戏的 UI 导航处理。</summary>
+/// <summary>在 Mod 的输入框里打字时，方向键 / 回车不让游戏的 UI 导航处理；咖啡伴侣窗口开着时，手柄也不让游戏的界面跟着动。</summary>
 [HarmonyPatch(typeof(InputSystemUIInputModule), "ProcessNavigation")]
 public static class InputGuardNavigationGate
 {
-	private static bool Prefix() => !InputGuard.BlockKeyboard;
+	private static bool Prefix() => !InputGuard.BlockKeyboard && !(Gamepad.current != null && LOMAssistant.Features.Story.StoryReviewPanel.OwnsEscape);
 }

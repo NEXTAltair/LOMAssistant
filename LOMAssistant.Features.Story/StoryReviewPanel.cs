@@ -26,6 +26,9 @@ public partial class StoryReviewPanel : MonoBehaviour
 	private int _fontMode = -1;
 	private string _message = "";
 	private float _messageUntil;
+	private bool _messageRed; // 提示用朱砂色小字（手柄操作说明）
+	private GUIStyle _redNotice;
+	private float _redNoticeScale;
 	private string _tooltip = "";
 
 	// 配色：宣纸底、墨色字、朱砂点睛，和游戏的水墨画风搭
@@ -106,7 +109,10 @@ public partial class StoryReviewPanel : MonoBehaviour
 		// 正在等新热键时 Esc 是取消改键、右键是绑定右键，交给设置页
 		Keyboard keyboard = Keyboard.current;
 		Mouse mouse = Mouse.current;
-		bool back = (keyboard != null && keyboard.escapeKey.wasPressedThisFrame) || (mouse != null && mouse.rightButton.wasPressedThisFrame);
+		Gamepad pad = Gamepad.current;
+		// 手柄：B 键和 Esc 一样是返回
+		bool back = (keyboard != null && keyboard.escapeKey.wasPressedThisFrame) || (mouse != null && mouse.rightButton.wasPressedThisFrame)
+			|| (pad != null && pad.buttonEast.wasPressedThisFrame);
 		if (_visible && !UiHider.Active && _capturing == null && back)
 		{
 			_escFrame = Time.frameCount;
@@ -119,11 +125,18 @@ public partial class StoryReviewPanel : MonoBehaviour
 				_visible = false;
 				GUIUtility.keyboardControl = 0;
 			}
+			GamepadCursor.Release();
 			return;
 		}
-		if (GUIUtility.keyboardControl == 0 && InputGuard.HotkeyDown(ConfigManager.StoryReviewKey.Value))
+		// 手柄开关窗口：默认按下左摇杆（L3，游戏没用到这个键），设置页可改
+		bool padToggle = pad != null && GamepadCursor.TogglePressed(pad) && !UiHider.Active && _capturing == null;
+		if ((GUIUtility.keyboardControl == 0 && InputGuard.HotkeyDown(ConfigManager.StoryReviewKey.Value)) || padToggle)
 		{
 			_visible = !_visible;
+			if (padToggle && _visible)
+			{
+				Notice(GamepadCursor.Hint, red: true);
+			}
 			_confirming = null;
 			if (_visible)
 			{
@@ -138,6 +151,21 @@ public partial class StoryReviewPanel : MonoBehaviour
 				StoryAtlas.ForgetConditions();
 				StoryAtlas.RefreshProgress();
 			}
+		}
+		if (_visible && !UiHider.Active)
+		{
+			// 手柄 LB / RB 切换各页
+			int step = pad != null ? GamepadCursor.ShoulderStep(pad) : 0;
+			if (step != 0 && _confirming == null && _capturing == null)
+			{
+				_tab = _showChangelog ? _tab : (_tab + step + Tabs.Length) % Tabs.Length;
+				_showChangelog = false;
+			}
+			GamepadCursor.Update(_windowRect);
+		}
+		else
+		{
+			GamepadCursor.Release();
 		}
 	}
 
@@ -262,9 +290,10 @@ public partial class StoryReviewPanel : MonoBehaviour
 		InputGuard.Report("StoryReview", _windowRect);
 	}
 
-	private void Notice(string text)
+	private void Notice(string text, bool red = false)
 	{
 		_message = text;
+		_messageRed = red;
 		_messageUntil = Time.realtimeSinceStartup + 6f;
 	}
 
@@ -317,7 +346,13 @@ public partial class StoryReviewPanel : MonoBehaviour
 		float right = DrawUpdateHint(top, bandHeight, close.x - S(14));
 		if (Time.realtimeSinceStartup < _messageUntil)
 		{
-			GUI.Label(new Rect(x + S(16), top, right - x - S(16), bandHeight), _message, Middle(_label));
+			if (_redNotice == null || _redNoticeScale != _scale)
+			{
+				_redNoticeScale = _scale;
+				_redNotice = new GUIStyle(Middle(_muted));
+				_redNotice.normal.textColor = Cinnabar;
+			}
+			GUI.Label(new Rect(x + S(16), top, right - x - S(16), bandHeight), _message, _messageRed ? _redNotice : Middle(_label));
 		}
 		// 题头下一道墨线
 		Fill(new Rect(pad, S(56), w - pad * 2, S(2)), InkLine);
@@ -577,9 +612,19 @@ public partial class StoryReviewPanel : MonoBehaviour
 	private Vector2 _dragFrom;
 	private bool _dragging;
 
+	private readonly Dictionary<string, int> _padScrollFrame = new Dictionary<string, int>();
+
 	private void DragScroll(string id, Rect area, ref Vector2 scroll)
 	{
 		Event e = Event.current;
+		// 手柄右摇杆：指针在这块区域里时直接改滚动位置，每帧滚一点，连续不跳（一帧只加一次）
+		if (e.type == EventType.Layout && area.Contains(e.mousePosition) && (!_padScrollFrame.TryGetValue(id, out int frame) || frame != Time.frameCount))
+		{
+			_padScrollFrame[id] = Time.frameCount;
+			Vector2 delta = GamepadCursor.ScrollDelta();
+			scroll.x = Mathf.Max(0, scroll.x + delta.x);
+			scroll.y = Mathf.Max(0, scroll.y - delta.y);
+		}
 		// 最右边一条是滚动条，留给它自己拖
 		if (e.type == EventType.MouseDown && e.button == 0 && new Rect(area.x, area.y, area.width - S(24), area.height).Contains(e.mousePosition))
 		{
