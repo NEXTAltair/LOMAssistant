@@ -126,21 +126,6 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.EnableFastDuelRounds, "决斗回合间不干等"),
 				Row(ConfigManager.EnableSkillColumns, "技能表全显示"),
 			}),
-			("其他", new List<SettingRow>
-			{
-				new SettingRow { Element = ConfigManager.PanelFont, Name = "窗口字体", Choices = new[] { "思源宋体", "微软雅黑" } },
-				new SettingRow { Element = ConfigManager.GameSpeed, Name = "游戏倍速", Speeds = GameSpeed.Options },
-				Row(ConfigManager.PanelOpacity, "咖啡伴侣窗口不透明度", 0.3f, 1f),
-				Row(ConfigManager.EnableBackgroundRun, "后台继续运行"),
-				Row(ConfigManager.EnableFastStartup, "开游戏更快"),
-				Row(ConfigManager.EnableFlowSpeedup, "流程提速"),
-				Row(ConfigManager.EnableLibraryDisplay, "讲经堂解锁显示"),
-				Row(ConfigManager.EnableShopAllItems, "四师兄卖全部物品"),
-				Row(ConfigManager.EnableShopAllBooks, "四师兄卖全部功法"),
-				Row(ConfigManager.EnableDebugPanel, "数值面板热键"),
-				Row(ConfigManager.LogToFile, "写独立日志文件"),
-				Row(ConfigManager.EnableUpdateCheck, "检查新版本"),
-			}),
 			("存档", new List<SettingRow>
 			{
 				Row(ConfigManager.EnableAnytimeSave, "随时存档"),
@@ -148,6 +133,25 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.SaveSlotCount, "手动存档栏位", 20f, 999f),
 				Row(ConfigManager.AutoSaveHistory, "自动存档多留旧档", 0f, 50f),
 				Row(ConfigManager.EnableSaveBrowser, "新版存档、读档界面"),
+			}),
+			("其他", new List<SettingRow>
+			{
+				new SettingRow { Element = ConfigManager.GameSpeed, Name = "游戏倍速", Speeds = GameSpeed.Options },
+				Row(ConfigManager.EnableBackgroundRun, "后台继续运行"),
+				Row(ConfigManager.EnableFastStartup, "开游戏更快"),
+				Row(ConfigManager.EnableFlowSpeedup, "流程提速"),
+				Row(ConfigManager.EnableLibraryDisplay, "讲经堂解锁显示"),
+				Row(ConfigManager.EnableShopAllItems, "四师兄卖全部物品"),
+				Row(ConfigManager.EnableShopAllBooks, "四师兄卖全部功法"),
+			}),
+			// Mod 自己的设置：窗口的样子、日志、更新检查（界面语言在搜索框右边）
+			("咖啡伴侣", new List<SettingRow>
+			{
+				new SettingRow { Element = ConfigManager.PanelFont, Name = "窗口字体", Choices = new[] { "思源宋体", "微软雅黑" } },
+				Row(ConfigManager.PanelOpacity, "咖啡伴侣窗口不透明度", 0.3f, 1f),
+				Row(ConfigManager.EnableDebugPanel, "数值面板热键"),
+				Row(ConfigManager.EnableUpdateCheck, "检查新版本"),
+				Row(ConfigManager.LogToFile, "写独立日志文件"),
 			}),
 			("热键", new List<SettingRow>
 			{

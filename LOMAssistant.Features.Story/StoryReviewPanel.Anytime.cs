@@ -61,7 +61,7 @@ public partial class StoryReviewPanel
 		AnytimeSave.AnytimeSave save = AnytimeSave.AnytimeSave.Instance;
 		if (save == null)
 		{
-			GUI.Label(new Rect(r.x, r.y + S(10), r.width, S(80)), AnytimeSave.AnytimeSave.Unavailable ?? "随时存档没有启用：在设置页「其他」里打开，重启游戏后生效。", _rich);
+			GUI.Label(new Rect(r.x, r.y + S(10), r.width, S(80)), AnytimeSave.AnytimeSave.Unavailable ?? "随时存档没有启用：在设置页「存档」里打开，重启游戏后生效。", _rich);
 			return;
 		}
 		List<SaveSummary> saves;
