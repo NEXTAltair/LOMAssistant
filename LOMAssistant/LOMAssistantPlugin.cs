@@ -31,6 +31,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 		LogSource = base.Logger;
 		FileLogger.Init(Path.GetDirectoryName(base.Info.Location));
 		ConfigManager.Init();
+		BepInExConsole.Hide();
 		LogInfo("咖啡伴侣已加载。");
 		FileLogger.Log("咖啡伴侣已加载。");
 		Diagnostics.LogStartup(base.Info);
