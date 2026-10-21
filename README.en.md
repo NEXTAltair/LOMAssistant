@@ -1,4 +1,4 @@
-![咖啡伴侣](media/banner.webp)
+![Coffee Companion](media/banner.en.webp)
 
 # 咖啡伴侣
 
@@ -35,6 +35,7 @@ The zip already contains BepInEx.
 | F4 | Roll back to before the last story check |
 | F9 | Stats page |
 | Tab | The 咖啡伴侣 window |
+| Gamepad L3 | Open / close the window (press the left stick; can be changed to R3 or LB+RB in settings) |
 | ESC | The game menu gets 「空过」 (skip turn), 「直接获胜」 (win now) and 「导出诊断」 (export diagnostics) |
 
 All keys can be changed on the settings page.
@@ -77,6 +78,7 @@ Edit stats, martial arts, sect values, relationships, talents, training points, 
 
 ### Other
 
+- **Gamepad**: the window can be used entirely with a gamepad (typing into the search and number boxes still needs a keyboard). Press the left stick (L3) to open the window; inside it the left stick or d-pad moves the pointer, A clicks, the right stick scrolls, LB / RB switch tabs and B closes it. The game ignores the gamepad while the window is open. PlayStation and Switch controllers get their own button names (× / ○, L1 / R1 and so on).
 - **Languages**: the mod follows the game language (Simplified Chinese, Traditional Chinese, Korean). With the [Japanese patch](https://github.com/Dlaqe2334/LOM-JPMOD) installed it shows Japanese. You can also choose 「界面语言」 at the top of the settings page. Korean and Japanese currently cover the common UI text; the rest is still Chinese.
 - **Export diagnostics**: ESC → settings → 「导出诊断」 packs logs, config and the plugin list onto the desktop (no saves).
 - **Conflict detection**: if a conflicting old mod is installed, the settings page opens and names it.
