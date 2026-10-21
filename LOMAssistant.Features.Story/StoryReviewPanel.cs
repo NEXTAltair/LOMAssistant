@@ -96,7 +96,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 		// 窗口开着时多半是在等剧本读完（读完后台词索引也一样），读快一点
 		StoryAtlas.Tick(_visible && !UiHider.Active);
 		// 等新热键时面板被关掉或切走了：不再等，免得热键一直失灵
-		if (_capturing != null && (!_visible || _tab != SettingsTab || UiHider.Active))
+		if (_capturing != null && (!_visible || _tab != SettingsTab || _showChangelog || UiHider.Active))
 		{
 			StopCapture();
 		}
@@ -130,6 +130,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 				_texts.Clear();
 				// 每次打开先看「此刻」，内容重新整理；数值页也重新整理（窗口关着时可能修炼、锻造升了级）
 				_tab = 0;
+				_showChangelog = false;
 				_now = null;
 				_statSections = null;
 				_statInputs.Clear();
@@ -290,11 +291,13 @@ public partial class StoryReviewPanel : MonoBehaviour
 		{
 			float textWidth = _tabOn.CalcSize(new GUIContent(Tabs[i])).x;
 			var tab = new Rect(x, top, textWidth + S(36), bandHeight);
-			if (GUI.Button(tab, Tabs[i], i == _tab ? _tabOn : _tabOff))
+			bool on = i == _tab && !_showChangelog;
+			if (GUI.Button(tab, Tabs[i], on ? _tabOn : _tabOff))
 			{
 				_tab = i;
+				_showChangelog = false;
 			}
-			if (i == _tab)
+			if (on)
 			{
 				Fill(new Rect(tab.center.x - textWidth / 2f - S(4), tab.yMax, textWidth + S(8), S(3)), Cinnabar);
 			}
@@ -305,15 +308,17 @@ public partial class StoryReviewPanel : MonoBehaviour
 		{
 			_visible = false;
 		}
+		float right = DrawUpdateHint(top, bandHeight, close.x - S(14));
 		if (Time.realtimeSinceStartup < _messageUntil)
 		{
-			GUI.Label(new Rect(x + S(16), top, close.x - x - S(30), bandHeight), _message, Middle(_label));
+			GUI.Label(new Rect(x + S(16), top, right - x - S(16), bandHeight), _message, Middle(_label));
 		}
 		// 题头下一道墨线
 		Fill(new Rect(pad, S(56), w - pad * 2, S(2)), InkLine);
 		var body = new Rect(pad, S(68), w - pad * 2, _windowRect.height - S(68) - pad);
-		switch (_tab)
+		switch (_showChangelog ? -1 : _tab)
 		{
+			case -1: DrawChangelog(body); break;
 			case 0: DrawNow(body); break;
 			case 1: DrawRoute(body); break;
 			case 2: DrawFlow(body); break;

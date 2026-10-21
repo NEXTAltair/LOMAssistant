@@ -41,13 +41,14 @@ public partial class StoryReviewPanel
 		panel._visible = true;
 		StoryAtlas.RefreshProgress();
 		panel._tab = AnytimeTab;
+		panel._showChangelog = false;
 	}
 
 	/// <summary>F6：打开随时存档页；已经在这一页就关掉。</summary>
 	public static void ToggleAnytime()
 	{
 		StoryReviewPanel panel = Instance;
-		if (panel != null && panel._visible && panel._tab == AnytimeTab)
+		if (panel != null && panel._visible && panel._tab == AnytimeTab && !panel._showChangelog)
 		{
 			panel._visible = false;
 			return;

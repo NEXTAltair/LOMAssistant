@@ -40,7 +40,7 @@ public partial class StoryReviewPanel
 		{
 			return;
 		}
-		if (panel._visible && panel._tab == SettingsTab)
+		if (panel._visible && panel._tab == SettingsTab && !panel._showChangelog)
 		{
 			panel._visible = false;
 			return;
@@ -59,6 +59,7 @@ public partial class StoryReviewPanel
 		panel._visible = true;
 		StoryAtlas.RefreshProgress();
 		panel._tab = SettingsTab;
+		panel._showChangelog = false;
 		return true;
 	}
 
@@ -133,6 +134,7 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.EnableShopAllBooks, "四师兄卖全部功法"),
 				Row(ConfigManager.EnableDebugPanel, "数值面板热键"),
 				Row(ConfigManager.LogToFile, "写独立日志文件"),
+				Row(ConfigManager.EnableUpdateCheck, "检查新版本"),
 			}),
 			("存档", new List<SettingRow>
 			{
@@ -246,8 +248,7 @@ public partial class StoryReviewPanel
 	private void DrawSettings(Rect r)
 	{
 		_settingSections ??= BuildSettingSections();
-		string query = SearchBox(new Rect(r.x, r.y, S(420), S(36)), ref _settingsSearch);
-		var area = new Rect(r.x, r.y + S(46), r.width, r.height - S(46));
+		string query = SearchBox(new Rect(r.x, r.y, S(420), S(36)), ref _settingsSearch);		var area = new Rect(r.x, r.y + S(46), r.width, r.height - S(46));
 		DragScroll("settings", area, ref _settingsScroll);
 		GUILayout.BeginArea(area);
 		_settingsScroll = GUILayout.BeginScrollView(_settingsScroll);

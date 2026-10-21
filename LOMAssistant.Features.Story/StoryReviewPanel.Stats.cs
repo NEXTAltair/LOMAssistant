@@ -94,7 +94,7 @@ public partial class StoryReviewPanel
 		{
 			return;
 		}
-		if (panel._visible && panel._tab == StatsTab)
+		if (panel._visible && panel._tab == StatsTab && !panel._showChangelog)
 		{
 			panel._visible = false;
 			return;
@@ -102,6 +102,7 @@ public partial class StoryReviewPanel
 		panel._visible = true;
 		StoryAtlas.RefreshProgress();
 		panel._tab = StatsTab;
+		panel._showChangelog = false;
 		panel._statSections = null;
 		panel._statInputs.Clear();
 	}

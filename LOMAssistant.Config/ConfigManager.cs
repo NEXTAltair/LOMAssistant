@@ -123,6 +123,10 @@ public static class ConfigManager
 
 	public static ConfigElement<bool> LogToFile;
 
+	public static ConfigElement<bool> EnableUpdateCheck;
+
+	public static ConfigElement<string> LastSeenVersion;
+
 	private static ConfigFile Config => LOMAssistantPlugin.Instance.Config;
 
 	public static void Init()
@@ -300,5 +304,7 @@ public static class ConfigManager
 		AnytimePanelKey = new ConfigElement<KeyCode>("AnytimePanelKey", "打开咖啡伴侣窗口的随时存档页（列表、读取、备注、删除）的热键", KeyCode.F6);
 		AnytimeRollbackKey = new ConfigElement<KeyCode>("AnytimeRollbackKey", "回退到剧情判定前一句的热键（只在内存里保留最近几个判定点，切场景后清空）", KeyCode.F4);
 		LogToFile = new ConfigElement<bool>("LogToFile", "是否写入独立日志文件。日志位置：BepInEx\\plugins\\LOMAssistant\\logs\\", defaultValue: true);
+		EnableUpdateCheck = new ConfigElement<bool>("EnableUpdateCheck", "进游戏后联网（GitHub）看有没有新版本，有就在咖啡伴侣窗口右上角用小字提示，不弹窗。true=开（默认），false=关", defaultValue: true);
+		LastSeenVersion = new ConfigElement<string>("LastSeenVersion", "上次看过更新提示的版本（自动记录，不用改）", "");
 	}
 }

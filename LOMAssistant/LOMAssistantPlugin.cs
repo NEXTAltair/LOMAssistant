@@ -40,6 +40,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 		BepInEx5Plugins.Load();
 		Diagnostics.LogPatchSummary(_harmony);
 		StartCoroutine(ConflictDetector.CheckLater(_harmony));
+		StartCoroutine(UpdateInfo.Check());
 	}
 
 	private void Update()

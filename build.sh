@@ -28,6 +28,7 @@ mkdir -p bin
 	-resource:LOMAssistant.Features.AnytimeSave/Replay.lua,LOMAssistant.AnytimeSave.Replay.lua \
 	-resource:LOMAssistant.Features.AnytimeSave/contract.tsv.gz,LOMAssistant.AnytimeSave.contract.tsv.gz \
 	-resource:LOMAssistant/conditions.json.gz,LOMAssistant.conditions.json.gz \
+	-resource:CHANGELOG.md,LOMAssistant.CHANGELOG.md \
 	-resource:bin/BepInEx.dll,LOMAssistant.BepInEx5Shim.dll \
 	$(find . -name '*.cs' -not -path './bin/*' -not -path './Installer/*' -not -path './tools/*')
 
