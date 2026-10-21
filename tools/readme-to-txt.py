@@ -53,6 +53,12 @@ def convert(lines):
         if skipping:
             continue
         stripped = line.strip()
+        # 一排徽章（[![名字](图片)](链接)）：每个写成「名字：链接」一行
+        badges = re.findall(r'\[!\[([^\]]*)\]\([^)]*\)\]\(([^)]+)\)', stripped)
+        if badges and stripped.startswith('[!['):
+            # 下载次数这类只是展示用的徽章，说明文件里不写
+            out += [f'- {name}：{link}' for name, link in badges if name != '下载次数']
+            continue
         if stripped.startswith('![') or stripped.startswith('<img'):
             continue
         if stripped.startswith('|'):
