@@ -129,7 +129,8 @@ public class EventPicker : MonoBehaviour
 			}
 			_state = State.Waiting;
 			_pool = pool;
-			_highlight = 0;
+			// 键盘、手柄的选中项默认停在「随机」：直接按确认就是按原本概率抽；停在第一项会让人误以为会抽到它
+			_highlight = Choices.Count;
 			FileLogger.Log($"[事件自选] {pool}：{Choices.Count} 个可触发事件，等待选择");
 			return true;
 		}
