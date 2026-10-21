@@ -59,6 +59,9 @@ def convert(lines):
             # 下载次数这类只是展示用的徽章，说明文件里不写
             out += [f'- {name}：{link}' for name, link in badges if name != '下载次数']
             continue
+        # 顶上切换 README 语言的一行，说明文件里不写
+        if 'README.en.md' in stripped:
+            continue
         if stripped.startswith('![') or stripped.startswith('<img'):
             continue
         if stripped.startswith('|'):

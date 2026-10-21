@@ -2,6 +2,8 @@
 
 # 咖啡伴侣
 
+**简体中文** · [繁體中文](README.zh-Hant.md) · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
+
 《活侠传》（Legend of Mortal）的 BepInEx 6 插件，原名「活侠传拓展」。适配最新版游戏，并加入剧情回顾、分支自选、修改面板、存档优化、随时存档等功能。
 
 [![下载最新版](https://img.shields.io/github/v/release/kevinnie2003/LOMAssistant?label=%E4%B8%8B%E8%BD%BD%E6%9C%80%E6%96%B0%E7%89%88&color=A3302A&logo=github)](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip) [![夸克网盘](https://img.shields.io/badge/%E5%A4%B8%E5%85%8B%E7%BD%91%E7%9B%98-%E4%B8%8B%E8%BD%BD-4C6EF5)](https://pan.quark.cn/s/e78c41abcebc) [![B站演示视频](https://img.shields.io/badge/B%E7%AB%99-%E6%BC%94%E7%A4%BA%E8%A7%86%E9%A2%91-FB7299?logo=bilibili&logoColor=white)](https://www.bilibili.com/video/BV1Tunw6qEyC/) [![QQ群 496887060](https://img.shields.io/badge/QQ%E7%BE%A4-496887060-12B7F5?logo=tencentqq&logoColor=white)](https://qm.qq.com/q/22cO11mHBq) [![下载次数](https://img.shields.io/github/downloads/kevinnie2003/LOMAssistant/total?label=%E4%B8%8B%E8%BD%BD%E6%AC%A1%E6%95%B0&color=555)](https://github.com/kevinnie2003/LOMAssistant/releases)
@@ -16,7 +18,7 @@
 - 已知会冲突的旧 Mod 移到 `BepInEx\已停用的Mod`，不删除；不改动你的设置。
 - 以后更新再运行一次即可。Windows 提示「已保护你的电脑」时，点「更多信息」→「仍要运行」。
 
-<img src="media/installer.webp" width="360" alt="安装器：一键安装 / 更新、导出诊断、卸载">
+<img src="media/installer.webp" width="640" alt="安装器：游戏目录、已安装和将安装的版本、更新内容，一键安装 / 更新、导出诊断、卸载">
 
 **手动安装**：Steam 中右键《活侠传》→ 管理 → 浏览本地文件，把压缩包里的所有内容解压到游戏目录，提示同名文件时选覆盖。先删掉 `BepInEx\plugins` 里的旧版骰子大师、多功能 Mod、赵活系统等同类 Mod，它们和本 Mod 改的是同一批游戏代码。
 
@@ -157,7 +159,8 @@
 - **手柄支持**：骰子选线（十字键或左摇杆切换，A 确认）、空过、直接获胜。
 - **导出诊断**：游戏 ESC →「环境设定」→「导出诊断」，把日志、配置、插件列表打包到桌面（不含存档）。安装器里也有同样的按钮，Mod 没加载时用它，还会检查 BepInEx 是否完整。
 - **冲突检测**：装了会冲突的旧 Mod 时，启动几秒后自动打开设置页，在最上面用红字提示是哪个。
-- **全部简体显示**：选项结果、事件名、旗标名等游戏数据都转成简体。
+- **多语言**：咖啡伴侣窗口、各种小窗和提示跟着游戏语言显示简体、繁体或韩语；装了[日语补丁](https://github.com/Dlaqe2334/LOM-JPMOD)时显示日语。也可以在「设置」页最上面的「界面语言」自己选。韩语、日语目前翻译了界面上的常用文字，其余仍是中文。
+- **全部简体显示**：选项结果、事件名、旗标名等游戏数据都转成简体（游戏是繁体时转成繁体）。
 - **放大对白文字**：「设置」页的「对白文字大小」改成 120、140 等，剧情对白框里的字按比例放大，界面不变。
 - **防误触**：点 Mod 的窗口时不会点到下面的游戏界面，在 Mod 的输入框里打字也不会触发游戏快捷键。
 
