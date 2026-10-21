@@ -11,12 +11,12 @@ namespace LOMAssistant.Features.Story;
 /// 剧情回顾面板（默认 Tab）：
 /// 路线图——主线按剧本里写明的「下一个主线任务」连成线，岔开的路自动分到不同的车道，按游戏日历排开；支线挂在下面。
 /// 剧情图——一个任务里的剧情段画成流程图：每段一个方块，选项、掷骰、条件连到下一段。
-/// 收录节点、结局速查是列表。
+/// 节点存档、随时存档、结局速查是列表。
 /// </summary>
 public partial class StoryReviewPanel : MonoBehaviour
 {
 	private const int WindowId = 584135;
-	private static readonly string[] Tabs = { "此刻", "路线图", "剧情图", "收录节点", "结局速查", "随时存档", "数值", "设置" };
+	private static readonly string[] Tabs = { "此刻", "路线图", "剧情图", "节点存档", "随时存档", "结局速查", "数值", "设置" };
 
 	private bool _visible;
 	private int _tab;
@@ -318,8 +318,8 @@ public partial class StoryReviewPanel : MonoBehaviour
 			case 1: DrawRoute(body); break;
 			case 2: DrawFlow(body); break;
 			case 3: DrawNodes(body); break;
-			case 4: DrawEndings(body); break;
 			case AnytimeTab: DrawAnytime(body); break;
+			case 5: DrawEndings(body); break;
 			case StatsTab: DrawStats(body); break;
 			default: DrawSettings(body); break;
 		}
@@ -662,7 +662,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 		return false;
 	}
 
-	// ---------------- 收录节点 ----------------
+	// ---------------- 节点存档 ----------------
 
 	private Vector2 _nodesScroll;
 	private string _nodesSearch = "";

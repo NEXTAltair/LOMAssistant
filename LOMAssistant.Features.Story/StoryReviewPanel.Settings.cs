@@ -94,7 +94,7 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.EnableOneClickUnlock, "锁住的选项一键设置"),
 				Row(ConfigManager.EnableOptionInfo, "选项提示、判定记录"),
 				Row(ConfigManager.EnableManualDiceSelection, "骰子手动选择"),
-				Row(ConfigManager.EnableStoryReview, "剧情回顾收录节点"),
+				Row(ConfigManager.EnableStoryReview, "节点存档（自动收录剧情节点）"),
 				Row(ConfigManager.EnableRightClickHideUI, "隐藏界面看 CG"),
 				Row(ConfigManager.FontScale, "对白文字大小（%）", 50f, 200f),
 				Row(ConfigManager.FlagNoticeSeconds, "旗标提示停留（秒）", 0f, 30f),

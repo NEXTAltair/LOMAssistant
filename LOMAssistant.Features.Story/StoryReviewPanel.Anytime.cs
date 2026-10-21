@@ -13,7 +13,7 @@ namespace LOMAssistant.Features.Story;
 /// </summary>
 public partial class StoryReviewPanel
 {
-	private const int AnytimeTab = 5;
+	private const int AnytimeTab = 4;
 	private Vector2 _anytimeScroll;
 	private string _noteFile, _noteText = "";
 	private string _deleteFile;
