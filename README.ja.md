@@ -8,7 +8,7 @@
 
 [日本語化MOD](https://github.com/Dlaqe2334/LOM-JPMOD)を導入している場合、このMODのウィンドウやメッセージは自動的に日本語で表示されます（設定タブ上部の「表示言語」でも切り替え可能）。現在はよく使う画面の文字だけを翻訳しており、それ以外は中国語のままです。翻訳は正確でない場合があります。おかしな訳を見つけたら [Issues](https://github.com/kevinnie2003/LOMAssistant/issues) で教えてください。以下のスクリーンショットは中国語版です。
 
-[![ダウンロード](https://img.shields.io/github/v/release/kevinnie2003/LOMAssistant?label=%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89&color=A3302A&logo=github)](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip)
+[![ダウンロード](https://img.shields.io/github/v/release/kevinnie2003/LOMAssistant?label=%E3%83%80%E3%82%A6%E3%83%B3%E3%83%AD%E3%83%BC%E3%83%89&color=A3302A&logo=github)](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip) [![Nexus Mods](https://img.shields.io/badge/Nexus%20Mods-Coffee%20Companion-D98F40?logo=nexusmods&logoColor=white)](https://www.nexusmods.com/legendofmortal/mods/10)
 
 ## 導入
 

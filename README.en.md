@@ -8,7 +8,7 @@ A BepInEx 6 plugin for *Legend of Mortal* (活侠传), formerly known as 「活�
 
 The mod's own windows are shown in Simplified Chinese, Traditional Chinese, Korean or Japanese (no English UI). Screenshots below are in Chinese.
 
-[![Download](https://img.shields.io/github/v/release/kevinnie2003/LOMAssistant?label=Download&color=A3302A&logo=github)](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip) [![Downloads](https://img.shields.io/github/downloads/kevinnie2003/LOMAssistant/total?label=Downloads&color=555)](https://github.com/kevinnie2003/LOMAssistant/releases)
+[![Download](https://img.shields.io/github/v/release/kevinnie2003/LOMAssistant?label=Download&color=A3302A&logo=github)](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip) [![Nexus Mods](https://img.shields.io/badge/Nexus%20Mods-Coffee%20Companion-D98F40?logo=nexusmods&logoColor=white)](https://www.nexusmods.com/legendofmortal/mods/10) [![Downloads](https://img.shields.io/github/downloads/kevinnie2003/LOMAssistant/total?label=Downloads&color=555)](https://github.com/kevinnie2003/LOMAssistant/releases)
 
 ## Install
 

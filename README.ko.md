@@ -8,7 +8,7 @@
 
 게임 언어를 한국어로 설정하면 이 Mod의 창과 알림도 한국어로 표시됩니다(설정 탭 맨 위 「표시 언어」에서 직접 고를 수도 있습니다). 지금은 자주 쓰는 화면 문구만 번역되어 있고 나머지는 중국어로 나옵니다. 번역이 정확하지 않을 수 있으니, 어색한 번역을 발견하면 [Issues](https://github.com/kevinnie2003/LOMAssistant/issues)로 알려 주세요. 아래 스크린샷은 중국어 화면입니다.
 
-[![다운로드](https://img.shields.io/github/v/release/kevinnie2003/LOMAssistant?label=%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C&color=A3302A&logo=github)](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip)
+[![다운로드](https://img.shields.io/github/v/release/kevinnie2003/LOMAssistant?label=%EB%8B%A4%EC%9A%B4%EB%A1%9C%EB%93%9C&color=A3302A&logo=github)](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip) [![Nexus Mods](https://img.shields.io/badge/Nexus%20Mods-Coffee%20Companion-D98F40?logo=nexusmods&logoColor=white)](https://www.nexusmods.com/legendofmortal/mods/10)
 
 ## 설치
 
