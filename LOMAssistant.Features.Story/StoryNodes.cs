@@ -517,7 +517,7 @@ public static class StoryNodes
 	{
 		if (SaveSystem.Instance == null || SceneController.Instance == null || MissionManagerData.Instance == null)
 		{
-			return "进游戏后才能重玩";
+			return "读档进入游戏后才能重玩";
 		}
 		if (SceneController.Instance.IsPrepare || SceneController.Instance.IsLoading)
 		{

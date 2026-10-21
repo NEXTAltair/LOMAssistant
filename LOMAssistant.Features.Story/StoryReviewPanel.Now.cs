@@ -45,6 +45,12 @@ public partial class StoryReviewPanel
 
 	private void DrawNow(Rect r)
 	{
+		// 标题画面：和数值页一样，只在左上角写一句
+		if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Title")
+		{
+			GUI.Label(new Rect(r.x, r.y, r.width, S(40)), "读档进入游戏后才有内容", _muted);
+			return;
+		}
 		if (_now == null || _now.Script != (OptionInfoPatch.LastScriptKey ?? ""))
 		{
 			_now = BuildNow();
@@ -164,7 +170,7 @@ public partial class StoryReviewPanel
 		}
 		if (!any)
 		{
-			GUILayout.Label("进游戏后才有内容", _muted);
+			GUILayout.Label("读档进入游戏后才有内容", _muted);
 		}
 		GUILayout.EndScrollView();
 		GUILayout.EndArea();
@@ -208,6 +214,11 @@ public partial class StoryReviewPanel
 	private static NowSnapshot BuildNow()
 	{
 		var now = new NowSnapshot { Script = OptionInfoPatch.LastScriptKey ?? "" };
+		// 标题画面上游戏还留着默认（或上一局）的任务数据，不算「此刻」
+		if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Title")
+		{
+			return now;
+		}
 		try
 		{
 			if (now.Script.Length > 0 && StoryManager.Instance != null)

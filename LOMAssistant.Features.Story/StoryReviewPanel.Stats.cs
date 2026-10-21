@@ -114,7 +114,7 @@ public partial class StoryReviewPanel
 		PlayerStatManagerData player = PlayerStatManagerData.Instance;
 		if (player == null || player.Stats == null || SaveSystem.Instance == null || !StoryNodes.HasCurrentSave)
 		{
-			GUI.Label(new Rect(r.x, r.y, r.width, S(40)), "进游戏读档后才能改数值", _muted);
+			GUI.Label(new Rect(r.x, r.y, r.width, S(40)), "读档进入游戏后才能改数值", _muted);
 			return;
 		}
 		if (_statSections == null || !ReferenceEquals(_statsFor, player) || _statsDirty)
