@@ -106,6 +106,7 @@ public partial class StoryReviewPanel
 			{
 				new SettingRow { Element = ConfigManager.ActionMode, Name = "行动点", Choices = new[] { "正常", "不消耗", "每旬N点" }, Choose = ActionModePatch.Set },
 				Row(ConfigManager.ActionsPerRound, "每旬N点的 N", 1f, 5f),
+				Row(ConfigManager.BreakStatLimit, "突破属性上限"),
 				Row(ConfigManager.CheatUnlimitedTraining, "无限修炼次数"),
 				Row(ConfigManager.CheatUnlimitedUpgrade, "无限锻造、炼丹"),
 				Row(ConfigManager.CheatFreeUpgradeMoney, "锻造、炼丹不花银两"),
