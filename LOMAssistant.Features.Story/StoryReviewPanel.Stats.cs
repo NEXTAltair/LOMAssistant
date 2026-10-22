@@ -23,6 +23,7 @@ public partial class StoryReviewPanel
 		public bool NoValue; // 数值没有意义（功法已练满、锻造未开发等），显示「—」不显示 0
 		public int Of; // 大于 0 时数值写成「当前/Of」，如本层点数 2/5
 		public GameStat LockStat; // 有值时这一行多一个锁按钮（心相用）
+		public string Group; // 旗标的分类（见 FlagGroup）
 	}
 
 	private string _statsSearch = "";
@@ -30,6 +31,7 @@ public partial class StoryReviewPanel
 	private readonly Dictionary<string, int> _sectionPages = new Dictionary<string, int>();
 	// 子分页：一次只看一组（搜索时各组都搜）
 	private string _statsGroup = "角色数值";
+	private string _flagGroup = "全部";
 	private string _flagQuery;
 	// 物品数量改了以后，功法修炼那段要跟着变（新拿到的书也要列出来），下次画的时候重新整理
 	private static bool _statsDirty;
@@ -174,6 +176,15 @@ public partial class StoryReviewPanel
 				continue;
 			}
 			bool flags = title == "旗标";
+			// 旗标先按分类筛（搜索时不分类，全部都搜）
+			if (flags && query.Length == 0)
+			{
+				DrawFlagGroups(shown);
+				if (_flagGroup != FlagGroups[0])
+				{
+					shown = shown.Where(row => row.Group == _flagGroup).ToList();
+				}
+			}
 			// 一段太长（旗标、书籍、物品）就分页
 			int total = shown.Count;
 			int pages = Mathf.Max(1, (total + FlagsPerPage - 1) / FlagsPerPage);
@@ -391,10 +402,54 @@ public partial class StoryReviewPanel
 				Set = v => f.State = v,
 				Step = 1,
 				Extra = () => note,
+				Group = FlagGroup(f.name),
 			});
 		}
 		sections.Add(("旗标", flags));
 		return sections;
+	}
+
+	// 旗标太多（一千多面），按编号前缀分成几类，点哪类看哪类；类别按游戏开发时的编号习惯分（H 是门派好感、G 是人物……）
+	private static readonly string[] FlagGroups = { "全部", "门派好感", "人物", "六道", "剧情", "事件与支线", "对话选项", "战斗", "养成与设施", "其他" };
+
+	private static string FlagGroup(string name)
+	{
+		switch (new string(name.TakeWhile(char.IsLetter).ToArray()))
+		{
+			case "H": return name.StartsWith("H03") ? "六道" : name.StartsWith("H04") ? "人物" : "门派好感";
+			case "G": return "人物";
+			case "M": return "剧情";
+			case "E": case "S": case "D": case "N": return "事件与支线";
+			case "Talk": case "Meeting": case "Ch": return "对话选项";
+			case "C": case "TC": case "BattleProgress": case "BattleResult": return "战斗";
+			case "Facility": case "FacilityAdd": case "P": case "Pharmacy": case "Back": case "Door": case "Kitchen": case "Alchemy":
+			case "Center": case "Craft": case "Guard": case "Prison": case "Shop": case "Pinball": case "ActionCheck": case "T":
+				return "养成与设施";
+			default: return "其他";
+		}
+	}
+
+	// 旗标的分类按钮，按钮上带这一类有几面
+	private void DrawFlagGroups(List<StatRow> rows)
+	{
+		GUILayout.Space(S(8));
+		GUILayout.BeginHorizontal();
+		foreach (string group in FlagGroups)
+		{
+			int count = group == FlagGroups[0] ? rows.Count : rows.Count(row => row.Group == group);
+			if (count == 0)
+			{
+				continue;
+			}
+			if (GUILayout.Button(TextConverter.ForDisplay(group) + " " + count, group == _flagGroup ? _primary : _button, Ctl()) && group != _flagGroup)
+			{
+				_flagGroup = group;
+				_sectionPages.Remove("旗标");
+				_statsScroll = Vector2.zero;
+			}
+		}
+		GUILayout.FlexibleSpace();
+		GUILayout.EndHorizontal();
 	}
 
 	// 上面几组都没列到的数值（游戏以后新加的也算），放进「其他数值」
