@@ -191,22 +191,100 @@ internal static class OptionInfoPatch
 	/// <summary>
 	/// 骰子菜单的线路文字框很窄、行距很小：后面接的结果说明一长就折成两行，两行叠在一起看不清。
 	/// 这里的文字框改成不折行，结果说明一行往右写完（右边是空的）。
+	/// 线路文字本身（DiceOption 的 _normalText、_highText）是 TextMeshPro，不是 UI.Text，也要一起改，
+	/// 不然结果说明一超过框宽（723）就折成几行，框高（55.2）放不下（日语的旗标名、变量名比中文长，更容易超过）。
 	/// </summary>
 	[HarmonyPostfix]
 	[HarmonyPatch(typeof(DiceMenuDialog), "OnEnable")]
 	public static void DiceMenuDialog_OnEnable_Postfix(DiceMenuDialog __instance)
 	{
+		foreach (UnityEngine.UI.Button button in __instance.CachedButtons ?? new UnityEngine.UI.Button[0])
+		{
+			if (button != null)
+			{
+				DiceNoWrap(button);
+			}
+		}
+	}
+
+	// 线路文字填进去以后，照画面宽度缩小说明。先再设一次不折行、不自动缩小，量出来的才是写成一行的宽度
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(DiceOption), "UpdateContent")]
+	public static void DiceOption_UpdateContent_Postfix(DiceOption __instance)
+	{
+		DiceNoWrap(__instance);
+		DiceFitToScreen(__instance);
+	}
+
+	// 选中时显示的是另一个文字框（_highText，粗体字型，字宽不同），换上来时再量一次
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(DiceOption), "Select")]
+	public static void DiceOption_Select_Postfix(DiceOption __instance) => DiceFitToScreen(__instance);
+
+	/// <summary>说明往右写到画面右边还写不完时，把说明的字缩小到刚好写到画面右边为止（最小 <see cref="DiceMinDescSize"/>）。</summary>
+	private const float DiceMinDescSize = 11f;
+	private const float DiceRightMargin = 24f;
+	private static readonly Regex DiceDescSize = new Regex(@"\n<size=(\d+(?:\.\d+)?)>");
+	private static readonly Vector3[] DiceCorners = new Vector3[4];
+
+	private static void DiceFitToScreen(DiceOption option)
+	{
 		try
 		{
-			foreach (UnityEngine.UI.Button button in __instance.CachedButtons ?? new UnityEngine.UI.Button[0])
+			foreach (TMPro.TMP_Text text in option.GetComponentsInChildren<TMPro.TMP_Text>(includeInactive: false))
 			{
-				if (button == null)
+				Match size = DiceDescSize.Match(text.text ?? string.Empty);
+				if (!size.Success || text.canvas == null)
 				{
 					continue;
 				}
-				foreach (UnityEngine.UI.Text text in button.GetComponentsInChildren<UnityEngine.UI.Text>(includeInactive: true))
+				text.ForceMeshUpdate();
+				TMPro.TMP_TextInfo info = text.textInfo;
+				float left = float.MaxValue;
+				float right = float.MinValue;
+				for (int i = 1; i < info.lineCount; i++)
 				{
-					text.horizontalOverflow = HorizontalWrapMode.Overflow;
+					left = Mathf.Min(left, info.lineInfo[i].lineExtents.min.x);
+					right = Mathf.Max(right, info.lineInfo[i].lineExtents.max.x);
+				}
+				((RectTransform)text.canvas.rootCanvas.transform).GetWorldCorners(DiceCorners);
+				float screenRight = text.rectTransform.InverseTransformPoint(DiceCorners[2]).x - DiceRightMargin;
+				if (right <= screenRight || right <= left)
+				{
+					continue;
+				}
+				float current = float.Parse(size.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+				float fitted = Mathf.Max(DiceMinDescSize, Mathf.Floor(current * (screenRight - left) / (right - left)));
+				if (fitted < current)
+				{
+					text.text = DiceDescSize.Replace(text.text, "\n<size=" + fitted.ToString(System.Globalization.CultureInfo.InvariantCulture) + ">", 1);
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			FileLogger.LogWarning("骰子菜单结果说明缩小失败: " + ex.Message);
+		}
+	}
+
+	private static void DiceNoWrap(UnityEngine.Component root)
+	{
+		try
+		{
+			foreach (UnityEngine.UI.Text text in root.GetComponentsInChildren<UnityEngine.UI.Text>(includeInactive: true))
+			{
+				text.horizontalOverflow = HorizontalWrapMode.Overflow;
+			}
+			// 自动缩小也关掉：不折行时它为了把整行塞进框里，会把标题缩到最小（15），说明是固定字号（<size=16>）却不跟着缩。
+			// 标题照最大字号（28），说明往右写完，太长的由 DiceFitToScreen 缩小
+			foreach (TMPro.TMP_Text text in root.GetComponentsInChildren<TMPro.TMP_Text>(includeInactive: true))
+			{
+				text.enableWordWrapping = false;
+				text.overflowMode = TMPro.TextOverflowModes.Overflow;
+				if (text.enableAutoSizing)
+				{
+					text.enableAutoSizing = false;
+					text.fontSize = text.fontSizeMax;
 				}
 			}
 		}
