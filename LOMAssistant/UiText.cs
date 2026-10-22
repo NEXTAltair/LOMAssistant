@@ -36,13 +36,16 @@ public static class UiText
 			lang.Cache.Clear();
 		}
 		string result = text.IndexOf('<') >= 0
-			? string.Concat(Tags.Split(text).Select(part => part.StartsWith("<") && part.EndsWith(">") ? part : Segment(part, lang)))
+			? string.Concat(Tags.Split(text).Select(part => Tag.IsMatch(part) ? part : Segment(part, lang)))
 			: Segment(text, lang);
 		lang.Cache[text] = result;
 		return result;
 	}
 
-	private static readonly Regex Tags = new Regex(@"(<[^<>]+>)");
+	// 只认 Unity 富文本的标签。条件里的「需<=40 且 … 需>=2」也有「<」「>」，以前当成一个标签整段不翻
+	private const string TagPattern = @"</?(?:b|i|size|color|material|quad)(?:[= ][^<>]*)?>";
+	private static readonly Regex Tags = new Regex("(" + TagPattern + ")");
+	private static readonly Regex Tag = new Regex("^" + TagPattern + "$");
 	private static readonly Regex Separators = new Regex(@"(\n| · |　·　|　+| {2,}|・| → )");
 	private static readonly Regex Han = new Regex(@"[一-鿿]");
 	private static readonly char[] Blank = { ' ', '　', '\n', '\r', '\t' };
@@ -106,6 +109,70 @@ public static class UiText
 		return text.Substring(0, start) + found + text.Substring(start + core.Length);
 	}
 
+	// 旗标名：常拼在条件、提示里（「名字 (编号) 需=1」「【旗标】名字  0 → 1」），比日期、界面词先换，免得名字里的字先被换掉。
+	// 三个字以内的（「天道」「投票」「古文」这类）容易撞上别的文字，只在后面紧跟「 (编号)」、「=值」「 值」（选项结果里的
+	// 「设置名字=1」）、两个空格或整段结尾时换。备注末尾常带着 \r、\t、空格（「抢劫\t (M20013)」），中间隔着空白也算
+	private static (Regex, MatchEvaluator) FlagNames(string[][] table)
+	{
+		var map = new Dictionary<string, string>();
+		foreach (string[] row in table)
+		{
+			map[row[0]] = row[1];
+		}
+		string Alternatives(IEnumerable<string> names) => string.Join("|", names.OrderByDescending(n => n.Length).Select(Regex.Escape).ToArray());
+		var regex = new Regex("(?:" + Alternatives(map.Keys.Where(n => n.Length > 3)) + ")|(?:" + Alternatives(map.Keys.Where(n => n.Length <= 3)) + ")(?=\\s*\\(|\\s*=|\\s+[+-]?\\d|\\s{2}|\\s*$)");
+		return (regex, m => map[m.Value]);
+	}
+
+	// 条件里的变量名（「嘴力 需>=40」「目前时间 需<=…」「好感度_三师兄 需>好感度_二师兄」）：只在条件格式里换，
+	// 名字后面跟「 需」，或跟在「需=」「需>=」等后面。要比旗标名先换：「攻略小师妹 (攻略人數)」「天道 (六道總點數)」
+	// 这类名字里的「攻略小师妹」「天道」也是旗标名，先被换掉就对不上了
+	private static (Regex, MatchEvaluator) ConditionNames(string[][] table)
+	{
+		var map = new Dictionary<string, string>();
+		foreach (string[] row in table)
+		{
+			map[row[0]] = row[1];
+		}
+		string names = string.Join("|", map.Keys.OrderByDescending(n => n.Length).Select(Regex.Escape).ToArray());
+		var regex = new Regex("(?<=需(?:>=|<=|!=|=|>|<))(?:" + names + ")(?=$|\\s|<)|(?<=^|\\s)(?:" + names + ")(?= 需)");
+		return (regex, m => map[m.Value]);
+	}
+
+	// 条件里的日期是中文数字（「第三年一月上旬」）：先换成「第3年1月上旬」，再由 KoreanDates / JapaneseDates 换成各自的写法
+	private static readonly (Regex, MatchEvaluator) ChineseNumeralDates = (new Regex("第([一二三四五六七八九十]+)年([一二三四五六七八九十]+)月"),
+		m => "第" + ChineseNumber(m.Groups[1].Value) + "年" + ChineseNumber(m.Groups[2].Value) + "月");
+
+	// 一～九十九的中文数字（「十」「十二」「二十」）
+	private static int ChineseNumber(string text)
+	{
+		const string digits = "一二三四五六七八九";
+		int ten = text.IndexOf('十');
+		if (ten < 0)
+		{
+			return digits.IndexOf(text[0]) + 1;
+		}
+		int tens = ten == 0 ? 1 : digits.IndexOf(text[0]) + 1;
+		int ones = ten == text.Length - 1 ? 0 : digits.IndexOf(text[ten + 1]) + 1;
+		return tens * 10 + ones;
+	}
+
+	// 选项结果（LuaParser）拼出来的动作说明里的词：「设置X=1」「X好感 +3」「天赋X lv1」「丢弃X」「X向心力 +1」「后续: …」「对决」「混战」，
+	// 和条件里的当前值「→ 当前1」（按「 → 」切开后单独剩下「当前1」，表里的「→ 当前」对不上）。
+	// 只在这种格式里换（「设置页」不换）。韩语为 null 的照旧显示中文
+	private static readonly (string Pattern, string Korean, string Japanese)[] ActionWords =
+	{
+		("设置(?=[^、；]*?(?:=| )-?\\d)", "설정 ", "セット "),
+		("丢弃", null, "破棄 "),
+		("好感 (?=[+-]?\\d)", " 호감 ", " 好感度 "),
+		("天赋(?=[^、；]+ lv\\d)", "천부 ", "天賦 "),
+		("向心力 (?=[+-]?\\d)", " 단합 ", " 団結 "),
+		("后续: ", null, "分岐先で: "),
+		("对决", "결투", "決闘"),
+		("混战", null, "乱戦"),
+		("当前(?=-?\\d)", "현재 ", "現在 "),
+	};
+
 	private class Lang
 	{
 		public readonly Dictionary<string, string> Exact = new Dictionary<string, string>();
@@ -115,6 +182,20 @@ public static class UiText
 
 		public Lang(int column)
 		{
+			if (column == 2)
+			{
+				Words.Add(ConditionNames(UiConditionNames.Japanese));
+				Words.Add(FlagNames(UiFlagNames.Japanese));
+			}
+			Words.Add(ChineseNumeralDates);
+			foreach (var (pattern, korean, japanese) in ActionWords)
+			{
+				string text = column == 1 ? korean : japanese;
+				if (text != null)
+				{
+					Words.Add((new Regex(pattern), _ => text));
+				}
+			}
 			Words.AddRange(column == 1 ? KoreanDates : JapaneseDates);
 			foreach (string[] row in Terms.OrderByDescending(r => r[0].Length))
 			{
@@ -195,8 +276,9 @@ public static class UiText
 		new[] { "每月", "매달 ", "毎月" },
 		new[] { " 需", " 필요 ", " 必要 " },
 		new[] { "→ 当前", "→ 현재 ", "→ 現在 " },
-		new[] { " 或 ", " 또는 ", " または " },
-		new[] { "\n或 ", "\n또는 ", "\nまたは " },
+		new[] { " 或 ", " 또는 ", " OR " },
+		new[] { "\n或 ", "\n또는 ", "\nOR " },
+		new[] { " 且 ", " 그리고 ", " AND " },
 		new[] { "以上条件都不满足", "위 조건을 모두 충족하지 않음", "上記の条件をどれも満たさない" },
 		new[] { "；解锁后：", "; 해금 후: ", "；解放後：" },
 		new[] { "：触发剧情", ": 스토리 발생", "：ストーリー発生" },
@@ -304,6 +386,10 @@ public static class UiText
 		new[] { "随机事件自选", "랜덤 이벤트 선택", "ランダムイベントを選ぶ" },
 		new[] { "锁住的选项一键设置", "잠긴 선택지 원클릭 해제", "ロック選択肢をワンクリック解除" },
 		new[] { "选项提示、判定记录", "선택지 정보·판정 기록", "選択肢情報・判定記録" },
+		new[] { "触发剧情检查点:", "조건 판정:", "条件判定:" },
+		new[] { "触发剧情分支检查点:", "분기 판정:", "分岐判定:" },
+		new[] { "触发任务检查点:", "임무 판정:", "任務判定:" },
+		new[] { "时限：{0}", "기한: {0}", "期限：{0}" },
 		new[] { "骰子手动选择", "주사위 직접 선택", "ダイスを手動で選ぶ" },
 		new[] { "节点存档（自动收录剧情节点）", "분기 저장 (자동 수록)", "分岐セーブ（自動収録）" },
 		new[] { "隐藏界面看 CG", "UI 숨기고 CG 보기", "UI を隠して CG を見る" },

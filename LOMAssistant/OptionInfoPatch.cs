@@ -147,7 +147,7 @@ internal static class OptionInfoPatch
 			{
 				string condition = RichText.Strip(DataHelper.ParseConditionCheckpoint(locked.Condition));
 				string effects = locked.Unlocked != null && LuaParser.Instance.OptionResult.TryGetValue(locked.Unlocked, out var unlockedActions)
-					? RichText.Strip(TextConverter.ToSimplified(LuaParser.Description(unlockedActions)))
+					? RichText.Strip(TextConverter.ToSimplifiedUnlessJapanese(LuaParser.Description(unlockedActions)))
 					: "";
 				if (!condition.IsNullOrWhiteSpace())
 				{
@@ -170,7 +170,7 @@ internal static class OptionInfoPatch
 			}
 			if (LuaParser.Instance.OptionResult.TryGetValue(key, out var value))
 			{
-				string text = TextConverter.ToSimplified(LuaParser.Description(value));
+				string text = TextConverter.ToSimplifiedUnlessJapanese(LuaParser.Description(value));
 				if (jumps.Length > 0)
 				{
 					text = text.IsNullOrWhiteSpace() ? jumps : text + "；" + jumps;
@@ -401,7 +401,8 @@ internal static class OptionInfoPatch
 			NarrativeLogEntry entry = new NarrativeLogEntry
 			{
 				name = "LOMAssistant",
-				text = "<size=18>" + text + "</size>"
+				// 记到游戏的对话记录里，不经过本 Mod 界面的翻译，这里先换成界面语言（繁体、韩语、日语）
+				text = "<size=18>" + TextConverter.ForDisplay(text) + "</size>"
 			};
 			narrativeLog.AddLine(entry);
 		}

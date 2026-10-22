@@ -226,7 +226,7 @@ public partial class StoryReviewPanel
 				foreach (KeyValuePair<string, List<LuaParse.Action>> option in LuaParser.Instance.ExtractOptionActionsFromLua(now.Script))
 				{
 					string text = RichText.Strip(StoryScripts.OptionText(option.Key)).Trim();
-					string result = RichText.Strip(TextConverter.ToSimplified(LuaParser.Description(option.Value))).Trim();
+					string result = RichText.Strip(TextConverter.ToSimplifiedUnlessJapanese(LuaParser.Description(option.Value))).Trim();
 					// 选项文字里已经被选项提示接上了「(结果)」，去掉，结果单独写在下面
 					if (result.Length > 0 && text.EndsWith(result + ")"))
 					{

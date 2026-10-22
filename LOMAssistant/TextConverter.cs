@@ -28,6 +28,12 @@ public static class TextConverter
 	/// <summary>转成简体。带假名的是日语（日语补丁把游戏文字换成了日语），不转，不然「話」会变成「话」。</summary>
 	public static string ToSimplified(string text) => HasKana(text) ? text : Cached(_cache, text, "zh-CN", LCMAP_SIMPLIFIED_CHINESE);
 
+	/// <summary>
+	/// 从游戏取来的名字（数值、人物、物品等）拼成的说明转简体；界面是日语时不转：日语补丁给的日语名字没有假名时
+	/// （「銀両」「体力」）会被当成中文转成简体（「银两」）。旗标名在 DataHelper 里取的时候已经转好，不受影响。
+	/// </summary>
+	public static string ToSimplifiedUnlessJapanese(string text) => DisplayLanguage == UiText.Japanese ? text : ToSimplified(text);
+
 	private static bool HasKana(string text)
 	{
 		if (text == null)
