@@ -66,7 +66,8 @@ public static class DataHelper
 						string devNote = fieldValue2.DevNote;
 						if (!string.IsNullOrEmpty(devNote))
 						{
-							return TextConverter.ToSimplified(devNote.Contains("\n") ? devNote.Split('\n')[0] : devNote) + " (" + text + ")";
+							// 第一行末尾的 \r 也去掉，见 GetFlagName
+							return TextConverter.ToSimplified(devNote.Split('\n')[0].TrimEnd('\r')) + " (" + text + ")";
 						}
 					}
 				}
@@ -511,11 +512,8 @@ public static class DataHelper
 		{
 			return string.Empty;
 		}
-		string text = flagData.DevNote;
-		if (text.Contains("\n"))
-		{
-			text = text.Split('\n')[0];
-		}
+		// 备注有的是 Windows 换行（\r\n），第一行末尾会留着 \r：TextMeshPro 遇到 \r 回到行首，后面的字叠在前面的字上（骰子菜单的结果说明）
+		string text = flagData.DevNote.Split('\n')[0].TrimEnd('\r');
 		if (!string.IsNullOrEmpty(text))
 		{
 			return TextConverter.ToSimplified(text);
