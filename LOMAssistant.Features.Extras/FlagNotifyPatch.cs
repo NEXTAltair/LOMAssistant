@@ -125,10 +125,29 @@ public static class FlagNotifyPatch
 		Camera cam = root.renderMode == RenderMode.ScreenSpaceOverlay ? null : root.worldCamera;
 		Vector2 screen = RectTransformUtility.WorldToScreenPoint(cam, text.transform.position);
 		NoticeCanvas host = NoticeCanvas.Get(root);
-		text.transform.SetParent(host.transform, worldPositionStays: false);
-		text.transform.position = screen;
+		var rt = (RectTransform)text.transform;
+		float height = rt.rect.height > 1f ? rt.rect.height : 40f;
+		rt.SetParent(host.transform, worldPositionStays: false);
+		// 横向放在屏幕正中（游戏画布按摄像机换算时横坐标会偏到右边），纵向用游戏原来的高度；
+		// 同时还在屏幕上的提示（一次改了好几面旗标）一条接一条往下排，不叠在一起
+		RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)host.transform, screen, null, out Vector2 local);
+		Active.RemoveAll(a => a == null);
+		rt.anchorMin = rt.anchorMax = rt.pivot = new Vector2(0.5f, 0.5f);
+		foreach (Text label in rt.GetComponentsInChildren<Text>(true))
+		{
+			label.alignment = TextAnchor.MiddleCenter;
+		}
+		foreach (TMPro.TMP_Text label in rt.GetComponentsInChildren<TMPro.TMP_Text>(true))
+		{
+			label.alignment = TMPro.TextAlignmentOptions.Center;
+		}
+		rt.anchoredPosition = new Vector2(0f, local.y - Active.Count * height * 1.1f);
+		Active.Add(rt);
 		host.StartCoroutine(Float(text, group, seconds));
 	}
+
+	// 还在屏幕上的旗标提示
+	private static readonly System.Collections.Generic.List<RectTransform> Active = new System.Collections.Generic.List<RectTransform>();
 
 	private static IEnumerator Float(FloatingText text, CanvasGroup group, float seconds)
 	{
@@ -146,6 +165,7 @@ public static class FlagNotifyPatch
 			}
 			yield return null;
 		}
+		Active.Remove(rt);
 		if (text != null)
 		{
 			Object.Destroy(text.gameObject);
