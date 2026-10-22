@@ -46,11 +46,22 @@ public class UiHider : MonoBehaviour
 		return SceneManager.GetActiveScene().name == "Story";
 	}
 
+	/// <summary>
+	/// 行动选择（江陵等地按行动点选做什么，BreakOptionButton）、地点选择（PositionOptionButton）开着：画面上没有对白和 CG 可看，
+	/// 不隐藏界面，右键交还给游戏（游戏的右键和 ESC 一样打开菜单，被拿走就打不开）。对话选项、掷骰时照旧隐藏。
+	/// 选项按钮在菜单关掉后会停用，FindObjectOfType 只找启用的，所以找到就是菜单开着。
+	/// </summary>
+	private static bool ActionMenuOpen()
+	{
+		return FindObjectOfType<Mortal.Core.BreakOptionButton>() != null || FindObjectOfType<Mortal.Core.PositionOptionButton>() != null;
+	}
+
 	/// <summary>这次右键是拿来隐藏界面的（热键是鼠标右键时）：游戏的输入回调不要再处理它（右键先于本组件的 Update 送到游戏）。</summary>
 	public static bool ClaimsRightClick(InputControl control)
 	{
 		return _instance != null && !Active && ConfigManager.EnableRightClickHideUI.Value && ConfigManager.HideUIKey.Value == KeyCode.Mouse1 && InStory()
-			&& control != null && Mouse.current != null && control == Mouse.current.rightButton && !EventPicker.IsWaiting && !LogOpen() && !InputGuard.ModWindowOpen;
+			&& control != null && Mouse.current != null && control == Mouse.current.rightButton && !EventPicker.IsWaiting && !LogOpen() && !InputGuard.ModWindowOpen
+			&& !ActionMenuOpen();
 	}
 
 	private void Update()
@@ -78,7 +89,7 @@ public class UiHider : MonoBehaviour
 		{
 			return;
 		}
-		if (TogglePressed() && !InputGuard.PointerOverModWindow)
+		if (TogglePressed() && !InputGuard.PointerOverModWindow && !ActionMenuOpen())
 		{
 			Hide();
 		}
