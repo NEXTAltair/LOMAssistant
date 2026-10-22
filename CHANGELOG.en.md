@@ -2,6 +2,11 @@
 
 Changes in each version, newest first. Versions before 2.7.0 are only in Chinese; see CHANGELOG.md.
 
+## 2.7.1 (2026-10-21)
+
+- **Fixed the random event picker not showing up in Tang sect buildings** such as the kitchen and the forge: the map event hints added in 2.7.0 recorded those buildings' random events as empty while on the training map.
+- The random events section of the map event hints now lists events properly.
+
 ## 2.7.0 (2026-10-21)
 
 **New features**
