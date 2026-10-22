@@ -24,6 +24,7 @@ public partial class StoryReviewPanel
 		public int Of; // 大于 0 时数值写成「当前/Of」，如本层点数 2/5
 		public GameStat LockStat; // 有值时这一行多一个锁按钮（心相用）
 		public string Group; // 旗标的分类（见 FlagGroup）
+		public Func<List<StoryUse>> Uses; // 有就能点名字看在哪些剧情里用到（剧本没读完返回 null）
 	}
 
 	private string _statsSearch = "";
@@ -126,6 +127,11 @@ public partial class StoryReviewPanel
 			_statSections = BuildStatSections(player);
 			_statsFor = player;
 		}
+		if (_usageRow != null)
+		{
+			DrawUsage(r);
+			return;
+		}
 		string query = SearchBox(new Rect(r.x, r.y, S(420), S(36)), ref _statsSearch);
 		if (query != _flagQuery)
 		{
@@ -194,7 +200,10 @@ public partial class StoryReviewPanel
 			GUILayout.Space(S(8));
 			GUILayout.BeginHorizontal();
 			string count = flags ? $"共 {total} 面，按编号或中文说明搜" : pages > 1 ? $"共 {total} 项" : "";
-			GUILayout.Label(title + (count.Length > 0 ? $"　<size={Mathf.RoundToInt(16 * _scale)}><color=#73644F>{count}</color></size>" : ""), _heading);
+			// 旗标、书籍、物品能反查：标题后面提示一句
+			string hint = rows.Any(row => row.Uses != null) ? "点名字看在哪些剧情里改动、判定" : "";
+			string small(string s) => $"　<size={Mathf.RoundToInt(16 * _scale)}><color=#73644F>{s}</color></size>";
+			GUILayout.Label(title + (count.Length > 0 ? small(count) : "") + (hint.Length > 0 ? small(hint) : ""), _heading);
 			GUILayout.FlexibleSpace();
 			if (pages > 1)
 			{
@@ -228,14 +237,31 @@ public partial class StoryReviewPanel
 		GUIStyle muted = Middle(_muted);
 		// 心相一行在加减按钮前面多一个锁：附加值那一栏（如「(+5)」）让出位置，后面的按钮和别的行对齐
 		float nameWidth = S(120), extraWidth = row.LockStat != null ? S(80) - S(36) - _button.margin.left : S(80);
-		GUILayout.Label(Fit(row.Name, line, nameWidth), line, GUILayout.Width(nameWidth), Ctl());
+		// 旗标、物品的名字能点，点了看它在哪些剧情里用到（标题后面有提示）
+		if (row.Uses != null)
+		{
+			if (GUILayout.Button(Fit(row.Name, line, nameWidth), line, GUILayout.Width(nameWidth), Ctl()))
+			{
+				_usageRow = row;
+				_usageScroll = Vector2.zero;
+			}
+		}
+		else
+		{
+			GUILayout.Label(Fit(row.Name, line, nameWidth), line, GUILayout.Width(nameWidth), Ctl());
+		}
 		Rect nameRect = GUILayoutUtility.GetLastRect();
 		int value = row.Get();
 		GUILayout.Label(row.NoValue ? "—" : row.Of > 0 ? value + "/" + row.Of : value.ToString(), line, GUILayout.Width(S(52)), Ctl());
 		string extra = row.Extra?.Invoke() ?? "";
-		GUILayout.Label(Fit(extra, muted, extraWidth), muted, GUILayout.Width(extraWidth), Ctl());
+		// 后面的说明（旗标的中文说明）也能点
+		if (row.Uses != null ? GUILayout.Button(Fit(extra, muted, extraWidth), muted, GUILayout.Width(extraWidth), Ctl()) : DrawLabel(Fit(extra, muted, extraWidth), muted, extraWidth))
+		{
+			_usageRow = row;
+			_usageScroll = Vector2.zero;
+		}
 		Rect extraRect = GUILayoutUtility.GetLastRect();
-		string full = row.Name + (row.Note.Length > 0 ? "\n" + row.Note : "");
+		string full = row.Name + (row.Note.Length > 0 ? "\n" + row.Note : "") + (row.Uses != null ? "\n点名字看在哪些剧情里改动、判定" : "");
 		if (full != row.Name || Fit(row.Name, line, nameWidth) != row.Name)
 		{
 			Hover(nameRect, full);
@@ -403,10 +429,94 @@ public partial class StoryReviewPanel
 				Step = 1,
 				Extra = () => note,
 				Group = FlagGroup(f.name),
+				Uses = () => StoryUsage.Flag(f.name),
 			});
 		}
 		sections.Add(("旗标", flags));
 		return sections;
+	}
+
+	// ---------------- 旗标、物品在哪些剧情里用到 ----------------
+
+	private StatRow _usageRow;
+
+	// 和 Button 同样的写法、但只是文字，返回 false
+	private bool DrawLabel(string text, GUIStyle style, float width)
+	{
+		GUILayout.Label(text, style, GUILayout.Width(width), Ctl());
+		return false;
+	}
+	private Vector2 _usageScroll;
+
+	/// <summary>点旗标、物品的名字后整页换成它的用处：哪些剧情里改（给、收）、哪些剧情里判定，每处能跳到剧情图。</summary>
+	private void DrawUsage(Rect r)
+	{
+		StatRow row = _usageRow;
+		if (GUI.Button(new Rect(r.x, r.y, S(110), S(36)), "返回", _button))
+		{
+			_usageRow = null;
+			return;
+		}
+		string title = row.Name + (row.Note.Length > 0 && row.Id.StartsWith("flag:") ? "　" + Short(row.Note, 40) : "");
+		GUI.Label(new Rect(r.x + S(126), r.y, r.width - S(126), S(36)), "「" + title + "」在哪些剧情里用到", Middle(_heading));
+		var area = new Rect(r.x, r.y + S(46), r.width, r.height - S(46));
+		if (!EnsureAtlas(area))
+		{
+			return;
+		}
+		List<StoryUse> uses = row.Uses() ?? new List<StoryUse>();
+		DragScroll("usage", area, ref _usageScroll);
+		GUILayout.BeginArea(area);
+		_usageScroll = GUILayout.BeginScrollView(_usageScroll);
+		if (uses.Count == 0)
+		{
+			GUILayout.Label("剧本、任务条件里都没找到（可能在商店、弹珠、团战、小游戏里，或者游戏没用到）", _muted);
+		}
+		// 先列改动（给、收），再列判定；同一类里主线、支线按时间排，不属于任务的放最后
+		foreach (bool changes in new[] { true, false })
+		{
+			var part = uses.Where(u => u.Changes == changes).OrderBy(u => u.Mission == null).ThenBy(u => u.Mission?.From ?? int.MaxValue).ThenBy(u => u.Script, StringComparer.Ordinal).ToList();
+			if (part.Count == 0)
+			{
+				continue;
+			}
+			GUILayout.Space(S(8));
+			GUILayout.Label((changes ? "在这些地方改动" : "在这些地方判定") + $"　<size={Mathf.RoundToInt(16 * _scale)}><color=#73644F>共 {part.Count} 处</color></size>", _heading);
+			foreach (StoryUse use in part.Take(UsesShown))
+			{
+				DrawUse(use);
+			}
+			if (part.Count > UsesShown)
+			{
+				GUILayout.Label($"还有 {part.Count - UsesShown} 处没列出", _muted);
+			}
+		}
+		GUILayout.EndScrollView();
+		GUILayout.EndArea();
+	}
+
+	private const int UsesShown = 150;
+
+	private void DrawUse(StoryUse use)
+	{
+		GUILayout.BeginHorizontal(_card);
+		GUILayout.BeginVertical();
+		string where = use.Mission != null
+			? $"在{(use.Mission.Main ? "主线" : "支线")}「{use.Mission.Title}」（{use.Mission.When}）" + (use.Mission.Place.Length > 0 ? "　" + use.Mission.Place : "")
+			: "剧本「" + StoryScripts.SegmentName(use.Script) + "」";
+		GUILayout.Label(where, _label);
+		// 各段用全角空格隔开，界面翻译时一段一段换（「改」「设成 1」「分支判定」、条件原文）
+		string what = use.Kind + (use.Detail.Length > 0 ? "　" + use.Detail : "");
+		var steps = use.Path.Select(StoryScripts.Describe).ToList();
+		GUILayout.Label(RichText.Strip(what) + (steps.Count > 0 ? "　" + string.Join(" → ", steps.ToArray()) : ""), _muted);
+		GUILayout.EndVertical();
+		GUI.enabled = use.Mission != null;
+		if (GUILayout.Button(use.Mission != null ? "看剧情图" : "不属于任务", use.Mission != null ? _primary : _button, GUILayout.Width(S(140)), GUILayout.Height(S(40))))
+		{
+			OpenFlow(use.Mission, use.Script);
+		}
+		GUI.enabled = true;
+		GUILayout.EndHorizontal();
 	}
 
 	// 旗标太多（一千多面），按编号前缀分成几类，点哪类看哪类；类别按游戏开发时的编号习惯分（H 是门派好感、G 是人物……）
@@ -502,6 +612,7 @@ public partial class StoryReviewPanel
 				},
 				Step = 1,
 				Extra = () => warning != null ? "(慎用)" : "",
+				Uses = consumable ? null : () => StoryUsage.Item(it.ItemType, it.Id),
 			});
 		}
 		return rows;

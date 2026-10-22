@@ -53,6 +53,10 @@ public sealed class StoryScript
 	public List<(List<StoryStep> Path, string Level)> Fights = new List<(List<StoryStep>, string)>();
 	/// <summary>数值变化（属性、好感、旗标、物品），记在发生时所在的分岔下。</summary>
 	public List<(List<StoryStep> Path, string Text)> Effects = new List<(List<StoryStep>, string)>();
+	/// <summary>改旗标、给收物品的原始调用（SetFlag、AddMisc……）和编号、数值，旗标、物品反查用。</summary>
+	public List<(List<StoryStep> Path, string Method, string Id, string Value)> Modifies = new List<(List<StoryStep>, string, string, string)>();
+	/// <summary>剧本里用到的条件检查点（分支判断 Switch、选项条件 Condition），旗标、物品反查用。</summary>
+	public List<(List<StoryStep> Path, string Checkpoint, bool Switch)> Checks = new List<(List<StoryStep>, string, bool)>();
 
 	/// <summary>走这个去处一路上会有的变化。</summary>
 	public List<string> EffectsOn(StoryExit exit)
@@ -84,6 +88,10 @@ public static class StoryScripts
 	private static readonly Regex StoryText = new Regex(@"GetStoryText\(""([^""]+)""\)");
 	private static readonly Regex AddStory = new Regex(@"AddStory\(""([^""]+)""\)");
 	private static readonly Regex Modify = new Regex(@"statmodifymanager\.(?!GetDisplayTime|AddStory|Mission|IsTrigger|ResetTalkFlag)\w+\(.*?\)");
+	private static readonly Regex Tracked = new Regex(@"^statmodifymanager\.(SetFlag|AddFlag|AddBook|RemoveBook|AddMisc|RemoveMisc|AddSpecial|RemoveSpecial)\(""(\w+)""(?:, *(-?\d+))?");
+
+	/// <summary>读过的全部剧本（生成时间线时一口气读进来的）。</summary>
+	public static IEnumerable<StoryScript> All => Outlines.Values.Where(s => s != null);
 
 	/// <summary>剧本原文，没有这个剧本返回 null。</summary>
 	public static string Text(string name)
@@ -180,6 +188,7 @@ public static class StoryScripts
 			if ((m = Checkpoint.Match(line)).Success)
 			{
 				(m.Groups[2].Value == "Switch" ? switches : conditions)[m.Groups[1].Value] = m.Groups[3].Value;
+				script.Checks.Add((CurrentPath(blocks, choices, switches), m.Groups[3].Value, m.Groups[2].Value == "Switch"));
 				continue;
 			}
 			if ((m = Choose.Match(line)).Success)
@@ -250,6 +259,11 @@ public static class StoryScripts
 			}
 			foreach (Match t in Modify.Matches(line))
 			{
+				Match tracked = Tracked.Match(t.Value);
+				if (tracked.Success)
+				{
+					script.Modifies.Add((CurrentPath(blocks, choices, switches), tracked.Groups[1].Value, tracked.Groups[2].Value, tracked.Groups[3].Value));
+				}
 				string effect = new LOMAssistant.LuaParse.Action(LOMAssistant.LuaParse.ActionType.ModifyAction, t.Value).Description;
 				if (!string.IsNullOrEmpty(effect))
 				{
