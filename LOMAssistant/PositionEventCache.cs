@@ -34,8 +34,13 @@ public class PositionEventCache
 	{
 		if (!positionEventDataCache.TryGetValue(position, out var value))
 		{
-			value = LoadPositionEvents(position);
-			positionEventDataCache[position] = value;
+			value = LoadPositionEvents(position, out bool found);
+			// 事件表没拿到（不在剧情场景、也没在已载入的资源里找到）时不缓存，下次再找；
+			// 以前在养成地图上悬停建筑会把空表缓存下来，回到剧情里随机事件自选就不弹了
+			if (found)
+			{
+				positionEventDataCache[position] = value;
+			}
 		}
 		return value;
 	}
@@ -70,15 +75,34 @@ public class PositionEventCache
 		return GetPositionEvents(position).OrderByDescending(GetPositionEventRate).ToList();
 	}
 
-	private List<PositionEventData> LoadPositionEvents(string position)
+	private static PositionResultConfig _config;
+
+	/// <summary>场所事件表：剧情场景里从 CheckPointManager 拿并记住；养成地图上没有它，就用记住的或在已载入的资源里找。</summary>
+	private static PositionResultConfig Config()
+	{
+		CheckPointManager checkPointManager = CheckPointManager.Instance;
+		PositionResultConfig config = checkPointManager != null ? checkPointManager.GetFieldValue<PositionResultConfig>("_position") : null;
+		if (config != null)
+		{
+			return _config = config;
+		}
+		if (_config == null)
+		{
+			_config = UnityEngine.Resources.FindObjectsOfTypeAll<PositionResultConfig>().FirstOrDefault();
+		}
+		return _config;
+	}
+
+	private List<PositionEventData> LoadPositionEvents(string position, out bool found)
 	{
 		List<PositionEventData> list = new List<PositionEventData>();
-		CheckPointManager checkPointManager = CheckPointManager.Instance;
-		if (checkPointManager == null)
+		PositionResultConfig config = Config();
+		found = config != null && config.List != null;
+		if (!found)
 		{
 			return list;
 		}
-		PositionResultData positionResultData = checkPointManager.GetFieldValue<PositionResultConfig>("_position").List.FirstOrDefault((PositionResultData p) => p.name == position);
+		PositionResultData positionResultData = config.List.FirstOrDefault((PositionResultData p) => p.name == position);
 		if (positionResultData == null)
 		{
 			return list;
