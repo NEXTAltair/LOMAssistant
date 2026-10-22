@@ -26,6 +26,24 @@ public static class LoadClickGuard
 	[HarmonyPatch(typeof(LoadSlotPanel), "OnTitleClick")]
 	public static bool LoadSlot_Prefix() => Allow("手动存档");
 
+	// 已读记录（对话变黄）只在内存里，进场景时游戏会从磁盘重新读一遍全局存档。原版读手动存档前会先存一次全局存档，
+	// 读自动存档、最近存档却不存，这一段刚读过的对话读完档又都成了白字。这里补上同样的一次保存。
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(AutoSaveSlotPanel), "OnTitleClick")]
+	public static void AutoSave_Postfix(bool __runOriginal) => SaveReadStory(__runOriginal);
+
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(RecentSaveSlotPanel), "OnTitleClick")]
+	public static void RecentSave_Postfix(bool __runOriginal) => SaveReadStory(__runOriginal);
+
+	private static void SaveReadStory(bool loaded)
+	{
+		if (loaded && SaveSystem.Instance != null)
+		{
+			SaveSystem.Instance.SaveUniverseData();
+		}
+	}
+
 	private static bool Allow(string kind)
 	{
 		SceneController scenes = SceneController.Instance;

@@ -253,10 +253,16 @@ public partial class AnytimeSave : MonoBehaviour
 		{
 			string name = a[0].String;
 			if (Faulted) throw new ScriptRuntimeException("Anytime Save restore stopped");
-			if (Replaying) return Decode(Consume("query", name));
-			OnJudgment(name);
 			var args = new DynValue[Math.Max(0, a.Count - 2)];
 			for (int i = 0; i < args.Length; i++) args[i] = a[i + 2];
+			if (Replaying)
+			{
+				Entry recorded = Consume("query", name);
+				// 台词照样过一遍游戏的 GetStoryText：登记已读、按已读设文字颜色（恢复到的那句才不会是白字），内容用记录里的
+				if (name == "luamanager.GetStoryText") script.Call(a[1], args);
+				return Decode(recorded);
+			}
+			OnJudgment(name);
 			DynValue v = script.Call(a[1], args);
 			Entry entry = Encode(v); entry.kind = "query"; entry.label = name; trace.Add(entry);
 			return v;
