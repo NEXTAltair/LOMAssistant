@@ -155,4 +155,4 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 
 ## Credits
 
-See the [Chinese README](README.md#致谢). This project builds on 活侠传助手 by 爱死, and takes ideas or code from MortalAnytimeSave, 赵活系统 and LOM_SaveSlotExpander. Thanks to [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes) and [NEXTAltair](https://github.com/NEXTAltair) for their pull requests.
+See the [Chinese README](README.md#致谢). This project builds on 活侠传助手 by 爱死, and takes ideas or code from MortalAnytimeSave, 赵活系统 and LOM_SaveSlotExpander; legend slot pages follow the design in [iampigcheng](https://github.com/iampigcheng)'s [issue #21](https://github.com/kevinnie2003/LOMAssistant/issues/21). Thanks to [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes) and [NEXTAltair](https://github.com/NEXTAltair) for their pull requests.

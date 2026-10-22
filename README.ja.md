@@ -144,4 +144,4 @@ ZIP には BepInEx が同梱されています。
 
 ## クレジット
 
-[中国語版 README](README.md#致谢) を参照してください。本プロジェクトは爱死氏の「活侠传助手」をもとにしており、MortalAnytimeSave、赵活系统、LOM_SaveSlotExpander の機能やコードを参考・移植しています。[lxsb222-spec](https://github.com/lxsb222-spec)、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair) のプルリクエストに感謝します。
+[中国語版 README](README.md#致谢) を参照してください。本プロジェクトは爱死氏の「活侠传助手」をもとにしており、MortalAnytimeSave、赵活系统、LOM_SaveSlotExpander の機能やコードを参考・移植しています。伝奇スロットのページ送りは [iampigcheng](https://github.com/iampigcheng) さんの [issue #21](https://github.com/kevinnie2003/LOMAssistant/issues/21) の設計に沿っています。[lxsb222-spec](https://github.com/lxsb222-spec)、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair) のプルリクエストに感謝します。

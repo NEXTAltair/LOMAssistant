@@ -230,5 +230,6 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 - **隨時存檔**：移植自 mahosalieri85-a11y 的 MortalAnytimeSave（[issue #2](https://github.com/kevinnie2003/LOMAssistant/issues/2)）。
 - **劇情分支小窗、選項提示、輸入隔離、隨機事件自選、一鍵設定、流程提速、決鬥回合間等待縮短、劇情回顧**：參考 [趙活系統](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 許可）的功能思路。
 - **存檔備註顯示**：移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 許可）及其[漢化版](https://github.com/shiluodeqiou/LOM_SaveSlotExpander-zh)（shiluodeqiou）。
+- **傳奇欄位翻頁**：思路來自 [iampigcheng](https://github.com/iampigcheng) 的 [issue #21](https://github.com/kevinnie2003/LOMAssistant/issues/21)（LegendSlotExtender）。
 - 感謝 [lxsb222-spec](https://github.com/lxsb222-spec)（愛死）、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair) 提交的 PR。
 - 下載包附帶的 [BepInEx](https://github.com/BepInEx/BepInEx)、[UnityDoorstop](https://github.com/NeighTools/UnityDoorstop)、[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) 按各自的許可證分發。

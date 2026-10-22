@@ -146,4 +146,4 @@ _스크린샷은 중국어 화면입니다._
 
 ## 크레딧
 
-[중국어 README](README.md#致谢)를 참고하세요. 이 프로젝트는 爱死 님의 「活侠传助手」를 바탕으로 하며, MortalAnytimeSave, 赵活系统, LOM_SaveSlotExpander의 기능과 코드를 참고·이식했습니다. 풀 리퀘스트를 보내 주신 [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes), [NEXTAltair](https://github.com/NEXTAltair) 님께 감사드립니다.
+[중국어 README](README.md#致谢)를 참고하세요. 이 프로젝트는 爱死 님의 「活侠传助手」를 바탕으로 하며, MortalAnytimeSave, 赵活系统, LOM_SaveSlotExpander의 기능과 코드를 참고·이식했습니다. 전기 슬롯 페이지 넘김은 [iampigcheng](https://github.com/iampigcheng) 님의 [issue #21](https://github.com/kevinnie2003/LOMAssistant/issues/21) 설계를 따랐습니다. 풀 리퀘스트를 보내 주신 [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes), [NEXTAltair](https://github.com/NEXTAltair) 님께 감사드립니다.

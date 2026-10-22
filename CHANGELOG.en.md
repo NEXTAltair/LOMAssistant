@@ -2,6 +2,28 @@
 
 Changes in each version, newest first. Versions before 2.7.0 are only in Chinese; see CHANGELOG.md.
 
+## 2.8.0 (2026-10-22)
+
+**New**
+
+- **Legend slot pages**: the legend save screen after an ending and the legend page in the library get page buttons, 5 pages of 12 slots by default (1 page in the base game); saving opens the first page with a free slot. Set the page count under 「传奇栏位页数」 in the save group of the settings page.
+- **Search the route map by flag**: the route map search box also matches flag IDs and descriptions, listing the scenes that change or check the flag, each with a link to the story chart.
+- **Search in Traditional Chinese, Korean and Japanese**: the search boxes also match the text as shown in the UI language.
+- **Movable, resizable enemy forecast in duels**: drag the bottom-right corner to resize; when narrow it switches to one line. Position and size are remembered.
+
+**Interface**
+
+- **Consistent windows and hint boxes**: the random event picker and save note editor use the same paper colors as the Coffee Companion window and follow dark mode; map hints, the branch window, the duel forecast, the fast-forward notice and anytime save loading progress share one dark hint box style.
+- **Opacity settings in one place**: the Coffee Companion group of the settings page has three opacity settings, for the main window, small windows and hint boxes, applied immediately. The old branch window and map hint opacity settings are merged into the hint box one.
+- **Check records in the backlog no longer show a speaker name**: only the small check line remains, so it isn't mistaken for dialogue.
+
+**Fixes**
+
+- **Read lines turning white again after loading**: after loading an auto save, a recent save or an anytime save, lines you had just read showed as unread; read records are no longer lost.
+- **Flag notice duration had no effect**: notices vanished at once whatever the setting, and disappeared on scene changes; they now stay for the set number of seconds across scenes.
+- **Traditional Chinese wording**: after character-by-character conversion, terms are now replaced with Traditional Chinese usage, and common wrong characters are fixed. The installer too.
+- **Clearer installer message when the download fails**: if the new version can't be downloaded from GitHub, the installer says which version from the zip was installed and where to get the new zip, instead of just "Installed".
+
 ## 2.7.3 (2026-10-22)
 
 - **Map event hints fixes**:
