@@ -91,13 +91,8 @@ internal sealed class DuelActionForecast : MonoBehaviour
 		if (!Mathf.Approximately(scale, _scale))
 		{
 			_scale = scale;
-			_style = new GUIStyle(GUI.skin.box)
-			{
-				fontSize = Mathf.Max(12, Mathf.RoundToInt(18f * scale)),
-				alignment = TextAnchor.MiddleCenter,
-				wordWrap = true
-			};
-			ModFont.Apply(_style);
+			_style = PanelTheme.Toast(scale, 18);
+			_style.alignment = TextAnchor.MiddleCenter;
 			_style.padding = new RectOffset(
 				Mathf.RoundToInt(12f * scale),
 				Mathf.RoundToInt(12f * scale),
@@ -122,7 +117,7 @@ internal sealed class DuelActionForecast : MonoBehaviour
 		HandlePointerInput(text, horizontalText);
 		string displayText = TextConverter.ForDisplay(_horizontalLayout ? horizontalText : text);
 		EnsureContentFits(displayText, scale);
-		GUI.Box(_rect, displayText, _style);
+		GUI.Box(_rect, displayText, PanelTheme.Sync(_style));
 		DrawResizeHandle();
 		InputGuard.Report("DuelForecast", _rect);
 	}

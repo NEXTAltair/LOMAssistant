@@ -99,7 +99,6 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.FontScale, "对白文字大小（%）", 50f, 200f),
 				Row(ConfigManager.FlagNoticeSeconds, "旗标提示停留（秒）", 0f, 30f),
 				Row(ConfigManager.BranchPanelAutoHide, "分支小窗自动收起（秒）", 0f, 600f),
-				Row(ConfigManager.PopupOpacity, "分支小窗不透明度", 0f, 1f),
 			}),
 			("养成", new List<SettingRow>
 			{
@@ -113,7 +112,6 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.PinballFixedScore, "弹珠固定总分（-1=关）", -1f, 9999999f),
 				Row(ConfigManager.EnableSkipAction, "养成「空过」按钮"),
 				Row(ConfigManager.EnableMapHints, "地图建筑事件提示"),
-				Row(ConfigManager.MapHintsOpacity, "地图提示不透明度", 0.3f, 1f),
 			}),
 			("战斗", new List<SettingRow>
 			{
@@ -150,7 +148,10 @@ public partial class StoryReviewPanel
 			{
 				new SettingRow { Element = ConfigManager.PanelTheme, Name = "窗口配色", Choices = new[] { "浅色", "深色", "跟随系统" } },
 				new SettingRow { Element = ConfigManager.PanelFont, Name = "窗口字体", Choices = new[] { "思源宋体", "微软雅黑" } },
+				// 所有窗口的不透明度放在一起
 				Row(ConfigManager.PanelOpacity, "咖啡伴侣窗口不透明度", 0.3f, 1f),
+				Row(ConfigManager.DialogOpacity, "小窗不透明度", 0.3f, 1f),
+				Row(ConfigManager.PopupOpacity, "提示框不透明度", 0.3f, 1f),
 				Row(ConfigManager.EnableUpdateCheck, "检查新版本"),
 				Row(ConfigManager.LogToFile, "写独立日志文件"),
 			}),

@@ -44,7 +44,9 @@ public class EventPicker : MonoBehaviour
 
 	private float _scale = -1f;
 	private int _fontMode = -1;
-	private GUIStyle _label, _title, _button, _highlighted, _effects, _window;
+	private GUIStyle _label, _title, _button, _highlighted, _effects, _window, _random, _randomHighlighted;
+	private bool _dark;
+	private float _opacity;
 	private Rect _windowRect;
 	private Vector2 _scroll;
 	private string _lastLayout;
@@ -207,21 +209,28 @@ public class EventPicker : MonoBehaviour
 
 	private void BuildStyles(float scale)
 	{
+		// 和咖啡伴侣主窗口同一套配色（宣纸底、墨色字，跟着深色模式变）
 		_scale = scale;
 		_fontMode = ModFont.Mode;
-		int fontSize = Mathf.Max(12, (int)(22f * scale));
-		_label = new GUIStyle(GUI.skin.label) { fontSize = fontSize, wordWrap = true };
-		ModFont.Apply(_label);
-		_effects = new GUIStyle(_label) { fontSize = Mathf.Max(11, (int)(18f * scale)) };
-		_effects.normal.textColor = new Color(0.8f, 0.8f, 0.8f);
-		_button = new GUIStyle(GUI.skin.button) { fontSize = fontSize, alignment = TextAnchor.MiddleLeft, wordWrap = true };
-		ModFont.Apply(_button);
+		_dark = PanelTheme.Dark;
+		_opacity = PanelTheme.DialogOpacity;
+		_label = PanelTheme.Label(scale, 20, PanelTheme.Ink);
+		_effects = PanelTheme.Label(scale, 16, PanelTheme.InkMuted);
+		_effects.padding = new RectOffset((int)(12f * scale), 0, 0, (int)(4f * scale));
+		_button = PanelTheme.Button(scale, 19);
+		_button.alignment = TextAnchor.MiddleLeft;
+		_button.wordWrap = true;
 		_highlighted = new GUIStyle(_button) { fontStyle = FontStyle.Bold };
-		_highlighted.normal.textColor = _highlighted.hover.textColor = new Color(1f, 0.82f, 0.4f);
-		_window = new GUIStyle(GUI.skin.window) { fontSize = fontSize };
-		ModFont.Apply(_window);
-		_window.padding.top = (int)(8f * scale);
-		_title = new GUIStyle(_label) { fontStyle = FontStyle.Bold, alignment = TextAnchor.MiddleCenter };
+		_highlighted.normal.background = _highlighted.hover.background = PanelTheme.Framed(PanelTheme.PaperDeep, PanelTheme.Cinnabar);
+		_highlighted.normal.textColor = _highlighted.hover.textColor = PanelTheme.Cinnabar;
+		_random = PanelTheme.Primary(scale, 19);
+		// 手柄、键盘停在「随机」上时和停在事件上一样：深一点的底、朱砂边框和字
+		_randomHighlighted = new GUIStyle(_highlighted) { alignment = TextAnchor.MiddleCenter };
+		_window = PanelTheme.Window(scale);
+		_title = PanelTheme.Label(scale, 22, PanelTheme.Ink, false);
+		_title.fontStyle = FontStyle.Bold;
+		_title.alignment = TextAnchor.MiddleCenter;
+		_title.margin = new RectOffset(0, 0, 0, (int)(8f * scale));
 		float width = 640f * scale;
 		_windowRect = new Rect((Screen.width - width) / 2f, 80f * scale, width, 10f);
 	}
@@ -237,7 +246,7 @@ public class EventPicker : MonoBehaviour
 		{
 			return;
 		}
-		if (ModFont.NeedsRebuild(scale, _scale, _fontMode))
+		if (ModFont.NeedsRebuild(scale, _scale, _fontMode) || _dark != PanelTheme.Dark || _opacity != PanelTheme.DialogOpacity)
 		{
 			BuildStyles(scale);
 		}
@@ -257,7 +266,21 @@ public class EventPicker : MonoBehaviour
 		return (i < 9 ? (i + 1) + ". " : "") + Choices[i].Name + $"（{Choices[i].Rate * 100f / total:0.#}%）";
 	}
 
+	// 事件名、效果里的绿、红、金是给深色底配的，画窗口期间在宣纸底上换成看得清的同色系（PanelTheme.MapColors）
 	private void DrawWindow(int id)
+	{
+		PanelTheme.Painting = true;
+		try
+		{
+			DrawChoices();
+		}
+		finally
+		{
+			PanelTheme.Painting = false;
+		}
+	}
+
+	private void DrawChoices()
 	{
 		GUILayout.Label("这次触发哪个事件", _title);
 		int total = Choices.Sum(c => c.Rate);
@@ -288,7 +311,8 @@ public class EventPicker : MonoBehaviour
 			}
 		}
 		GUILayout.EndScrollView();
-		if (GUILayout.Button("随机（按原本概率）", _highlight == Choices.Count ? _highlighted : _button))
+		GUILayout.Space(6f * _scale);
+		if (GUILayout.Button("随机（按原本概率）", _highlight == Choices.Count ? _randomHighlighted : _random))
 		{
 			Choose(null);
 			GUIUtility.ExitGUI();

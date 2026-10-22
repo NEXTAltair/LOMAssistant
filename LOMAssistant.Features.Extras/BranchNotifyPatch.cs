@@ -126,7 +126,6 @@ public class BranchPanel : MonoBehaviour
 	private GUIStyle _line;
 	private GUIStyle _taken;
 	private GUIStyle _close;
-	private Texture2D _bg;
 	private Texture2D _takenBg;
 	private float _opacity = -1f;
 
@@ -226,25 +225,24 @@ public class BranchPanel : MonoBehaviour
 		_scale = scale;
 		_fontMode = ModFont.Mode;
 		int fontSize = Mathf.Max(11, (int)(19f * scale));
-		// 背景不透明度可在配置 PopupOpacity 里改；走的那一行的高亮跟着按比例变化，始终看得出来
+		// 和其他提示框同一种样子（墨色底、宣纸色字、褐色细边），不透明度用设置里的「提示框不透明度」；
+		// 走的那一行的高亮跟着按比例变化，始终看得出来
 		_opacity = ConfigManager.PopupOpacity.Value;
-		float alpha = Mathf.Clamp01(_opacity);
-		_bg = Solid(new Color(0.06f, 0.05f, 0.04f, alpha));
+		float alpha = PanelTheme.ToastOpacity;
 		_takenBg = Solid(new Color(0.85f, 0.78f, 0.55f, Mathf.Max(0.15f, alpha * 0.4f)));
-		_window = new GUIStyle(GUI.skin.box);
-		_window.normal.background = _bg;
+		_window = PanelTheme.Toast(scale, 19);
 		_window.padding = new RectOffset((int)(12f * scale), (int)(12f * scale), (int)(8f * scale), (int)(10f * scale));
 		_title = new GUIStyle(GUI.skin.label) { fontSize = fontSize, fontStyle = FontStyle.Bold, richText = true, wordWrap = true };
 		ModFont.Apply(_title);
-		_title.normal.textColor = new Color(0.95f, 0.92f, 0.85f);
+		_title.normal.textColor = PanelTheme.ToastText;
 		_line = new GUIStyle(GUI.skin.label) { fontSize = fontSize, richText = true, wordWrap = true };
 		ModFont.Apply(_line);
 		_line.padding = new RectOffset((int)(14f * scale), 4, 2, 2);
 		_line.normal.textColor = new Color(0.85f, 0.82f, 0.76f);
 		_taken = new GUIStyle(_line);
 		_taken.normal.background = _takenBg;
-		_close = new GUIStyle(GUI.skin.button) { fontSize = fontSize };
-		ModFont.Apply(_close);
+		_close = PanelTheme.ToastButton(scale, 19);
+		_close.padding = new RectOffset(0, 0, 0, 0);
 	}
 
 	private static Texture2D Solid(Color color)

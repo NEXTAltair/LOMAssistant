@@ -65,8 +65,8 @@ public partial class AnytimeSave
 		{
 			_scale = scale;
 			_fontMode = ModFont.Mode;
-			_toast = new GUIStyle(GUI.skin.box) { fontSize = Mathf.Max(12, (int)(22f * scale)), wordWrap = true, alignment = TextAnchor.MiddleLeft };
-			ModFont.Apply(_toast);
+			_toast = PanelTheme.Toast(scale, 22);
+			_toast.alignment = TextAnchor.MiddleLeft;
 			_toast.padding = new RectOffset((int)(12 * scale), (int)(12 * scale), (int)(8 * scale), (int)(8 * scale));
 		}
 		if (Replaying || Time.realtimeSinceStartup < messageUntil)
@@ -74,7 +74,7 @@ public partial class AnytimeSave
 			var content = new GUIContent(Replaying ? "正在读取随时存档 " + cursor + "/" + (target + 1) : message);
 			float width = Mathf.Min(Screen.width - 40f * scale, Mathf.Max(200f * scale, _toast.CalcSize(content).x));
 			float height = _toast.CalcHeight(content, width);
-			GUI.Box(new Rect(20f * scale, Screen.height - height - 20f * scale, width, height), content, _toast);
+			GUI.Box(new Rect(20f * scale, Screen.height - height - 20f * scale, width, height), content, PanelTheme.Sync(_toast));
 		}
 	}
 }

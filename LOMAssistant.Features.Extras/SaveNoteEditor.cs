@@ -29,6 +29,8 @@ public class SaveNoteEditor : MonoBehaviour
 	private GUIStyle _button;
 	private GUIStyle _field;
 	private GUIStyle _window;
+	private bool _dark;
+	private float _opacity;
 
 	public static bool IsOpen => _instance != null && _instance._slot != null;
 
@@ -137,7 +139,7 @@ public class SaveNoteEditor : MonoBehaviour
 			return;
 		}
 		float scale = Mathf.Min(Screen.width / 1920f, Screen.height / 1080f);
-		if (ModFont.NeedsRebuild(scale, _scale, _fontMode))
+		if (ModFont.NeedsRebuild(scale, _scale, _fontMode) || _dark != PanelTheme.Dark || _opacity != PanelTheme.DialogOpacity)
 		{
 			BuildStyles(scale);
 		}
@@ -185,16 +187,17 @@ public class SaveNoteEditor : MonoBehaviour
 	{
 		_scale = scale;
 		_fontMode = ModFont.Mode;
-		int fontSize = Mathf.Max(12, (int)(24f * scale));
-		_label = new GUIStyle(GUI.skin.label) { fontSize = fontSize };
-		ModFont.Apply(_label);
-		_button = new GUIStyle(GUI.skin.button) { fontSize = fontSize, fixedHeight = 44f * scale };
-		ModFont.Apply(_button);
-		_field = new GUIStyle(GUI.skin.textField) { fontSize = fontSize, fixedHeight = 44f * scale };
-		ModFont.Apply(_field);
-		_window = new GUIStyle(GUI.skin.window) { fontSize = fontSize };
-		ModFont.Apply(_window);
-		_window.padding.top = (int)(34f * scale);
-		_window.padding.left = _window.padding.right = (int)(16f * scale);
+		// 和咖啡伴侣主窗口同一套配色
+		_dark = PanelTheme.Dark;
+		_opacity = PanelTheme.DialogOpacity;
+		_label = PanelTheme.Label(scale, 22, PanelTheme.Ink, false);
+		_button = PanelTheme.Button(scale, 20);
+		_button.fixedHeight = 44f * scale;
+		_field = PanelTheme.Field(scale, 22);
+		_field.fixedHeight = 44f * scale;
+		_window = PanelTheme.Window(scale);
+		_window.fontSize = Mathf.Max(12, (int)(22f * scale));
+		_window.normal.textColor = _window.onNormal.textColor = PanelTheme.Ink;
+		_window.padding.top = (int)(40f * scale);
 	}
 }

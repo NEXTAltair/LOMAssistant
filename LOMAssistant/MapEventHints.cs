@@ -141,10 +141,10 @@ public class MapEventHints : MonoBehaviour
 		{
 			_scale = scale;
 			_fontMode = ModFont.Mode;
-			_box = new GUIStyle(GUI.skin.box) { fontSize = Mathf.Max(11, (int)(19f * scale)), alignment = TextAnchor.UpperLeft, wordWrap = true, richText = true };
-			_box.normal.textColor = new Color(0.92f, 0.9f, 0.85f);
+			// 和其他提示框同一种样子（墨色底、宣纸色字、褐色细边），不透明度用设置里的「提示框不透明度」
+			_box = PanelTheme.Toast(scale, 19);
+			_box.alignment = TextAnchor.UpperLeft;
 			_box.padding = new RectOffset((int)(14f * scale), (int)(14f * scale), (int)(10f * scale), (int)(10f * scale));
-			ModFont.Apply(_box);
 		}
 		if (_text == null)
 		{
@@ -181,16 +181,7 @@ public class MapEventHints : MonoBehaviour
 			x = mouse.x - width - 16f * scale;
 		}
 		y = Mathf.Clamp(y, 0f, Mathf.Max(0f, Screen.height - height));
-		Color old = GUI.backgroundColor;
-		// 先铺一层不透明的深色底：游戏默认的 box 半透明，压在浅色地图上字看不清
-		var rect = new Rect(Mathf.Max(0f, x), y, width, height);
-		Color oldColor = GUI.color;
-		GUI.color = new Color(0.11f, 0.09f, 0.08f, Mathf.Clamp(ConfigManager.MapHintsOpacity.Value, 0.3f, 1f));
-		GUI.DrawTexture(rect, Texture2D.whiteTexture);
-		GUI.color = oldColor;
-		GUI.backgroundColor = new Color(0f, 0f, 0f, 2.5f);
-		GUI.Box(rect, content, _box);
-		GUI.backgroundColor = old;
+		GUI.Box(new Rect(Mathf.Max(0f, x), y, width, height), content, PanelTheme.Sync(_box));
 		_box.fontSize = fontSize;
 	}
 
