@@ -101,6 +101,8 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 	{
 		try
 		{
+			// 回想里旧的判定记录说话人是「LOMAssistant」，选项提示关着也去掉
+			TryPatchAll(typeof(NarrativeLogNamePatch));
 			if (ConfigManager.EnableOptionInfo.Value)
 			{
 				TryPatchAll(typeof(OptionInfoPatch));

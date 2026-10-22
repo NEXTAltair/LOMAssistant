@@ -478,11 +478,40 @@ internal static class OptionInfoPatch
 		{
 			NarrativeLogEntry entry = new NarrativeLogEntry
 			{
-				name = "LOMAssistant",
+				// 不写说话人：回想里有名字就多一行金色大字，容易当成有人在说话；没有名字就只剩这行小字
+				name = "",
 				// 记到游戏的对话记录里，不经过本 Mod 界面的翻译，这里先换成界面语言（繁体、韩语、日语）
 				text = "<size=18>" + TextConverter.ForDisplay(text) + "</size>"
 			};
 			narrativeLog.AddLine(entry);
+		}
+	}
+}
+
+/// <summary>
+/// 回想（对话记录）里的判定记录：以前说话人写的是内部名「LOMAssistant」，存档里留着的旧记录显示时把这行名字去掉，
+/// 和新记录一样只剩判定那行小字（游戏把名字排成 &lt;size=28&gt;&lt;color=#D9B077&gt;名字&lt;/color&gt;&lt;/size&gt; 单独一行）。
+/// </summary>
+internal static class NarrativeLogNamePatch
+{
+	// 测试版里名字写过 Mod 名（各语言），也一起去掉
+	private static readonly string[] OldNames = { "LOMAssistant", "咖啡伴侣", "咖啡伴侶", "커피 동반자", "珈琲のおとも" };
+
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(NarrativeLog), nameof(NarrativeLog.GetPrettyHistory))]
+	public static void GetPrettyHistory_Postfix(ref string __result)
+	{
+		if (__result == null)
+		{
+			return;
+		}
+		foreach (string name in OldNames)
+		{
+			string line = "<size=28><color=#D9B077>" + name + "</color></size>\n";
+			if (__result.Contains(line))
+			{
+				__result = __result.Replace(line, "");
+			}
 		}
 	}
 }
