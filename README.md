@@ -136,7 +136,6 @@
 - **养成行动点**（设置页）：正常 / 不消耗 / 每旬 N 点（N 在设置页里设 1～5）。不消耗时行动点扣到 1 不再扣，用「空过」结束本旬；每旬 N 点时每旬固定 N 次行动。有的选项要「剩余行动点大于 2」才出现，选每旬 3 点以上，旬初就能触发。
   > ⚠️ 这两个模式可能让部分剧情不触发或提前触发，还可能有 bug 卡掉关键主线，后面的剧情接不上，整个存档等于废了。我们一直在测试和修复，但不能保证完全没问题，请谨慎使用，多存档。
 - **四师兄售卖全部物品**（默认关，在「设置」页打开）：商店里加入所有没拥有的书籍、杂物、特殊物品；不卖《证类本草》（提前买会导致六月后山事件出 bug）。
-- **四师兄售卖全部功法**（默认关，在「设置」页打开）：只加书，不加杂物和特殊物品。各门派、线路限定、平时买不到的功法秘笈都能买，没拥有的才卖，不卖《证类本草》和剧情里拿不到的三本书（松风剑法、天师剑法、四平枪谱）。
 - **讲经堂**：全部解锁显示。
 
 ### F9 数值面板
@@ -224,5 +223,5 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 - **随时存档**：移植自 mahosalieri85-a11y 的 MortalAnytimeSave（[issue #2](https://github.com/kevinnie2003/LOMAssistant/issues/2)）。
 - **剧情分支小窗、选项提示、输入隔离、随机事件自选、一键设置、流程提速、决斗回合间等待缩短、剧情回顾**：参考 [赵活系统](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 许可）的功能思路。
 - **存档备注显示**：移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 许可）及其[汉化版](https://github.com/shiluodeqiou/LOM_SaveSlotExpander-zh)（shiluodeqiou）。
-- 感谢 [lxsb222-spec](https://github.com/lxsb222-spec)（爱死）、[blakceyes](https://github.com/blakceyes) 提交的 PR。
+- 感谢 [lxsb222-spec](https://github.com/lxsb222-spec)（爱死）、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair) 提交的 PR。
 - 下载包附带的 [BepInEx](https://github.com/BepInEx/BepInEx)、[UnityDoorstop](https://github.com/NeighTools/UnityDoorstop)、[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) 按各自的许可证分发。

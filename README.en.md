@@ -16,7 +16,7 @@ The mod's own windows are shown in Simplified Chinese, Traditional Chinese, Kore
 
 The zip already contains BepInEx.
 
-**Installer (recommended)**: unzip and run `咖啡伴侣安装器.exe`, then click 「一键安装 / 更新」 (Install / Update).
+**Installer (recommended)**: unzip and run `咖啡伴侣安装器.exe`, then click **Install / Update**. The installer follows your Windows display language.
 
 - It finds the game folder and downloads the latest version (or installs the bundled one if GitHub is unreachable).
 - Old mods known to conflict are moved to `BepInEx\已停用的Mod` (not deleted). Your settings are kept.
@@ -24,7 +24,7 @@ The zip already contains BepInEx.
 
 **Manual**: in Steam, right-click *Legend of Mortal* → Manage → Browse local files, and extract everything in the zip into the game folder, overwriting files. Remove older mods of the same kind (骰子大师, 多功能 Mod, 赵活系统) from `BepInEx\plugins` first; they patch the same game code.
 
-**Uninstall**: run the installer and click 「卸载本 Mod」 (Uninstall). Saves are not touched.
+**Uninstall**: run the installer and click **Uninstall**. Saves are not touched.
 
 ## Hotkeys
 
@@ -89,7 +89,7 @@ Edit stats, martial arts, sect values, relationships, talents, training points, 
 
 **Found a bug?** Run the installer again to make sure you are on the latest version. If it persists, export diagnostics and open an [issue](https://github.com/kevinnie2003/LOMAssistant/issues) describing how it happened.
 
-**Nothing happens after installing?** Quit Steam completely from the tray and start the game again. If it still does not work, use 「导出诊断」 in the installer.
+**Nothing happens after installing?** Quit Steam completely from the tray and start the game again. If it still does not work, use **Export diagnostics** in the installer.
 
 **Hotkey clash with another mod?** When the mod detects another mod using the same key (the Japanese patch, 邪神认知污染ON, 剧情随行, or any mod that sets the key in its own config file), it unbinds its own hotkey and shows a notice once at the top of the settings tab. Open the window with Tab and pick the tab, or bind another key under 「热键」 (Hotkeys) in settings; every hotkey can also be set to 「不绑定」 (unbound) by hand.
 
@@ -110,4 +110,4 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 
 ## Credits
 
-See the [Chinese README](README.md#致谢). This project builds on 活侠传助手 by 爱死, and takes ideas or code from MortalAnytimeSave, 赵活系统 and LOM_SaveSlotExpander. Thanks to [lxsb222-spec](https://github.com/lxsb222-spec) and [blakceyes](https://github.com/blakceyes) for their pull requests.
+See the [Chinese README](README.md#致谢). This project builds on 活侠传助手 by 爱死, and takes ideas or code from MortalAnytimeSave, 赵活系统 and LOM_SaveSlotExpander. Thanks to [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes) and [NEXTAltair](https://github.com/NEXTAltair) for their pull requests.
