@@ -16,15 +16,11 @@ The mod's own windows are shown in Simplified Chinese, Traditional Chinese, Kore
 
 The zip already contains BepInEx.
 
-**Installer (recommended)**: unzip and run `咖啡伴侣安装器.exe`, then click **Install / Update**. The installer follows your Windows display language.
-
-- It finds the game folder and downloads the latest version (or installs the bundled one if GitHub is unreachable).
-- Old mods known to conflict are moved to `BepInEx\已停用的Mod` (not deleted). Your settings are kept.
-- Run it again to update. If Windows SmartScreen warns you, click "More info" → "Run anyway".
+**Installer (recommended)**: unzip and run `咖啡伴侣安装器.exe`, then click **Install / Update**. It finds the game folder, downloads the latest version (or installs the bundled one if GitHub is unreachable) and moves old mods known to conflict to `BepInEx\已停用的Mod` (not deleted). Run it again to update. The installer follows your Windows display language.
 
 <img src="media/installer.webp" width="640" alt="Installer: game folder, installed and new version, release notes, install / update, export diagnostics, uninstall">
 
-**Manual**: in Steam, right-click *Legend of Mortal* → Manage → Browse local files, and extract everything in the zip into the game folder, overwriting files. Remove older mods of the same kind (骰子大师, 多功能 Mod, 赵活系统) from `BepInEx\plugins` first; they patch the same game code.
+**Manual**: in Steam, right-click *Legend of Mortal* → Manage → Browse local files, and extract everything in the zip into the game folder, overwriting files. Remove older mods of the same kind (骰子大师, 多功能 Mod, 赵活系统) from `BepInEx\plugins` first.
 
 **Uninstall**: run the installer and click **Uninstall**. Saves are not touched.
 
@@ -32,99 +28,119 @@ The zip already contains BepInEx.
 
 | Key | Action |
 |---|---|
+| Tab | The 咖啡伴侣 window (now, route map, story map, branch saves, save-anywhere, endings, stats, settings) |
 | F8 | Settings; on the save screen, edit the note of the selected save |
-| F5 / F7 | Save-anywhere: make a new save / load the latest one |
-| F6 | The save-anywhere page (all saves; load, note, delete) |
-| F2 | Skip read dialogue (like holding Ctrl) until an unread line |
-| F4 | Roll back to before the last story check |
 | F9 | Stats page |
-| Tab | The 咖啡伴侣 window |
-| Gamepad L3 | Open / close the window (press the left stick; can be changed to R3 or LB+RB in settings) |
+| F5 / F7 / F6 | Save-anywhere: new save / load the latest / list all |
+| F2 | Skip read dialogue until an unread line |
+| F4 | Roll back to before the last story check |
+| Right click | Hide the UI to view CGs |
+| Gamepad L3 | Open / close the window |
 | ESC | The game menu gets 「空过」 (skip turn), 「直接获胜」 (win now) and 「导出诊断」 (export diagnostics) |
 
-All keys can be changed under 「热键」 (Hotkeys) on the settings page, and any of them can be unbound (except Tab, which opens the window).
+All keys can be changed or unbound under 「热键」 (Hotkeys) on the settings page.
 
 ## Features
 
-_Screenshots show the Chinese UI._
+### Story overview (Tab)
 
-### Story
+- **Now**: every option and dice outcome of the current scene with its result, the branch conditions, whether the following dialogue has been read; the random events here with their odds (pick the next one); your current quests, where to trigger them and what is still missing.
 
-- **Story overview** (Tab):
-  - **Now**: every option and dice outcome of the current scene with its result, whether the following dialogue has been read, branch conditions, random events at the current location (pick the next one directly), and your current quests with what is still missing.
+  <img src="media/story-now.webp" width="640" alt="Now: this scene's options grouped by choice, stat gains in green and losses in red; current quests">
 
-    <img src="media/story-now.webp" width="640" alt="Now: options of the current scene grouped by choice, stat gains in green and losses in red; current quests">
+- **Route map**: the whole main story laid out on a calendar, branches as separate lanes, side quests below; ticks mark what this playthrough has done. Click a stop for when, where and under which conditions it triggers. Search by quest, place, dialogue or flag (a flag result lists the scenes that change or check it).
 
-  - **Route map**: the whole main story laid out on a calendar, side quests below; click a stop to see when, where and under which conditions it triggers. Searchable by quest, place, dialogue and flag (ID or description); a flag result lists the scenes that change or check it.
+  <img src="media/story-route.webp" width="640" alt="Route map: the main story as stops on a calendar, side quests below">
 
-    <img src="media/story-route.webp" width="640" alt="Route map: the main story as stops on a calendar, side quests below">
+- **Story map**: each quest as a flow chart, with the option or condition on every path.
 
-  - **Story map**: one quest drawn as a flow chart, with the options and conditions on every path and how stats change along the way.
+  <img src="media/story-flow.webp" width="640" alt="Story map: options, conditions and destinations between story segments">
 
-    <img src="media/story-flow.webp" width="640" alt="Story map: options, conditions and destinations between story segments">
+- **Branch saves**: progress is recorded at quest starts and key options; click 「从这里重玩」 to go back and try another path. Separate per save, uses no save slots, synced with Steam Cloud.
 
-  - **Branch saves**: progress is saved automatically at the start of key scenes so you can replay them with 「从这里重玩」. Stored in the save folder as `LOMStory_*` files and synced by Steam Cloud.
+  <img src="media/story-nodes.webp" width="640" alt="Branch saves: recorded story segments by date, replay or delete">
 
-    <img src="media/story-nodes.webp" width="640" alt="Branch saves: recorded scenes by date, replay or delete">
+- **Endings**: endings, deaths and achievements with their gallery numbers, what you have reached and how to reach the rest.
 
-  - **Endings**: endings, deaths and achievements, with how to reach the ones you are missing. Endings and deaths show their number from the in-game codex, can be searched by it, and can be sorted by number or by time.
+  <img src="media/story-endings.webp" width="640" alt="Endings: endings, deaths and achievements, filter by reached or not">
 
-    <img src="media/story-endings.webp" width="640" alt="Endings: endings, deaths and achievements, filter by reached or missing">
+### Story helpers
 
-- **Pick dice outcomes**: click a line on the dice wheel to choose that result.
-- **Option results**: dialogue options show what they will change, and locked options show their real unlock conditions. 「一键设置」 next to a locked option sets the missing conditions so it unlocks. 「选项后果」 in the story group of the settings page shows these always, only on hover (or when selected with a gamepad), or never.
+- **Pick dice results**: click a line on the dice wheel to choose that result.
+- **Option results**: dialogue options and dice lines show what they will change; locked options show their real unlock conditions, and 「一键设置」 next to them sets the conditions. 「选项后果」 in settings shows these always, only on hover (no spoilers unless you look), or never.
 
-  <img src="media/option-hint.webp" width="640" alt="Option results and unlock conditions after each option">
+  <img src="media/option-hint.webp" width="640" alt="Options followed by their results and unlock conditions">
 
-- **Branch panel** (off by default, spoilers): shows each branch condition, green when met.
-
-  <img src="media/branch-panel.webp" width="480" alt="Branch panel: green when met, red when not">
-
-- **Hide UI for CGs**: right-click during the story to hide the dialogue box and the mod's windows.
-- **Pick random events** (off by default): choose which random event triggers when working, wandering and so on. Branch checks that roll a random number (such as being pulled into a run by 小梅 while training) also let you pick the path. Each event or path can be set to 「总是」 (always) or 「不出」 (never); the rule is remembered and applies even with the picker off.
+- **Pick random events** (off by default): when working, wandering and so on, choose which event triggers, or roll with the normal odds. Branch checks that roll a random number (such as being pulled into a run by 小梅 while training) also let you pick the path. Each event or path can be set to 「总是」 (always) or 「不出」 (never); the rule is remembered and applies even with the picker off.
 
   <img src="media/event-picker.webp" width="480" alt="Pick random events: the events that can trigger, their odds and changes">
 
-- **Flag change notices** (off by default, spoilers).
-- **Map event hints** (on by default): hover over a building on the training map to see its main and side quests (whether they can trigger now, time window and conditions, met in green and unmet in red) and the odds of each random event. Buildings with a main or side quest you can trigger now and haven't played yet stay lit (random events don't count).
+- **Map event hints**: hover over a building on the training map to see its main and side quests (can they trigger, conditions) and the odds of its random events; buildings with a quest you can trigger now stay lit.
+- **Branch panel** (off by default, spoilers): lists the conditions of each branch check on the left, met in green and unmet in red.
+
+  <img src="media/branch-panel.webp" width="480" alt="Branch panel: met conditions in green, unmet in red">
+
+- **Flag change notices** (off by default, spoilers): a notice when the story changes a flag; how long it stays can be set.
+- **Checks in the backlog**: story checks, their conditions and your values are recorded in the backlog.
+- **Hide UI for CGs**: right-click in a story scene to leave only the background, CG and portraits; right-click again to restore.
 
 ### Saves
 
-- **Save anywhere**: F5 saves during dialogue, options, dice rolls or on the training map, without using the game's slots (up to 100, configurable). F7 loads the latest; F6 lists them all. Loading a story save fast-forwards to the saved line.
+- **Save anywhere**: save during dialogue, options, dice rolls or on the training map, without using the game's slots. F5 saves, F7 loads the latest, F6 lists them all (notes, the dialogue at that point); up to 100 are kept. Not available in combat.
+- **Roll back**: after seeing a check, press F4 to go back to the line before it, adjust stats with F9 and continue; the check is re-evaluated.
 
   <img src="media/anytime-save.webp" width="640" alt="Save-anywhere page: all saves, load, note, delete">
 
-- **Roll back** (F4): go back to the line before the last story check, adjust stats with F9 and continue; the check is re-evaluated.
-- **New save/load screen** (on by default): portrait of your love interest, game date, save time, note, and the first lines you will see after loading. Manual and auto saves on separate pages (LB / RB on a gamepad).
+- **New save/load screen** (can switch back to the original): a list with your love interest's portrait, date and note, and a detail pane with their full portrait and the first lines after loading; manual and auto saves on separate pages.
 
-  <img src="media/save-browser.webp" width="640" alt="New load screen: save list with portraits and notes, love interest and the first lines after loading">
+  <img src="media/save-browser.webp" width="640" alt="New load screen: save list with portraits and notes, and a detail pane with the portrait and the dialogue after loading">
 
-- **5 pages of legend slots** (1 page of 12 in the base game, adjustable): the legend save screen and the legend page in the library get page buttons, and saving opens the first page with a free slot.
-- **100 manual save slots** (20 in the base game), **save notes**, and **5 extra old copies** of each auto save.
+- **More slots**: 100 manual saves (20 in the base game), 5 pages of legend slots (1 page of 12), and 5 extra old copies of each auto save.
+- **Save notes**, synced with Steam Cloud; notes from LOM_SaveSlotExpander are imported.
 
 ### Training and combat
 
-- Settings for: breaking the 100 stat cap, unlimited training, free forging and alchemy, invincibility in duels, no damage in group fights, no ultimate cooldown, game speed 1x/2x/3x/5x, pinball score.
-- **Skip turn** and **win now** in the ESC menu.
-- **Faster flow**: faster scene changes, loading and story skipping.
-- **Action points**: normal / unlimited / N per period. These modes may break story triggers; save often.
-- **Enemy move forecast in duels** (off by default): while you pick a move, the right edge of the screen shows the move the enemy has picked, and marks turns where it may change it in response.
-- **The fourth senior brother sells everything** (off by default).
+Switches in the training and combat groups of the settings page (F8):
+
+- Game speed 1x / 2x / 3x / 5x
+- Action points: normal / not consumed / N per period
+  > ⚠️ The last two can make some story events not trigger or trigger early, and may block key main quests. Use with care and keep saves.
+- Break the 100 stat cap, unlimited training, unlimited forging and alchemy at no cost
+- Duel invincibility and no damage to enemies; no damage to your side and no ultimate cooldown in team battles
+- Duel enemy forecast (off by default): shows the enemy's chosen move; the window can be moved and resized
+- Pinball total score and multiplier; the fourth senior brother sells every item (off by default)
+
+Also:
+
+- **Skip turn**: in the ESC menu on the training and study maps; uses one action without triggering events.
+- **Win now**: in the ESC menu during duels and team battles.
+- **Speed-ups**: faster scene changes, loading and skipping, shorter pauses after stat changes, no idle wait between duel rounds.
+- **Skill list columns**: in battle, a long skill list is split into columns.
 
 ### Stats page (F9)
 
-Edit stats, martial arts, sect values, relationships, talents, training points, facilities, books, items, titles and every story flag. Flags are grouped into categories (sect favor, characters, the Six Paths, story and so on). Click a flag, book or item to see every story that changes or checks it, with the quest, time and place, and jump there in the story map. Changing stats or flags carelessly can break the story; save first.
+Stats, martial arts, sects, relationships (everyone), talents, training and crafting points, facilities, books, items and flags on one page; add, subtract or set any value, and search by name, ID or description.
+
+- **Books and items**: set the count directly; quests advance as if bought in a shop.
+- Your **love interest** is shown by name; the **mood lock** keeps story and options from changing your mood.
+- **Titles**: pick any title or write your own.
+- **Flags**: over a thousand, grouped by sect favour, characters, story and more.
+- **Reverse lookup**: click a flag, book or item to list the scenes that change or check it, with a link to the story map.
 
 <img src="media/stats.webp" width="640" alt="Stats page: stats, martial arts, sects, titles, relationships and more, all editable">
 
+Changing values or flags at random can break the story; save first.
+
 ### Other
 
-- **Gamepad**: the window can be used entirely with a gamepad (typing into the search and number boxes still needs a keyboard). Press the left stick (L3) to open the window; inside it the left stick or d-pad moves the pointer, A clicks, the right stick scrolls, LB / RB switch tabs and B closes it. The game ignores the gamepad while the window is open. PlayStation and Switch controllers get their own button names (× / ○, L1 / R1 and so on).
-- **Dark mode**: choose light, dark or follow Windows under 「窗口配色」 (window colors) in the settings page.
-- **Export legend**: the game's Status → Legend panel gets a button that saves your current save's unfinished legend as a txt file on the desktop.
-- **Languages**: the mod follows the game language (Simplified Chinese, Traditional Chinese, Korean). With the [Japanese patch](https://dlaqe2334.github.io/LOM-JPMOD/) installed it shows Japanese. You can also choose 「界面语言」 at the top of the settings page. Korean and Japanese currently cover the common UI text; the rest is still Chinese.
-- **Export diagnostics**: ESC → settings → 「导出诊断」 packs logs, config and the plugin list onto the desktop (no saves).
-- **Conflict detection**: if a conflicting old mod is installed, the settings page opens and names it.
+- **Gamepad**: the whole window works with a gamepad (L3 opens it, the left stick moves the pointer, A clicks, LB / RB switch tabs); dice, skip turn and the event picker too.
+- **Interface**: dark mode; Source Han Serif or Microsoft YaHei font; separate opacity for the main window, small windows and hint boxes; larger dialogue text.
+- **Languages**: Simplified Chinese, Traditional Chinese and Korean following the game language, Japanese with the [Japanese patch](https://dlaqe2334.github.io/LOM-JPMOD/); can also be chosen in settings.
+- **Export diagnostics**: ESC → 「环境设定」 → 「导出诊断」 packs logs and settings to the desktop (no saves); also in the installer.
+- **Conflict detection**: warns about conflicting old mods at the top of settings; if another mod uses the same key, this mod gives it up.
+- **Export legend**: export this playthrough's legend as a txt at any time from 「状态 → 传奇」.
+- **Faster start**: the title animation is sped up, and the installer can skip the opening logos.
+- **Also**: the lecture hall shows everything unlocked; the game keeps running in the background; the window's top right shows each version's changes and a red note when a new version is out.
 
 ## FAQ
 
@@ -132,15 +148,17 @@ Edit stats, martial arts, sect values, relationships, talents, training points, 
 
 **Nothing happens after installing?** Quit Steam completely from the tray and start the game again. If it still does not work, use **Export diagnostics** in the installer.
 
-**Game in a folder with Chinese or other non-English characters?** BepInEx fails to load there and the mod won't work (the installer warns in red). Move the whole game folder to a path with only English letters and numbers (for example `D:\Games\LegendOfMortal`; for the Steam version, right-click the game → Properties → Installed Files → Move install folder), then run the installer again.
+**Game in a folder with Chinese or other non-English characters?** BepInEx fails to load there. Move the game folder to a path with only English letters and numbers (in Steam, right-click the game → Properties → Installed Files → Move install folder), then run the installer again.
 
-**Hotkey clash with another mod?** When the mod detects another mod using the same key (the Japanese patch, 邪神认知污染ON, 剧情随行, or any mod that sets the key in its own config file), it unbinds its own hotkey and shows a notice once at the top of the settings tab. Open the window with Tab and pick the tab, or bind another key under 「热键」 (Hotkeys) in settings; every hotkey can also be set to 「不绑定」 (unbound) by hand.
+**Option results missing, dice cannot be picked?** An older mod of the same kind is installed. The installer handles this; for manual installs, remove the old mods from `BepInEx\plugins`.
+
+**Works with 邪神认知污染ON and 剧情随行?** Yes. For 邪神认知污染ON install only 「1_必装_插件」, not 「2_只有没装过BepInEx才装」 (if you did, run this mod's installer again). Clashing hotkeys are given up automatically; bind another under 「热键」.
 
 **Linux / Steam Deck?** Install manually and add `WINEDLLOVERRIDES="winhttp=n,b" %command%` to the Steam launch options.
 
 ## Settings
 
-Everything is on the settings page of the window (F8). Changes are saved immediately; hover over a name for details. Settings are also stored in `BepInEx\config\LOMAssistant.cfg`.
+Everything is on the settings page of the window (F8). Changes are saved immediately; ones that need a restart are marked; hover over a name for details. Settings are also stored in `BepInEx\config\LOMAssistant.cfg`.
 
 <img src="media/settings.webp" width="640" alt="Settings page: switches, numbers, game speed and hotkeys by group">
 
