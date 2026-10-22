@@ -81,7 +81,7 @@ _Screenshots show the Chinese UI._
   <img src="media/branch-panel.webp" width="480" alt="Branch panel: green when met, red when not">
 
 - **Hide UI for CGs**: right-click during the story to hide the dialogue box and the mod's windows.
-- **Pick random events** (off by default): choose which random event triggers when working, wandering and so on.
+- **Pick random events** (off by default): choose which random event triggers when working, wandering and so on. Branch checks that roll a random number (such as being pulled into a run by 小梅 while training) also let you pick the path. Each event or path can be set to 「总是」 (always) or 「不出」 (never); the rule is remembered and applies even with the picker off.
 
   <img src="media/event-picker.webp" width="480" alt="Pick random events: the events that can trigger, their odds and changes">
 

@@ -136,6 +136,7 @@ public static class ConfigManager
 	public static ConfigElement<bool> BreakStatLimit;
 
 	public static ConfigElement<string> CustomTitle;
+	public static ConfigElement<string> EventRules;
 	public static ConfigElement<int> OptionResultMode;
 
 	public static ConfigElement<int> AnytimeSaveLimit;
@@ -342,6 +343,7 @@ public static class ConfigManager
 		PanelFont = new ConfigElement<int>("PanelFont", "咖啡伴侣窗口等 Mod 界面的字体：0=思源宋体（游戏对话用的字体，默认），1=微软雅黑（系统字体）", 0);
 		EnableBackgroundRun = new ConfigElement<bool>("EnableBackgroundRun", "后台继续运行：切到别的窗口时游戏不暂停，背景音乐也不停。true=开，false=关（游戏原本的做法：切走就停）", defaultValue: true);
 		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "隐藏界面看 CG：剧情里按热键（HideUIKey，默认鼠标右键）隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次恢复。已不用：不想要就把 HideUIKey 设成 None", defaultValue: true);
+		EventRules = new ConfigElement<string>("EventRules", "随机事件的「总是」「不出」（在随机事件选择框里点，自动记录）：事件编号=1 总是触发、=2 不出，分号隔开。清空就全部取消", "");
 		OptionResultMode = new ConfigElement<int>("OptionResultMode", "对话选项后面的后果说明（选了会怎样、解锁条件）：0=总是显示（默认），1=鼠标停在选项上（或手柄选中）才显示，2=不显示", 0);
 		CustomTitle = new ConfigElement<string>("CustomTitle", "自定义称号：对话框名字上方、人物介绍、属性页显示的称号换成这个（空=照游戏原样）。在数值页「称号」里改", "");
 		BreakStatLimit = new ConfigElement<bool>("BreakStatLimit", "突破属性上限：体力、内力、轻功、学问、嘴力、心相、性情、处世、修养、道德、阴阳、命运、魅力、厨艺、抗毒、抗麻原本最高 100，打开后上限改成 9999；关掉后超过的部分会在下次变化时截回。true=开，false=关", defaultValue: false);

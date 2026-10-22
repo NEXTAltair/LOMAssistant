@@ -196,7 +196,7 @@ public partial class AnytimeSave : MonoBehaviour
 			{
 				wrapped.Clear();
 			}
-			result = wrapped[hash] = scriptPrefix + "\n" + Transform(EventPicker.Instrument(code));
+			result = wrapped[hash] = scriptPrefix + "\n" + Transform(EventPicker.Instrument(code, name.EndsWith(".LuaScript") ? name.Substring(0, name.Length - ".LuaScript".Length) : name));
 		}
 		return result;
 	}

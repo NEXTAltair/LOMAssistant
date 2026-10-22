@@ -178,6 +178,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			TryPatchAll(typeof(LuaLoadTiming));
 			TryPatchAll(typeof(BranchNotifyPatch));
 			TryPatchAll(typeof(EventPickerPatch));
+			TryPatchAll(typeof(SwitchRandom));
 			TryPatchAll(typeof(OneClickUnlockPatch));
 			EventPicker.Ensure(base.gameObject);
 			UiHider.Ensure(base.gameObject);

@@ -15,6 +15,8 @@ namespace LOMAssistant;
 /// <summary>
 /// 随机事件自选：剧本走到 checkpointmanager.Position（工作、闲逛等按权重抽一个事件）时先停下，
 /// 列出这次满足条件的事件，选一个就触发它，也可以选「随机」照游戏原本的概率抽。
+/// 条件里带随机值的分支判断（checkpointmanager.Switch，比如飞天门修炼时「随机值 ≤ 小梅好感」就被小梅拉去跑步）也一样停下，
+/// 列出这次能走到的几条路和概率，选哪条就把这次判断里的随机值定成让它成立的数（其他条件照常判断，见 SwitchRandom）。
 /// 停下的办法参考赵活系统（Toufff，MIT）：把剧本里的调用包一层，在 Lua 协程里等待，选完再执行原调用。
 /// </summary>
 public class EventPicker : MonoBehaviour
@@ -22,6 +24,7 @@ public class EventPicker : MonoBehaviour
 	private enum State { Idle, Waiting, Released }
 
 	private static readonly Regex Call = new Regex(@"(?<![\w.])checkpointmanager\.Position\(\s*""([A-Za-z0-9_]+)""\s*\)", RegexOptions.Compiled);
+	private static readonly Regex SwitchCall = new Regex(@"(?<![\w.])checkpointmanager\.Switch\(\s*""([A-Za-z0-9_]+)""\s*\)", RegexOptions.Compiled);
 
 	private static EventPicker _instance;
 	private static State _state;
@@ -37,14 +40,21 @@ public class EventPicker : MonoBehaviour
 	private class Choice
 	{
 		public PositionEventData Data;
+		/// <summary>分支判断：选它时把随机值定成这个数。</summary>
+		public int Forced;
+		/// <summary>「总是」「不出」记在这个编号下（事件编号，或「Switch:判断名#第几支」）。</summary>
+		public string Key;
 		public string Name;
 		public string Effects;
 		public int Rate;
 	}
 
+	/// <summary>正在问的是分支判断（不是事件池）时，判断名。</summary>
+	private static string _switch;
+
 	private float _scale = -1f;
 	private int _fontMode = -1;
-	private GUIStyle _label, _title, _button, _highlighted, _effects, _window, _random, _randomHighlighted;
+	private GUIStyle _label, _title, _button, _highlighted, _effects, _window, _random, _randomHighlighted, _rule, _ruleOn;
 	private bool _dark;
 	private float _opacity;
 	private Rect _windowRect;
@@ -65,20 +75,28 @@ public class EventPicker : MonoBehaviour
 	{
 		_state = State.Idle;
 		_pool = null;
+		_switch = null;
 		Choices.Clear();
 		Pending = null;
+		SwitchRandom.Pending = null;
 	}
 
-	/// <summary>给剧本里每个 checkpointmanager.Position("名字") 包上等待；只在协程里等，主线程直接执行。</summary>
-	public static string Instrument(string code)
+	/// <summary>
+	/// 给剧本里每个 checkpointmanager.Position("名字")、checkpointmanager.Switch("名字") 包上等待；只在协程里等，主线程直接执行。
+	/// 分支判断带上剧本名，选择框里写每条路接到哪段剧情。
+	/// </summary>
+	public static string Instrument(string code, string script = "")
 	{
-		return Call.Replace(code, m => "(function() local _, __lom_main = coroutine.running(); if not __lom_main and __lom_wait_position then while __lom_wait_position(\""
+		code = Call.Replace(code, m => "(function() local _, __lom_main = coroutine.running(); if not __lom_main and __lom_wait_position then while __lom_wait_position(\""
 			+ m.Groups[1].Value + "\") do coroutine.yield() end end return " + m.Value + " end)()");
+		return SwitchCall.Replace(code, m => "(function() local _, __lom_main = coroutine.running(); if not __lom_main and __lom_wait_switch then while __lom_wait_switch(\""
+			+ m.Groups[1].Value + "\", \"" + (script ?? "") + "\") do coroutine.yield() end end return " + m.Value + " end)()");
 	}
 
 	public static void Bind(Script script)
 	{
 		script.Globals["__lom_wait_position"] = DynValue.NewCallback((c, a) => DynValue.NewBoolean(a.Count > 0 && Wait(a[0].String)));
+		script.Globals["__lom_wait_switch"] = DynValue.NewCallback((c, a) => DynValue.NewBoolean(a.Count > 1 && WaitSwitch(a[0].String, a[1].String)));
 	}
 
 	/// <summary>新剧本开始执行：上一段剧本里没选完的作废。</summary>
@@ -88,6 +106,7 @@ public class EventPicker : MonoBehaviour
 		{
 			_state = State.Idle;
 			_pool = null;
+			_switch = null;
 			Choices.Clear();
 		}
 	}
@@ -122,7 +141,7 @@ public class EventPicker : MonoBehaviour
 				int rate = data.GetRate();
 				if (rate > 0)
 				{
-					Choices.Add(new Choice { Data = data, Rate = rate, Name = TextConverter.ToSimplified(DataHelper.GetEventName(data)), Effects = PositionEventCache.Instance.GetCertainEffects(data) });
+					Choices.Add(new Choice { Data = data, Key = data.name, Rate = rate, Name = TextConverter.ToSimplified(DataHelper.GetEventName(data)), Effects = PositionEventCache.Instance.GetCertainEffects(data) });
 				}
 			}
 			if (Choices.Count < 2)
@@ -132,8 +151,8 @@ public class EventPicker : MonoBehaviour
 			}
 			_state = State.Waiting;
 			_pool = pool;
-			// 键盘、手柄的选中项默认停在「随机」：直接按确认就是按原本概率抽；停在第一项会让人误以为会抽到它
-			_highlight = Choices.Count;
+			_switch = null;
+			HighlightDefault();
 			FileLogger.Log($"[事件自选] {pool}：{Choices.Count} 个可触发事件，等待选择");
 			return true;
 		}
@@ -146,11 +165,76 @@ public class EventPicker : MonoBehaviour
 		}
 	}
 
-	private static void Choose(PositionEventData data)
+	// 键盘、手柄的选中项默认停在「随机」：直接按确认就是按原本概率抽；停在第一项会让人误以为会抽到它。
+	// 设了「总是」的能走到时停在它上面
+	private static void HighlightDefault()
 	{
-		Pending = data;
+		int always = Choices.FindIndex(c => EventRules.Get(c.Key) == EventRules.Always);
+		_highlight = always >= 0 ? always : Choices.Count;
+	}
+
+	/// <summary>剧本每帧问一次：这个分支判断要不要停下来等选（条件里有随机值、能走到两条以上的路才问）。</summary>
+	private static bool WaitSwitch(string name, string script)
+	{
+		string pool = "switch:" + name;
+		try
+		{
+			if (_state == State.Waiting && _pool == pool)
+			{
+				return true;
+			}
+			if (_state == State.Released && _pool == pool)
+			{
+				_state = State.Idle;
+				_pool = null;
+				_switch = null;
+				return false;
+			}
+			if (_instance == null || !ConfigManager.EnableEventPicker.Value || AnytimeSave.Replaying || AnytimeSave.Restoring)
+			{
+				return false;
+			}
+			List<SwitchRandom.Arm> arms = SwitchRandom.Arms(name);
+			if (arms == null || arms.Count < 2)
+			{
+				return false;
+			}
+			Choices.Clear();
+			foreach (SwitchRandom.Arm arm in arms)
+			{
+				var (label, condition) = SwitchRandom.Describe(name, script, arm.Branch, arm.Value);
+				Choices.Add(new Choice { Key = SwitchRandom.RuleKey(name, arm.Branch), Forced = arm.Value, Rate = arm.Count, Name = label, Effects = condition });
+			}
+			_state = State.Waiting;
+			_pool = pool;
+			_switch = name;
+			HighlightDefault();
+			FileLogger.Log($"[分支自选] {name}：{Choices.Count} 条路，等待选择");
+			return true;
+		}
+		catch (System.Exception ex)
+		{
+			FileLogger.LogWarning("[分支自选] 读取分支判断失败，按原本随机: " + ex.Message);
+			_state = State.Idle;
+			_switch = null;
+			Choices.Clear();
+			return false;
+		}
+	}
+
+	private static void Choose(Choice choice)
+	{
+		if (_switch != null)
+		{
+			SwitchRandom.Pending = choice == null ? null : (_switch, choice.Forced);
+			FileLogger.Log("[分支自选] " + _switch + "：" + (choice == null ? "随机" : choice.Name));
+		}
+		else
+		{
+			Pending = choice?.Data;
+			FileLogger.Log("[事件自选] " + _pool + "：" + (choice == null ? "随机" : DataHelper.GetEventName(choice.Data)));
+		}
 		_state = State.Released;
-		FileLogger.Log("[事件自选] " + _pool + "：" + (data == null ? "随机" : DataHelper.GetEventName(data)));
 		Choices.Clear();
 	}
 
@@ -196,14 +280,14 @@ public class EventPicker : MonoBehaviour
 			{
 				if (kb[Key.Digit1 + i].wasPressedThisFrame)
 				{
-					Choose(Choices[i].Data);
+					Choose(Choices[i]);
 					return;
 				}
 			}
 		}
 		if ((kb != null && (kb.enterKey.wasPressedThisFrame || kb.numpadEnterKey.wasPressedThisFrame)) || (pad != null && pad.buttonSouth.wasPressedThisFrame))
 		{
-			Choose(_highlight < Choices.Count ? Choices[_highlight].Data : null);
+			Choose(_highlight < Choices.Count ? Choices[_highlight] : null);
 		}
 	}
 
@@ -223,6 +307,10 @@ public class EventPicker : MonoBehaviour
 		_highlighted = new GUIStyle(_button) { fontStyle = FontStyle.Bold };
 		_highlighted.normal.background = _highlighted.hover.background = PanelTheme.Framed(PanelTheme.PaperDeep, PanelTheme.Cinnabar);
 		_highlighted.normal.textColor = _highlighted.hover.textColor = PanelTheme.Cinnabar;
+		_rule = PanelTheme.Button(scale, 16);
+		_rule.margin = new RectOffset((int)(4f * scale), 0, (int)(3f * scale), (int)(3f * scale));
+		_ruleOn = PanelTheme.Primary(scale, 16);
+		_ruleOn.margin = _rule.margin;
 		_random = PanelTheme.Primary(scale, 19);
 		// 手柄、键盘停在「随机」上时和停在事件上一样：深一点的底、朱砂边框和字
 		_randomHighlighted = new GUIStyle(_highlighted) { alignment = TextAnchor.MiddleCenter };
@@ -263,7 +351,10 @@ public class EventPicker : MonoBehaviour
 
 	private static string Label(int i, int total)
 	{
-		return (i < 9 ? (i + 1) + ". " : "") + Choices[i].Name + $"（{Choices[i].Rate * 100f / total:0.#}%）";
+		Choice c = Choices[i];
+		int rate = EventRules.EffectiveRate(c.Key, c.Rate, Choices.Select(x => x.Key));
+		string odds = rate == 0 && EventRules.Get(c.Key) == EventRules.Never ? "不出" : $"{rate * 100f / Mathf.Max(1, total):0.#}%";
+		return (i < 9 ? (i + 1) + ". " : "") + c.Name + $"（{odds}）";
 	}
 
 	// 事件名、效果里的绿、红、金是给深色底配的，画窗口期间在宣纸底上换成看得清的同色系（PanelTheme.MapColors）
@@ -282,10 +373,11 @@ public class EventPicker : MonoBehaviour
 
 	private void DrawChoices()
 	{
-		GUILayout.Label("这次触发哪个事件", _title);
-		int total = Choices.Sum(c => c.Rate);
+		GUILayout.Label(_switch != null ? "这次走哪条路" : "这次触发哪个事件", _title);
+		int total = Choices.Sum(c => EventRules.EffectiveRate(c.Key, c.Rate, Choices.Select(x => x.Key)));
 		// 窗口高度随内容变，滚动区不给高度会被压成一行：按内容算出高度，超过屏幕七成再滚动
-		float width = _windowRect.width - _window.padding.horizontal - 24f * _scale;
+		float ruleWidth = 64f * _scale;
+		float width = _windowRect.width - _window.padding.horizontal - 24f * _scale - ruleWidth * 2f - 8f * _scale;
 		float height = 0f;
 		for (int i = 0; i < Choices.Count; i++)
 		{
@@ -300,11 +392,23 @@ public class EventPicker : MonoBehaviour
 		{
 			Choice c = Choices[i];
 			string text = Label(i, total);
+			GUILayout.BeginHorizontal();
 			if (GUILayout.Button(text, i == _highlight ? _highlighted : _button))
 			{
-				Choose(c.Data);
+				Choose(c);
 				GUIUtility.ExitGUI();
 			}
+			// 「总是」：以后这里能抽到它就直接触发它；「不出」：以后不会抽到它。再点一次取消
+			int rule = EventRules.Get(c.Key);
+			if (GUILayout.Button("总是", rule == EventRules.Always ? _ruleOn : _rule, GUILayout.Width(ruleWidth)))
+			{
+				EventRules.Set(c.Key, c.Name, rule == EventRules.Always ? EventRules.None : EventRules.Always);
+			}
+			if (GUILayout.Button("不出", rule == EventRules.Never ? _ruleOn : _rule, GUILayout.Width(ruleWidth)))
+			{
+				EventRules.Set(c.Key, c.Name, rule == EventRules.Never ? EventRules.None : EventRules.Never);
+			}
+			GUILayout.EndHorizontal();
 			if (!string.IsNullOrEmpty(c.Effects))
 			{
 				GUILayout.Label(c.Effects, _effects);
@@ -312,7 +416,7 @@ public class EventPicker : MonoBehaviour
 		}
 		GUILayout.EndScrollView();
 		GUILayout.Space(6f * _scale);
-		if (GUILayout.Button("随机（按原本概率）", _highlight == Choices.Count ? _randomHighlighted : _random))
+		if (GUILayout.Button(Choices.Any(c => EventRules.Get(c.Key) != EventRules.None) ? "随机（按上面的概率）" : "随机（按原本概率）", _highlight == Choices.Count ? _randomHighlighted : _random))
 		{
 			Choose(null);
 			GUIUtility.ExitGUI();
@@ -337,7 +441,7 @@ internal static class EventPickerPatch
 		EventPicker.Bind(__instance.Interpreter);
 		if (AnytimeSave.Instance == null)
 		{
-			luaString = EventPicker.Instrument(luaString);
+			luaString = EventPicker.Instrument(luaString, friendlyName.Substring(0, friendlyName.Length - ".LuaScript".Length));
 		}
 	}
 
@@ -357,6 +461,128 @@ internal static class EventPickerPatch
 		{
 			FileLogger.LogWarning("[事件自选] 指定事件失败，按原本随机: " + ex.Message);
 		}
+		try
+		{
+			if (EventRules.TryPick(__instance, out string result))
+			{
+				__result = result;
+				return false;
+			}
+		}
+		catch (System.Exception ex)
+		{
+			FileLogger.LogWarning("[事件规则] 按规则抽事件失败，按原本随机: " + ex.Message);
+		}
 		return true;
+	}
+}
+
+/// <summary>
+/// 随机事件的「总是」「不出」：在随机事件选择框里给某个事件设上，记在配置 EventRules 里（事件编号=1 总是、=2 不出）。
+/// 游戏从事件池抽结果时（没有在选择框里点名选哪个，包括选「随机」和关掉事件自选时）：
+/// 能触发的事件里有「总是」的就只在它们之间抽；否则把「不出」的去掉再按原本的权重抽；全都「不出」就照原样抽。
+/// 比如练功时的教小竹练功、小梅练功，闲逛时的和小梅跑步，想刷出来就设「总是」，不想被打扰就设「不出」。
+/// </summary>
+internal static class EventRules
+{
+	public const int None = 0, Always = 1, Never = 2;
+
+	private static Dictionary<string, int> _rules;
+	private static string _parsedFrom;
+
+	private static Dictionary<string, int> Rules
+	{
+		get
+		{
+			string raw = ConfigManager.EventRules.Value ?? "";
+			if (_rules == null || _parsedFrom != raw)
+			{
+				_parsedFrom = raw;
+				_rules = new Dictionary<string, int>();
+				foreach (string part in raw.Split(';'))
+				{
+					string[] kv = part.Split('=');
+					if (kv.Length == 2 && int.TryParse(kv[1], out int v) && (v == Always || v == Never) && kv[0].Trim().Length > 0)
+					{
+						_rules[kv[0].Trim()] = v;
+					}
+				}
+			}
+			return _rules;
+		}
+	}
+
+	public static int Get(PositionEventData data) => data != null ? Get(data.name) : None;
+
+	public static int Get(string key) => key != null && Rules.TryGetValue(key, out int v) ? v : None;
+
+	public static void Set(string key, string label, int rule)
+	{
+		var rules = new Dictionary<string, int>(Rules);
+		if (rule == None)
+		{
+			rules.Remove(key);
+		}
+		else
+		{
+			rules[key] = rule;
+		}
+		ConfigManager.EventRules.Value = string.Join(";", rules.Select(kv => kv.Key + "=" + kv.Value).ToArray());
+		FileLogger.Log("[事件规则] " + RichText.Strip(label ?? "") + "（" + key + "）：" + (rule == Always ? "总是" : rule == Never ? "不出" : "取消"));
+	}
+
+	public static int EffectiveRate(PositionEventData data, int rate, IEnumerable<PositionEventData> pool) => EffectiveRate(data.name, rate, pool.Select(d => d.name));
+
+	/// <summary>按规则算出来的权重：同一池里有能触发的「总是」时，只有它们保留原权重。</summary>
+	public static int EffectiveRate(string key, int rate, IEnumerable<string> pool)
+	{
+		int rule = Get(key);
+		bool anyAlways = pool.Any(d => Get(d) == Always);
+		if (anyAlways)
+		{
+			return rule == Always ? rate : 0;
+		}
+		bool allNever = pool.All(d => Get(d) == Never);
+		return rule == Never && !allNever ? 0 : rate;
+	}
+
+	public static bool TryPick(PositionResultData pool, out string result)
+	{
+		result = null;
+		if (Rules.Count == 0)
+		{
+			return false;
+		}
+		var candidates = new List<(PositionEventData Data, int Rate)>();
+		foreach (PositionEventData data in pool.List)
+		{
+			int rate = data != null ? data.GetRate() : 0;
+			if (rate > 0)
+			{
+				candidates.Add((data, rate));
+			}
+		}
+		if (!candidates.Any(c => Get(c.Data) != None))
+		{
+			return false;
+		}
+		var weighted = candidates.Select(c => (c.Data, Rate: EffectiveRate(c.Data, c.Rate, candidates.Select(x => x.Data)))).Where(c => c.Rate > 0).ToList();
+		int total = weighted.Sum(c => c.Rate);
+		if (total <= 0)
+		{
+			return false;
+		}
+		int roll = Random.Range(0, total);
+		foreach (var (data, rate) in weighted)
+		{
+			if (roll < rate)
+			{
+				result = pool.GetFieldValue<string>("_scriptPrefix") + "_" + data.ResultType;
+				FileLogger.Log("[事件规则] " + pool.name + " 按规则抽到：" + DataHelper.GetEventName(data));
+				return true;
+			}
+			roll -= rate;
+		}
+		return false;
 	}
 }

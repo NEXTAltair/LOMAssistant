@@ -120,7 +120,7 @@ public static class DataHelper
 	/// 分支判断表。挂在剧情场景的 CheckPointManager 上，离开剧情场景（养成地图）就拿不到；
 	/// 拿到过就记住，没拿到过就在已载入的资源里找。
 	/// </summary>
-	private static SwitchResultConfig[] SwitchConfigs()
+	internal static SwitchResultConfig[] SwitchConfigs()
 	{
 		CheckPointManager instance = CheckPointManager.Instance;
 		if (instance != null)
