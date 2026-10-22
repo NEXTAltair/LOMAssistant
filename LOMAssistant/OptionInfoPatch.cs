@@ -401,7 +401,8 @@ internal static class OptionInfoPatch
 			NarrativeLogEntry entry = new NarrativeLogEntry
 			{
 				name = "LOMAssistant",
-				text = "<size=18>" + text + "</size>"
+				// 记到游戏的对话记录里，不经过本 Mod 界面的翻译，这里先换成界面语言（繁体、韩语、日语）
+				text = "<size=18>" + TextConverter.ForDisplay(text) + "</size>"
 			};
 			narrativeLog.AddLine(entry);
 		}
