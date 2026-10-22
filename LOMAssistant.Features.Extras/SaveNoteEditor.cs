@@ -127,6 +127,8 @@ public class SaveNoteEditor : MonoBehaviour
 	/// <summary>备注框上次关掉的时间（不受游戏倍速影响）：刚关掉的那一下不算点到后面的存档上。</summary>
 	public static float ClosedAt { get; private set; } = -10f;
 
+	private Rect _lastRect;
+
 	private void OnGUI()
 	{
 		// 隐藏界面看 CG 时本 Mod 的窗口也不画
@@ -136,6 +138,11 @@ public class SaveNoteEditor : MonoBehaviour
 		}
 		if (_slot == null)
 		{
+			// 刚关掉的一小会儿仍然挡住这块：点「保存」「不写」松开鼠标时，不能落到下面的存档栏上读了档
+			if (Time.unscaledTime - ClosedAt < 0.5f)
+			{
+				InputGuard.Report("SaveNote", _lastRect);
+			}
 			return;
 		}
 		float scale = Mathf.Min(Screen.width / 1920f, Screen.height / 1080f);
@@ -144,9 +151,11 @@ public class SaveNoteEditor : MonoBehaviour
 			BuildStyles(scale);
 		}
 		float w = 560f * _scale;
-		float h = 190f * _scale;
+		float h = 220f * _scale;
 		Rect rect = new Rect((Screen.width - w) / 2f, (Screen.height - h) / 2f, w, h);
-		GUI.ModalWindow(WindowId, rect, DrawWindow, $"存档 {_slot} 备注", _window);
+		_lastRect = rect;
+		InputGuard.Report("SaveNote", rect);
+		GUI.ModalWindow(WindowId, rect, DrawWindow, "", _window);
 	}
 
 	private void DrawWindow(int id)
@@ -162,7 +171,9 @@ public class SaveNoteEditor : MonoBehaviour
 			return;
 		}
 
-		GUILayout.Space(10f * _scale);
+		// 标题单独一行（用窗口自带的标题栏时，字一大就压到输入框上）
+		GUILayout.Label($"存档 {_slot} 备注", _label);
+		GUILayout.Space(8f * _scale);
 		GUI.SetNextControlName(FieldName);
 		_text = GUILayout.TextField(_text, MaxLength, _field);
 		if (_focusPending && e.type == EventType.Repaint)
@@ -191,6 +202,8 @@ public class SaveNoteEditor : MonoBehaviour
 		_dark = PanelTheme.Dark;
 		_opacity = PanelTheme.DialogOpacity;
 		_label = PanelTheme.Label(scale, 22, PanelTheme.Ink, false);
+		_label.alignment = TextAnchor.MiddleCenter;
+		_label.fontStyle = FontStyle.Bold;
 		_button = PanelTheme.Button(scale, 20);
 		_button.fixedHeight = 44f * scale;
 		_field = PanelTheme.Field(scale, 22);
@@ -198,6 +211,6 @@ public class SaveNoteEditor : MonoBehaviour
 		_window = PanelTheme.Window(scale);
 		_window.fontSize = Mathf.Max(12, (int)(22f * scale));
 		_window.normal.textColor = _window.onNormal.textColor = PanelTheme.Ink;
-		_window.padding.top = (int)(40f * scale);
+
 	}
 }

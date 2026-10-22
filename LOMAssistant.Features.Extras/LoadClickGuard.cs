@@ -46,6 +46,12 @@ public static class LoadClickGuard
 
 	private static bool Allow(string kind)
 	{
+		// 存档备注框开着或刚关掉：这一下是点在备注框的按钮上，不是要读档
+		if (SaveNoteEditor.IsOpen || Time.unscaledTime - SaveNoteEditor.ClosedAt < 0.5f)
+		{
+			FileLogger.Log($"读档：忽略{kind}读档点击（刚在写存档备注）");
+			return false;
+		}
 		SceneController scenes = SceneController.Instance;
 		bool busy = scenes != null && (scenes.IsPrepare || scenes.IsLoading);
 		if (busy || Time.realtimeSinceStartup - _lastLoad < Window)
