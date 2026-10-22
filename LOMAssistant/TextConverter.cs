@@ -46,9 +46,6 @@ public static class TextConverter
 
 	public static string ToTraditional(string text) => Cached(_traditionalCache, text, "zh-TW", LCMAP_TRADITIONAL_CHINESE);
 
-	/// <summary>日语界面需使用日语补丁提供的字体；韩语字形由游戏字体支持。</summary>
-	public static bool NeedsSystemFont => DisplayLanguage == UiText.Japanese;
-
 	/// <summary>
 	/// 本 Mod 界面用的语言：ChineseSimplified / ChineseTraditional / Korean / Japanese。
 	/// 设置里「界面语言」选了就用选的；「跟随游戏」时用游戏的语言，游戏是简体但装了日语补丁（它覆盖的就是简体）时算日语。
