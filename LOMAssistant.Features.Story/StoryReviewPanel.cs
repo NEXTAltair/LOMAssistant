@@ -513,9 +513,26 @@ public partial class StoryReviewPanel : MonoBehaviour
 		return value.Trim();
 	}
 
+	// 内部数据是简体：输入繁体时转成简体再搜一遍；界面是繁体、韩语、日语时，再按界面上显示的字样（翻译后）搜一遍
 	private static bool Matches(string query, params string[] texts)
 	{
-		return query.Length == 0 || texts.Any(t => t != null && RichText.Strip(t).IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
+		if (query.Length == 0)
+		{
+			return true;
+		}
+		string simplified = TextConverter.ToSimplifiedUnlessJapanese(query);
+		bool translated = TextConverter.DisplayLanguage != "ChineseSimplified";
+		return texts.Any(t =>
+		{
+			if (t == null)
+			{
+				return false;
+			}
+			string plain = RichText.Strip(t);
+			return plain.IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0
+				|| (simplified != query && plain.IndexOf(simplified, StringComparison.OrdinalIgnoreCase) >= 0)
+				|| (translated && RichText.Strip(TextConverter.ForDisplay(t)).IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0);
+		});
 	}
 
 	// ---------------- 绘图小工具 ----------------

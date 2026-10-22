@@ -525,6 +525,8 @@ public static class StoryAtlas
 		{
 			return found;
 		}
+		// 台词索引是简体，输入繁体时转成简体再搜
+		query = TextConverter.ToSimplifiedUnlessJapanese(query);
 		foreach (var (script, text) in Dialogue)
 		{
 			int at = text.IndexOf(query, StringComparison.OrdinalIgnoreCase);

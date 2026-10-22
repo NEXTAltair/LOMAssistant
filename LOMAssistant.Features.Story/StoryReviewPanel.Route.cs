@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Mortal.Core;
 using UnityEngine;
 
 namespace LOMAssistant.Features.Story;
@@ -588,6 +589,63 @@ public partial class StoryReviewPanel
 		}
 	}
 
+	// ---------------- 旗标搜索 ----------------
+
+	private const int FlagHitsShown = 5;
+	private List<(string Name, string Note)> _allFlags;
+	private string _flagSearchedFor;
+	private List<(string Name, string Note, List<StoryUse> Uses)> _flagHits = new List<(string, string, List<StoryUse>)>();
+
+	/// <summary>搜索词对得上旗标编号或说明时，列出这面旗标在哪些剧情里改动、判定（和数值页点旗标名字看到的一样），每处能跳到剧情图。</summary>
+	private void DrawFlagSearch(string query)
+	{
+		if (_flagSearchedFor != query)
+		{
+			_flagSearchedFor = query;
+			_allFlags ??= MissionManagerData.Instance?.FlagsCollection?.Where(c => c != null && c.List != null).SelectMany(c => c.List).Where(f => f != null)
+				.Select(f => f.name).Distinct().OrderBy(n => n, StringComparer.Ordinal)
+				.Select(n => (n, TextConverter.ToSimplified(MissionManagerData.Instance.GetFlag(n)?.DevNote ?? "").Replace("\n", " ").Trim())).ToList();
+			_flagHits = new List<(string, string, List<StoryUse>)>();
+			foreach (var (name, note) in _allFlags ?? new List<(string, string)>())
+			{
+				if (note.Contains("暂存") || !Matches(query, name, note))
+				{
+					continue;
+				}
+				List<StoryUse> uses = StoryUsage.Flag(name);
+				if (uses == null)
+				{
+					// 反查还没整理好：下一帧再搜
+					_flagSearchedFor = null;
+					return;
+				}
+				if (uses.Count > 0)
+				{
+					_flagHits.Add((name, note, uses));
+				}
+			}
+		}
+		if (_flagHits.Count == 0)
+		{
+			return;
+		}
+		GUILayout.Label($"旗标里找到 {_flagHits.Count} 面" + (_flagHits.Count > FlagHitsShown ? $"（只列前 {FlagHitsShown} 面，搜得更具体些能缩小范围）" : ""), _heading);
+		foreach (var (name, note, uses) in _flagHits.Take(FlagHitsShown))
+		{
+			GUILayout.Space(S(6));
+			GUILayout.Label($"<b>{name}</b>" + (note.Length > 0 ? "　" + Short(note, 40) : ""), _label);
+			foreach (StoryUse use in uses.OrderBy(u => !u.Changes).ThenBy(u => u.Mission == null).ThenBy(u => u.Mission?.From ?? int.MaxValue).Take(20))
+			{
+				DrawUse(use);
+			}
+			if (uses.Count > 20)
+			{
+				GUILayout.Label($"还有 {uses.Count - 20} 处，到数值页点这面旗标的名字看全部", _muted);
+			}
+		}
+		GUILayout.Space(S(12));
+	}
+
 	// ---------------- 台词搜索 ----------------
 
 	private string _searchedFor;
@@ -595,6 +653,7 @@ public partial class StoryReviewPanel
 
 	private void DrawSearchResults(string query)
 	{
+		DrawFlagSearch(query);
 		if (!StoryAtlas.DialogueReady)
 		{
 			GUILayout.Label("正在整理台词……", _muted);

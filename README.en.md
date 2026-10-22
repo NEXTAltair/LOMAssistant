@@ -55,7 +55,7 @@ _Screenshots show the Chinese UI._
 
     <img src="media/story-now.webp" width="640" alt="Now: options of the current scene grouped by choice, stat gains in green and losses in red; current quests">
 
-  - **Route map**: the whole main story laid out on a calendar, side quests below; click a stop to see when, where and under which conditions it triggers. Searchable by quest, place and dialogue.
+  - **Route map**: the whole main story laid out on a calendar, side quests below; click a stop to see when, where and under which conditions it triggers. Searchable by quest, place, dialogue and flag (ID or description); a flag result lists the scenes that change or check it.
 
     <img src="media/story-route.webp" width="640" alt="Route map: the main story as stops on a calendar, side quests below">
 
