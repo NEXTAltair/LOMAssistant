@@ -833,9 +833,35 @@ public partial class StoryReviewPanel : MonoBehaviour
 	private static readonly string[] EndingSections = { "结局（汗青书）", "死亡（生死簿）", "成就（风云史）" };
 	private static readonly string[] EndingFilters = { "全部", "已达成", "未达成" };
 
-	private static IEnumerable<StoryEnding> EndingSection(int section) =>
-		section == 2 ? StoryAtlas.Achievements : StoryAtlas.Endings.Where(e => e.Death == (section == 1))
-			.OrderBy(e => e.Ways.Select(w => w.Mission?.From ?? int.MaxValue).DefaultIfEmpty(int.MaxValue).Min()).ThenBy(e => e.Id, StringComparer.Ordinal);
+	/// <summary>和游戏图鉴一样的编号前缀：汗青书「结局 N　」（按游戏语言），生死簿「N. 」；成就和图鉴里没有的不加。</summary>
+	private static string EndingNumber(StoryEnding ending)
+	{
+		if (ending.Number <= 0 || ending.Item == null || StoryAtlas.Achievements.Contains(ending))
+		{
+			return "";
+		}
+		if (ending.Death)
+		{
+			return ending.Number + ". ";
+		}
+		string format = Mortal.Core.LocalizationManager.Instance?.LocaleResolver?.GetString("System/EndText");
+		return (string.IsNullOrEmpty(format) || !format.Contains("{0}") ? "结局" + ending.Number : string.Format(format, ending.Number)) + "　";
+	}
+
+	private static bool _endingsByTime; // false：按游戏图鉴的编号；true：按剧情里最早能触发的时间
+
+	private static IEnumerable<StoryEnding> EndingSection(int section)
+	{
+		if (section == 2)
+		{
+			return StoryAtlas.Achievements;
+		}
+		IEnumerable<StoryEnding> list = StoryAtlas.Endings.Where(e => e.Death == (section == 1));
+		// 图鉴里没有的（编号 0）排在最后
+		return _endingsByTime
+			? list.OrderBy(e => e.Ways.Select(w => w.Mission?.From ?? int.MaxValue).DefaultIfEmpty(int.MaxValue).Min()).ThenBy(e => e.Id, StringComparer.Ordinal)
+			: list.OrderBy(e => e.Number > 0 ? e.Number : int.MaxValue).ThenBy(e => e.Id, StringComparer.Ordinal);
+	}
 
 	private void DrawEndings(Rect r)
 	{
@@ -855,6 +881,22 @@ public partial class StoryReviewPanel : MonoBehaviour
 				_endingsScroll = Vector2.zero;
 			}
 			fx += S(102);
+		}
+		// 再往右：排序方式（成就没有编号，不显示）
+		if (_endingsSection != 2)
+		{
+			fx += S(14);
+			string[] sorts = { "按编号", "按时间" };
+			for (int i = 0; i < sorts.Length; i++)
+			{
+				bool on = _endingsByTime == (i == 1);
+				if (GUI.Button(new Rect(fx, r.y + S(2), S(96), S(32)), sorts[i], on ? _primary : _button) && !on)
+				{
+					_endingsByTime = i == 1;
+					_endingsScroll = Vector2.zero;
+				}
+				fx += S(102);
+			}
 		}
 		// 下面一排是三类，点哪类看哪类；搜索时三类的结果都列出来
 		float gx = r.x, gy = r.y + S(44);
@@ -886,7 +928,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 			var shown = EndingSection(section).Where(e => _endingsFilter == 0 || e.Achieved == (_endingsFilter == 1)).Where(e =>
 			{
 				string where = string.Join("、", e.Ways.Select(w => w.Mission).Where(m => m != null).Select(m => (m.Main ? "主线" : m.SeriesTitle) + "「" + m.Title + "」").Distinct().ToArray());
-				return Matches(query, e.Title, e.Desc, e.Id, e.Award, where);
+				return Matches(query, EndingNumber(e) + e.Title, e.Desc, e.Id, e.Award, where);
 			}).ToList();
 			if (shown.Count == 0)
 			{
@@ -903,7 +945,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 				GUILayout.BeginVertical(_card);
 				GUILayout.BeginHorizontal();
 				GUILayout.Label(ending.Achieved ? "<color=#2F6B3A><b>✓ 已达成</b></color>" : "<color=#A3302A>未达成</color>", _small, GUILayout.Width(S(80)));
-				GUILayout.Label("<b>" + ending.Title + "</b>", _label);
+				GUILayout.Label("<b>" + EndingNumber(ending) + ending.Title + "</b>", _label);
 				GUILayout.EndHorizontal();
 				if (section == 2)
 				{

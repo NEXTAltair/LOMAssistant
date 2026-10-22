@@ -68,6 +68,8 @@ public sealed class StoryEnding
 	/// <summary>成就给新存档的奖励，一行；结局、死亡没有。</summary>
 	public string Award = "";
 	public LibraryItemData Item;
+	/// <summary>游戏图鉴里的编号（汗青书「结局 N」、生死簿「N.」，按图鉴里的顺序从 1 数）；图鉴里没有的为 0。</summary>
+	public int Number;
 	public List<StoryEndingWay> Ways = new List<StoryEndingWay>();
 
 	/// <summary>达成过没有：游戏自己的记录（全部周目）。</summary>
@@ -397,13 +399,15 @@ public static class StoryAtlas
 			{
 				return;
 			}
-			foreach (LibraryItemData item in collection.List)
+			// 编号和游戏图鉴（LibraryPanel）一样：列表里的位置 + 1
+			for (int i = 0; i < collection.List.Count; i++)
 			{
+				LibraryItemData item = collection.List[i];
 				if (item == null)
 				{
 					continue;
 				}
-				var ending = new StoryEnding { Id = item.name, Death = death, Item = item, Title = LibraryText(item.GetTitleKey(), item.name), Desc = LibraryText(item.GetDescKey(), "") };
+				var ending = new StoryEnding { Id = item.name, Death = death, Item = item, Number = i + 1, Title = LibraryText(item.GetTitleKey(), item.name), Desc = LibraryText(item.GetDescKey(), "") };
 				byId[(death ? "d" : "e") + item.name] = ending;
 				Endings.Add(ending);
 			}
