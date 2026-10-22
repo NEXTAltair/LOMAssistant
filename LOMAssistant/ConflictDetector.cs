@@ -27,6 +27,7 @@ public static class ConflictDetector
 		yield return new WaitForSeconds(5f);
 		StoryWorkbenchCompat.Apply();
 		JapanesePatchCompat.Apply();
+		HotkeyCompat.Apply(ours.Id);
 		Check(ours);
 	}
 
@@ -36,6 +37,7 @@ public static class ConflictDetector
 		Warnings.AddRange(BepInEx5Plugins.Notices);
 		Warnings.AddRange(JapanesePatchCompat.Notices);
 		Warnings.AddRange(StoryWorkbenchCompat.Notices);
+		Warnings.AddRange(HotkeyCompat.Notices);
 		try
 		{
 			Dictionary<string, string> pluginNames = LoadedPluginNames();
