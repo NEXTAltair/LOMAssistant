@@ -59,7 +59,7 @@ public class UiHider : MonoBehaviour
 	/// <summary>这次右键是拿来隐藏界面的（热键是鼠标右键时）：游戏的输入回调不要再处理它（右键先于本组件的 Update 送到游戏）。</summary>
 	public static bool ClaimsRightClick(InputControl control)
 	{
-		return _instance != null && !Active && ConfigManager.EnableRightClickHideUI.Value && ConfigManager.HideUIKey.Value == KeyCode.Mouse1 && InStory()
+		return _instance != null && !Active && ConfigManager.HideUIKey.Value == KeyCode.Mouse1 && InStory()
 			&& control != null && Mouse.current != null && control == Mouse.current.rightButton && !EventPicker.IsWaiting && !LogOpen() && !InputGuard.ModWindowOpen
 			&& !ActionMenuOpen();
 	}
@@ -97,7 +97,7 @@ public class UiHider : MonoBehaviour
 
 	private static bool TogglePressed()
 	{
-		return ConfigManager.EnableRightClickHideUI.Value && InputGuard.HotkeyDown(ConfigManager.HideUIKey.Value);
+		return InputGuard.HotkeyDown(ConfigManager.HideUIKey.Value);
 	}
 
 	private static bool TextInputFocused()

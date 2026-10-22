@@ -45,7 +45,7 @@ public class SkipReadToggle : MonoBehaviour
 			// 游戏自己停了（没读过的对话、松开 Ctrl、选项）：本 Mod 的快进也算结束
 			_ours = false;
 		}
-		if (!ConfigManager.EnableSkipRead.Value || GUIUtility.keyboardControl != 0 || !InputGuard.HotkeyDown(ConfigManager.SkipReadKey.Value))
+		if (GUIUtility.keyboardControl != 0 || !InputGuard.HotkeyDown(ConfigManager.SkipReadKey.Value))
 		{
 			return;
 		}

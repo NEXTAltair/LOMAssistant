@@ -117,7 +117,7 @@ public static class BepInEx5Plugins
 
 	/// <summary>
 	/// 「邪神认知污染ON」（立绘替换）的 F8（安全模式）、F9（重新载入立绘）写死不能改，和本 Mod 的设置页、存档备注、数值页撞了。
-	/// 第一次检测到它时，本 Mod 还是默认 F8 / F9 的这几个热键改成不绑定，键让给它；玩家可以在设置页另绑别的键。只改一次。
+	/// 第一次检测到它时，本 Mod 绑在 F8 / F9 上的热键改成不绑定，键让给它；玩家可以在设置页另绑别的键。只改一次。
 	/// </summary>
 	private static class DaguiCompat
 	{
@@ -132,10 +132,7 @@ public static class BepInEx5Plugins
 			{
 				return;
 			}
-			var yielded = new List<string>();
-			Yield(ConfigManager.PanelKey, KeyCode.F8, "设置页", yielded);
-			Yield(ConfigManager.SaveNoteKey, KeyCode.F8, "存档备注", yielded);
-			Yield(ConfigManager.DebugPanelKey, KeyCode.F9, "数值页", yielded);
+			List<string> yielded = ConflictDetector.YieldHotkeys(KeyCode.F8, KeyCode.F9);
 			if (yielded.Count > 0)
 			{
 				string text = "检测到立绘替换 Mod「邪神认知污染ON」，它的 F8、F9 改不了，本 Mod 的" + string.Join("、", yielded.ToArray()) + "热键已让给它（改成不绑定）。可以按 Tab 打开窗口再点对应的页，或者在设置页「热键」里另绑别的键。";
@@ -144,15 +141,6 @@ public static class BepInEx5Plugins
 			}
 			Directory.CreateDirectory(Path.GetDirectoryName(mark));
 			File.WriteAllText(mark, "");
-		}
-
-		private static void Yield(ConfigElement<KeyCode> key, KeyCode taken, string name, List<string> yielded)
-		{
-			if (key.Value == taken)
-			{
-				key.Value = KeyCode.None;
-				yielded.Add(name);
-			}
 		}
 	}
 }

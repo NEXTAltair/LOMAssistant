@@ -12,8 +12,8 @@ namespace LOMAssistant;
 /// <summary>
 /// 和「剧情随行」（MortalStoryWorkbench，local.mortal.storyworkbench）一起装时的兼容处理。
 /// 两边重叠的功能用本 Mod 的：第一次检测到它时，把它的 100 个手动存档、直接选择骰子、选项属性增减、
-/// 悬停地点提示这四项关掉，并把它的 F6 / F8 / F9 快捷键改成 Ctrl+F6 / Ctrl+F8 / Ctrl+F9（免得决斗里按 F8 被它直接判赢）。
-/// 改的是它自己的配置，只改一次：之后玩家在它的面板里再打开，不会被改回去。快捷键只改还是原默认值的。
+/// 悬停地点提示这四项关掉（改的是它自己的配置）。它的 F6 / F8 / F9 快捷键不动，本 Mod 绑在这几个键上的热键改成不绑定，键让给它。
+/// 只改一次：之后玩家在它的面板里再打开、或在本 Mod 设置页再绑回这些键，不会被改回去。
 /// </summary>
 public static class StoryWorkbenchCompat
 {
@@ -30,12 +30,8 @@ public static class StoryWorkbenchCompat
 		("剧情", "悬停地点显示事件提示", "悬停地点提示"),
 	};
 
-	private static readonly (string Key, KeyCode Main)[] Keys =
-	{
-		("主面板", KeyCode.F6),
-		("战斗胜利", KeyCode.F8),
-		("显示隐藏Mod界面", KeyCode.F9),
-	};
+	/// <summary>要给玩家看的提示（显示在设置页最上面）。</summary>
+	public static readonly List<string> Notices = new List<string>();
 
 	private static string Mark => Path.Combine(Path.GetDirectoryName(typeof(StoryWorkbenchCompat).Assembly.Location) ?? ".", "StoryReview", "compat-storyworkbench");
 
@@ -63,24 +59,13 @@ public static class StoryWorkbenchCompat
 					changed.Add("关掉" + name);
 				}
 			}
-			foreach (var (key, main) in Keys)
-			{
-				var definition = new ConfigDefinition("按键", key);
-				if (!config.ContainsKey(definition))
-				{
-					continue;
-				}
-				ConfigEntryBase entry = config[definition];
-				object value = entry.BoxedValue;
-				if (value == null || !Equals(Traverse.Create(value).Property("MainKey").GetValue(), main)
-					|| (Traverse.Create(value).Property("Modifiers").GetValue() as IEnumerable)?.Cast<object>().Any() == true)
-				{
-					continue; // 玩家改过的键不动
-				}
-				entry.BoxedValue = Activator.CreateInstance(value.GetType(), main, new[] { KeyCode.LeftControl });
-				changed.Add(key + " 改成 Ctrl+" + main);
-			}
 			config.Save();
+			List<string> yielded = ConflictDetector.YieldHotkeys(KeyCode.F6, KeyCode.F8, KeyCode.F9);
+			if (yielded.Count > 0)
+			{
+				changed.Add("本 Mod 的" + string.Join("、", yielded.ToArray()) + "热键改成不绑定");
+				Notices.Add("检测到「剧情随行」，它的 F6、F8、F9 快捷键和本 Mod 撞了，本 Mod 的" + string.Join("、", yielded.ToArray()) + "热键已让给它（改成不绑定）。可以按 Tab 打开窗口再点对应的页，或者在设置页「热键」里另绑别的键。");
+			}
 			Directory.CreateDirectory(Path.GetDirectoryName(Mark));
 			File.WriteAllText(Mark, "");
 			FileLogger.Log("[兼容] 检测到剧情随行，已调整它的设置：" + (changed.Count > 0 ? string.Join("，", changed.ToArray()) : "无需调整"));

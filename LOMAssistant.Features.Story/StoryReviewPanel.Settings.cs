@@ -96,8 +96,6 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.EnableOptionInfo, "选项提示、判定记录"),
 				Row(ConfigManager.EnableManualDiceSelection, "骰子手动选择"),
 				Row(ConfigManager.EnableStoryReview, "节点存档（自动收录剧情节点）"),
-				Row(ConfigManager.EnableRightClickHideUI, "隐藏界面看 CG"),
-				Row(ConfigManager.EnableSkipRead, "一键快进已读对话"),
 				Row(ConfigManager.FontScale, "对白文字大小（%）", 50f, 200f),
 				Row(ConfigManager.FlagNoticeSeconds, "旗标提示停留（秒）", 0f, 30f),
 				Row(ConfigManager.BranchPanelAutoHide, "分支小窗自动收起（秒）", 0f, 600f),
@@ -150,7 +148,6 @@ public partial class StoryReviewPanel
 				new SettingRow { Element = ConfigManager.PanelTheme, Name = "窗口配色", Choices = new[] { "浅色", "深色", "跟随系统" } },
 				new SettingRow { Element = ConfigManager.PanelFont, Name = "窗口字体", Choices = new[] { "思源宋体", "微软雅黑" } },
 				Row(ConfigManager.PanelOpacity, "咖啡伴侣窗口不透明度", 0.3f, 1f),
-				Row(ConfigManager.EnableDebugPanel, "数值面板热键"),
 				Row(ConfigManager.EnableUpdateCheck, "检查新版本"),
 				Row(ConfigManager.LogToFile, "写独立日志文件"),
 			}),
@@ -369,6 +366,12 @@ public partial class StoryReviewPanel
 			if (GUILayout.Button("默认", _button, GUILayout.Width(S(60)), Ctl()))
 			{
 				AssignKey(row, (KeyCode)element.DefaultValue);
+			}
+			// 不想要这个热键（比如和别的 Mod 抢键）就改成不绑定；开本窗口的键不行，解了就再也打不开窗口改回来
+			GUI.enabled = !waiting && key != KeyCode.None && element != ConfigManager.StoryReviewKey;
+			if (GUILayout.Button("不绑定", _button, GUILayout.Width(S(76)), Ctl()))
+			{
+				AssignKey(row, KeyCode.None);
 			}
 			GUI.enabled = true;
 		}

@@ -147,6 +147,7 @@ public static class ConfigManager
 		LoadConfig();
 		MigrateStoryReviewKey();
 		MigrateHideUIKey();
+		MigrateHotkeyToggles();
 	}
 
 	/// <summary>
@@ -176,6 +177,36 @@ public static class ConfigManager
 		catch (Exception ex)
 		{
 			DicePlugin.LogError("隐藏界面热键迁移失败: " + ex.Message);
+		}
+	}
+
+	/// <summary>
+	/// 隐藏界面看 CG、一键快进、数值面板热键以前各有一个开关，现在热键能设成不绑定，开关不再用：
+	/// 以前关掉的，对应热键改成不绑定，开关打开（配置文件里留着也不起作用）。只换一次。
+	/// </summary>
+	private static void MigrateHotkeyToggles()
+	{
+		try
+		{
+			string mark = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(typeof(ConfigManager).Assembly.Location) ?? ".", "StoryReview", "hotkey-toggles");
+			if (System.IO.File.Exists(mark))
+			{
+				return;
+			}
+			foreach (var (toggle, key) in new[] { (EnableRightClickHideUI, HideUIKey), (EnableSkipRead, SkipReadKey), (EnableDebugPanel, DebugPanelKey) })
+			{
+				if (!toggle.Value)
+				{
+					key.Value = KeyCode.None;
+					toggle.Value = true;
+				}
+			}
+			System.IO.Directory.CreateDirectory(System.IO.Path.GetDirectoryName(mark));
+			System.IO.File.WriteAllText(mark, "");
+		}
+		catch (Exception ex)
+		{
+			DicePlugin.LogError("热键开关迁移失败: " + ex.Message);
 		}
 	}
 
@@ -291,10 +322,10 @@ public static class ConfigManager
 		PanelTheme = new ConfigElement<int>("PanelTheme", "咖啡伴侣窗口的配色：0=浅色（宣纸底，默认），1=深色（夜里不刺眼），2=跟随系统（Windows 的应用模式）", 0);
 		PanelFont = new ConfigElement<int>("PanelFont", "咖啡伴侣窗口等 Mod 界面的字体：0=思源宋体（游戏对话用的字体，默认），1=微软雅黑（系统字体）", 0);
 		EnableBackgroundRun = new ConfigElement<bool>("EnableBackgroundRun", "后台继续运行：切到别的窗口时游戏不暂停，背景音乐也不停。true=开，false=关（游戏原本的做法：切走就停）", defaultValue: true);
-		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "隐藏界面看 CG：剧情里按热键（HideUIKey，默认鼠标右键）隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次恢复。true=开，false=关", defaultValue: true);
+		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "隐藏界面看 CG：剧情里按热键（HideUIKey，默认鼠标右键）隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次恢复。已不用：不想要就把 HideUIKey 设成 None", defaultValue: true);
 		CustomTitle = new ConfigElement<string>("CustomTitle", "自定义称号：对话框名字上方、人物介绍、属性页显示的称号换成这个（空=照游戏原样）。在数值页「称号」里改", "");
 		BreakStatLimit = new ConfigElement<bool>("BreakStatLimit", "突破属性上限：体力、内力、轻功、学问、嘴力、心相、性情、处世、修养、道德、阴阳、命运、魅力、厨艺、抗毒、抗麻原本最高 100，打开后上限改成 9999；关掉后超过的部分会在下次变化时截回。true=开，false=关", defaultValue: false);
-		EnableSkipRead = new ConfigElement<bool>("EnableSkipRead", "一键快进已读对话：剧情里按一下热键（默认 F2）一直跳过读过的对话，再按一下停，碰到没读过的对话自己停。true=开，false=关", defaultValue: true);
+		EnableSkipRead = new ConfigElement<bool>("EnableSkipRead", "一键快进已读对话：剧情里按一下热键（默认 F2）一直跳过读过的对话，再按一下停，碰到没读过的对话自己停。已不用：不想要就把 SkipReadKey 设成 None", defaultValue: true);
 		SkipReadKey = new ConfigElement<KeyCode>("SkipReadKey", "一键快进的热键：剧情里按一下一直跳过读过的对话（像一直按着 Ctrl），再按一下停；碰到没读过的对话会自己停", KeyCode.F2);
 		HideUIKey = new ConfigElement<KeyCode>("HideUIKey", "隐藏界面看 CG 的按键，默认鼠标右键（Mouse1）；习惯右键做别的事可以改成键盘上的键，如 H", KeyCode.Mouse1);
 		EnableStoryReview = new ConfigElement<bool>("EnableStoryReview", "剧情回顾：走到大节点（任务、事件的开头，以及会改变剧情走向的选项）时，在存档文件夹里收录这一段开头的进度（LOMStory_ 开头，跟着 Steam 云同步），以后可以从这里重玩。true=开，false=关", defaultValue: true);
@@ -313,7 +344,7 @@ public static class ConfigManager
 		EnableSaveBrowser = new ConfigElement<bool>("EnableSaveBrowser", "新版存档、读档界面：左边列表（心上人头像、备注、备注和删除按钮），右边详情（心上人立绘、任务、读档后的对白）。true=开（默认），false=用游戏原来的界面，改后重启生效", defaultValue: true);
 		EnableShopAllBooks = new ConfigElement<bool>("EnableShopAllBooks", "四师兄商店售卖全部功法（包括各门派、线路限定、平时买不到的功法秘笈；没拥有的才卖；不卖《证类本草》和剧情里拿不到的松风剑法、天师剑法、四平枪谱）。true=开，false=关", defaultValue: false);
 		EnableShopAllItems = new ConfigElement<bool>("EnableShopAllItems", "四师兄商店售卖全部物品（书籍、杂物、特殊物品；不卖《证类本草》，提前买会导致六月后山事件出 bug）。true=开，false=关", defaultValue: false);
-		EnableDebugPanel = new ConfigElement<bool>("EnableDebugPanel", "是否启用数值面板热键（F9 打开「数值」页：属性、好感、门派、天赋、旗标）。true=开，false=关", defaultValue: true);
+		EnableDebugPanel = new ConfigElement<bool>("EnableDebugPanel", "数值面板热键（F9 打开「数值」页）。已不用：不想要就把 DebugPanelKey 设成 None", defaultValue: true);
 		DebugPanelKey = new ConfigElement<KeyCode>("DebugPanelKey", "打开数值面板的热键，如 F9 / P 等", KeyCode.F9);
 		EnableAnytimeSave = new ConfigElement<bool>("EnableAnytimeSave", "是否启用随时存档（剧情台词、选项、掷骰和养成界面都能存，每次存一个新档，不占原版存档栏）。true=开，false=关，改后重启生效", defaultValue: true);
 		AnytimeSaveLimit = new ConfigElement<int>("AnytimeSaveLimit", "随时存档最多保留几个，超过就自动删最旧的", 100);

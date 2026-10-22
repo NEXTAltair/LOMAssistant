@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
+using LOMAssistant.Config;
+using UnityEngine;
 
 namespace LOMAssistant;
 
@@ -22,8 +24,9 @@ public static class ConflictDetector
 	public static IEnumerator CheckLater(Harmony ours)
 	{
 		// 其他 Mod 可能在 Awake 之后才打补丁，等几秒再查
-		yield return new UnityEngine.WaitForSeconds(5f);
+		yield return new WaitForSeconds(5f);
 		StoryWorkbenchCompat.Apply();
+		JapanesePatchCompat.Apply();
 		Check(ours);
 	}
 
@@ -31,6 +34,8 @@ public static class ConflictDetector
 	{
 		Warnings.Clear();
 		Warnings.AddRange(BepInEx5Plugins.Notices);
+		Warnings.AddRange(JapanesePatchCompat.Notices);
+		Warnings.AddRange(StoryWorkbenchCompat.Notices);
 		try
 		{
 			Dictionary<string, string> pluginNames = LoadedPluginNames();
@@ -82,8 +87,37 @@ public static class ConflictDetector
 		Checked = true;
 	}
 
+	// 本 Mod 能让出去的热键和它在设置页「热键」里的叫法；开本窗口的键不让（让了就打不开窗口改回来）
+	private static (ConfigElement<KeyCode> Key, string Name)[] Hotkeys => new[]
+	{
+		(ConfigManager.DebugPanelKey, "数值页"),
+		(ConfigManager.PanelKey, "设置页"),
+		(ConfigManager.SaveNoteKey, "存档备注"),
+		(ConfigManager.HideUIKey, "隐藏界面看 CG"),
+		(ConfigManager.SkipReadKey, "一键快进已读对话"),
+		(ConfigManager.AnytimePanelKey, "随时存档页"),
+		(ConfigManager.AnytimeSaveKey, "随时存档：存新档"),
+		(ConfigManager.AnytimeLoadKey, "随时存档：读最近的"),
+		(ConfigManager.AnytimeRollbackKey, "回退到判定前"),
+	};
+
+	/// <summary>别的 Mod 占着改不了的键：本 Mod 绑在这些键上的热键改成不绑定，返回让出去的热键名。</summary>
+	internal static List<string> YieldHotkeys(params KeyCode[] taken)
+	{
+		var names = new List<string>();
+		foreach (var (key, name) in Hotkeys)
+		{
+			if (key != null && Array.IndexOf(taken, key.Value) >= 0)
+			{
+				key.Value = KeyCode.None;
+				names.Add(name);
+			}
+		}
+		return names;
+	}
+
 	// GUID -> 插件名。用反射读 BepInEx 的插件列表，读不到就返回空。
-	private static Dictionary<string, string> LoadedPluginNames()
+	internal static Dictionary<string, string> LoadedPluginNames()
 	{
 		var result = new Dictionary<string, string>();
 		try
