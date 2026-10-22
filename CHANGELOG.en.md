@@ -2,6 +2,11 @@
 
 Changes in each version, newest first. Versions before 2.7.0 are only in Chinese; see CHANGELOG.md.
 
+## 2.7.2 (2026-10-22)
+
+- **Fixed option results under dice lines overlapping or running off screen**: some flag names ended with an invisible line break that made the second half overwrite the first. Long results now stay on one line and shrink if they would run past the right edge of the screen.
+- **The installer warns about non-English paths**: when the game is installed in a path with Chinese or other non-English characters, BepInEx fails to load and the mod doesn't work. The installer now shows a red warning under the game folder and asks again before installing; exported diagnostics flag it too.
+
 ## 2.7.1 (2026-10-21)
 
 - **Fixed the random event picker not showing up in Tang sect buildings** such as the kitchen and the forge: the map event hints added in 2.7.0 recorded those buildings' random events as empty while on the training map.
