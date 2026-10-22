@@ -2,6 +2,17 @@
 
 Changes in each version, newest first. Versions before 2.7.0 are only in Chinese; see CHANGELOG.md.
 
+## 2.7.3 (2026-10-22)
+
+- **Map event hints fixes**:
+  - Side quests whose conditions are met now show as ready to trigger (they always showed as not ready before). When the main quest requires you to go elsewhere, the hint says clicking here won't trigger anything.
+  - Only buildings with a main or side quest you can trigger now and haven't played yet stay lit; unseen random events no longer count, and lit buildings no longer flicker.
+  - Time limits written in quest conditions are shown as dates, and quests that are past or not yet due go under "not in time".
+  - Random events list only the ones that can be drawn, sorted by odds; very long hints shrink to fit. Events you have read any line of are no longer marked as unseen.
+  - The hint box has a dark background; its opacity can be set under 「地图提示不透明度」 in the training group of the settings page (default 0.8).
+  - Before you've entered any story scene after starting the game, the random events section says it needs one story scene first.
+- **No more false conflict warning with the Japanese patch**; when another mod patches the same game code, the warning shows its plugin name instead of an ID.
+
 ## 2.7.2 (2026-10-22)
 
 - **Fixed option results under dice lines overlapping or running off screen**: some flag names ended with an invisible line break that made the second half overwrite the first. Long results now stay on one line and shrink if they would run past the right edge of the screen.
