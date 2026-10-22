@@ -78,6 +78,9 @@ public class PositionEventCache
 	private static PositionResultConfig _config;
 
 	/// <summary>场所事件表：剧情场景里从 CheckPointManager 拿并记住；养成地图上没有它，就用记住的或在已载入的资源里找。</summary>
+	/// <summary>场所事件表拿得到没有：它挂在剧情场景上，开游戏后直接读档进养成地图、还没进过剧情时拿不到。</summary>
+	public static bool Available => Config() != null;
+
 	private static PositionResultConfig Config()
 	{
 		CheckPointManager checkPointManager = CheckPointManager.Instance;

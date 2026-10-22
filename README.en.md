@@ -86,7 +86,7 @@ _Screenshots show the Chinese UI._
   <img src="media/event-picker.webp" width="480" alt="Pick random events: the events that can trigger, their odds and changes">
 
 - **Flag change notices** (off by default, spoilers).
-- **Map event hints** (on by default): hover over a building on the training map to see its main and side quests (whether they can trigger now, time window and conditions, met in green and unmet in red) and the odds of each random event. Buildings with events you haven't seen yet stay lit.
+- **Map event hints** (on by default): hover over a building on the training map to see its main and side quests (whether they can trigger now, time window and conditions, met in green and unmet in red) and the odds of each random event. Buildings with a main or side quest you can trigger now and haven't played yet stay lit (random events don't count).
 
 ### Saves
 
