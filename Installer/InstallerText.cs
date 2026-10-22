@@ -143,7 +143,8 @@ internal static class InstallerText
 		{
 			var dest = new StringBuilder(text.Length + 16);
 			int n = LCMapStringEx("zh-TW", LCMAP_TRADITIONAL_CHINESE, text, text.Length, dest, dest.Capacity, IntPtr.Zero, IntPtr.Zero, IntPtr.Zero);
-			return n > 0 ? dest.ToString(0, n) : text;
+			// 逐字转换后再换成繁中习惯用语（和 Mod 界面同一张表）
+			return LOMAssistant.UiTraditional.Fix(n > 0 ? dest.ToString(0, n) : text);
 		}
 		catch
 		{

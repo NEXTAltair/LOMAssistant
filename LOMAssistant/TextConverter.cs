@@ -50,7 +50,25 @@ public static class TextConverter
 		return false;
 	}
 
-	public static string ToTraditional(string text) => Cached(_traditionalCache, text, "zh-TW", LCMAP_TRADITIONAL_CHINESE);
+	private static readonly Dictionary<string, string> _hantCache = new Dictionary<string, string>();
+
+	/// <summary>转成繁体：逐字转换以后，再按 UiTraditional 把转不对的字和大陆用语换成繁中习惯（設定、介面、視窗……）。</summary>
+	public static string ToTraditional(string text)
+	{
+		if (string.IsNullOrEmpty(text))
+		{
+			return text;
+		}
+		if (_hantCache.TryGetValue(text, out string result))
+		{
+			return result;
+		}
+		if (_hantCache.Count > CacheLimit)
+		{
+			_hantCache.Clear();
+		}
+		return _hantCache[text] = UiTraditional.Fix(Cached(_traditionalCache, text, "zh-TW", LCMAP_TRADITIONAL_CHINESE));
+	}
 
 	/// <summary>
 	/// 本 Mod 界面用的语言：ChineseSimplified / ChineseTraditional / Korean / Japanese。
