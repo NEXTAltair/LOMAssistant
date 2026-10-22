@@ -201,7 +201,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			TryPatchAll(typeof(ShopAllItemsPatch));
 			TryPatchAll(typeof(BackgroundRun));
 			TryPatchAll(typeof(FontScale));
-			LogInfo($"四师兄商店补丁已应用（售卖全部物品：{(ConfigManager.EnableShopAllItems.Value ? "开" : "关")}，售卖全部书籍：{(ConfigManager.EnableShopAllBooks.Value ? "开" : "关")}）。");
+			LogInfo($"四师兄商店补丁已应用（售卖全部物品：{(ConfigManager.EnableShopAllItems.Value ? "开" : "关")}）。");
 			if (ConfigManager.EnableAnytimeSave.Value && AnytimeSave.Install(base.gameObject))
 			{
 				TryPatchAll(typeof(AnytimeSavePatches));

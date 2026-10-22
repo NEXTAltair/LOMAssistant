@@ -142,7 +142,6 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.EnableFlowSpeedup, "流程提速"),
 				Row(ConfigManager.EnableLibraryDisplay, "讲经堂解锁显示"),
 				Row(ConfigManager.EnableShopAllItems, "四师兄卖全部物品"),
-				Row(ConfigManager.EnableShopAllBooks, "四师兄卖全部功法"),
 			}),
 			// Mod 自己的设置：窗口的样子、日志、更新检查（界面语言在搜索框右边）
 			("咖啡伴侣", new List<SettingRow>
