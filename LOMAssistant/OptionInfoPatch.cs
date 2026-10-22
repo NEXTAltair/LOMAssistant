@@ -11,6 +11,8 @@ using Mortal.Core;
 using Mortal.Free;
 using Mortal.Story;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
 
 namespace LOMAssistant;
 
@@ -135,11 +137,25 @@ internal static class OptionInfoPatch
 	[HarmonyPatch(typeof(LeanLocalizationResolver), "GetStoryText")]
 	public static void LeanLocalizationResolver_GetStoryText_Postfix(string key, ref string __result)
 	{
-		// 本 Mod 自己取选项原文（剧情回顾里显示）时不加结果说明，也不算游戏弹出的菜单
-		if (Raw)
+		// 本 Mod 自己取选项原文（剧情回顾里显示）时不加结果说明，也不算游戏弹出的菜单；
+		// 设成「鼠标悬停」「不显示」时也不接在选项后面（悬停时由 OptionHoverHint 另外显示）
+		if (Raw || ConfigManager.OptionResultMode.Value != 0)
 		{
 			return;
 		}
+		string note = OptionNote(key);
+		if (note.Length > 0)
+		{
+			__result = __result + TextConverter.ForDisplay("\n<size=16>(" + note + ")</size>");
+		}
+	}
+
+	/// <summary>
+	/// 一个选项的后果说明（不带括号、字号）：被锁的选项写真正的解锁条件和解锁后的效果；其余写选了会怎样，
+	/// 满足某个分支条件就直接接一段剧情的写成「若 条件：触发剧情」。没有就返回空串。
+	/// </summary>
+	internal static string OptionNote(string key)
+	{
 		try
 		{
 			// 被锁的选项（「解锁条件：？？？」「银两不足」这类）：写出真正的解锁条件和当前值，以及解锁后的效果
@@ -149,13 +165,8 @@ internal static class OptionInfoPatch
 				string effects = locked.Unlocked != null && LuaParser.Instance.OptionResult.TryGetValue(locked.Unlocked, out var unlockedActions)
 					? RichText.Strip(TextConverter.ToSimplifiedUnlessJapanese(LuaParser.Description(unlockedActions)))
 					: "";
-				if (!condition.IsNullOrWhiteSpace())
-				{
-					__result = __result + TextConverter.ForDisplay("\n<size=16>(" + condition + (effects.IsNullOrWhiteSpace() ? "" : "；解锁后：" + effects) + ")</size>");
-				}
-				return;
+				return condition.IsNullOrWhiteSpace() ? "" : condition + (effects.IsNullOrWhiteSpace() ? "" : "；解锁后：" + effects);
 			}
-			// 满足某个分支条件就直接接一段剧情：写成「若 条件：触发剧情」
 			string jumps = "";
 			if (LuaParser.Instance.OptionJumps.TryGetValue(key, out var jumpList))
 			{
@@ -175,16 +186,51 @@ internal static class OptionInfoPatch
 				{
 					text = text.IsNullOrWhiteSpace() ? jumps : text + "；" + jumps;
 				}
-				if (!text.IsNullOrWhiteSpace())
-				{
-					string text2 = RichText.Strip(text);
-					__result = __result + TextConverter.ForDisplay("\n<size=16>(" + text2 + ")</size>");
-				}
+				return text.IsNullOrWhiteSpace() ? "" : RichText.Strip(text);
 			}
 		}
 		catch (Exception ex)
 		{
-			DicePlugin.LogError("GetStoryText Postfix 追加选项结果失败，已跳过以保证对话显示: " + ex);
+			DicePlugin.LogError("取选项后果说明失败，已跳过以保证对话显示: " + ex);
+		}
+		return "";
+	}
+
+	/// <summary>每个选项按钮现在是哪个选项（加选项时记下）：按钮上的文字会被游戏再加工，不能按文字查。</summary>
+	internal static readonly Dictionary<Button, string> ButtonKeys = new Dictionary<Button, string>();
+
+	[HarmonyPrefix]
+	[HarmonyPatch(typeof(MenuDialog), nameof(MenuDialog.AddOption), new[] { typeof(string), typeof(bool), typeof(LuaEnvironment), typeof(MoonSharp.Interpreter.Closure) })]
+	// 游戏按顺序取下一个按钮（nextOptionIndex），按钮本来可能就亮着，所以按加之前的序号找是哪个按钮
+	public static void MenuDialog_AddOption_Prefix(MenuDialog __instance, out int __state)
+	{
+		__state = Traverse.Create(__instance).Field("nextOptionIndex").GetValue<int>();
+	}
+
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(MenuDialog), nameof(MenuDialog.AddOption), new[] { typeof(string), typeof(bool), typeof(LuaEnvironment), typeof(MoonSharp.Interpreter.Closure) })]
+	public static void MenuDialog_AddOption_Postfix(MenuDialog __instance, string text, int __state)
+	{
+		Button[] buttons = __instance.CachedButtons;
+		int now = Traverse.Create(__instance).Field("nextOptionIndex").GetValue<int>();
+		if (buttons == null || now <= __state || __state < 0 || __state >= buttons.Length || buttons[__state] == null)
+		{
+			return;
+		}
+		string key = text != null && _textKeys.TryGetValue(text, out string k) ? k : null;
+		// 对话选项、地点菜单常把选项编号（「O_xxx」或「类型+O_xxx+…」）交给按钮，由按钮自己取文字：编号就在里面
+		if (key == null && text != null)
+		{
+			string code = LOMAssistant.Features.Story.StoryScripts.OptionKey(text, out string _);
+			key = code.StartsWith("O_") ? code : null;
+		}
+		if (key != null)
+		{
+			ButtonKeys[buttons[__state]] = key;
+		}
+		else
+		{
+			ButtonKeys.Remove(buttons[__state]);
 		}
 	}
 
@@ -513,5 +559,161 @@ internal static class NarrativeLogNamePatch
 				__result = __result.Replace(line, "");
 			}
 		}
+	}
+}
+
+/// <summary>
+/// 选项后果「鼠标悬停」显示：鼠标停在对话选项、掷骰线路上（或用手柄、方向键选中时），在选项旁边用提示框显示后果说明；
+/// 不看就不剧透。普通选项按按钮上的文字查回选项编号，掷骰线路按线路记着的「编号|范围」查。
+/// </summary>
+internal sealed class OptionHoverHint : MonoBehaviour
+{
+	private static OptionHoverHint _instance;
+
+	private MenuDialog[] _dialogs = new MenuDialog[0];
+	private float _nextScan;
+	private bool _useSelection;
+	private Vector2 _lastMouse;
+	private GUIStyle _style;
+	private float _scale = -1f;
+	private int _fontMode = -1;
+
+	public static void Ensure(GameObject host)
+	{
+		if (_instance == null)
+		{
+			_instance = host.GetComponent<OptionHoverHint>() ?? host.AddComponent<OptionHoverHint>();
+		}
+	}
+
+	private void Update()
+	{
+		if (ConfigManager.OptionResultMode.Value != 1)
+		{
+			return;
+		}
+		// 动了鼠标就按鼠标位置；按了方向键、手柄就按选中的选项（菜单打开时游戏会默认选中第一项，鼠标玩家不该一开就看到它的后果）
+		var mouse = UnityEngine.InputSystem.Mouse.current;
+		if (mouse != null)
+		{
+			Vector2 position = mouse.position.ReadValue();
+			if ((position - _lastMouse).sqrMagnitude > 4f)
+			{
+				_useSelection = false;
+			}
+			_lastMouse = position;
+		}
+		var keyboard = UnityEngine.InputSystem.Keyboard.current;
+		var pad = UnityEngine.InputSystem.Gamepad.current;
+		if ((keyboard != null && (keyboard.upArrowKey.wasPressedThisFrame || keyboard.downArrowKey.wasPressedThisFrame || keyboard.leftArrowKey.wasPressedThisFrame || keyboard.rightArrowKey.wasPressedThisFrame))
+			|| (pad != null && (pad.dpad.ReadValue().sqrMagnitude > 0.25f || pad.leftStick.ReadValue().sqrMagnitude > 0.25f)))
+		{
+			_useSelection = true;
+		}
+		if (Time.unscaledTime >= _nextScan)
+		{
+			_nextScan = Time.unscaledTime + 0.3f;
+			_dialogs = FindObjectsOfType<MenuDialog>();
+		}
+	}
+
+
+	private void OnGUI()
+	{
+		if (ConfigManager.OptionResultMode.Value != 1 || UiHider.Active || Event.current.type != EventType.Repaint)
+		{
+			return;
+		}
+		foreach (MenuDialog dialog in _dialogs)
+		{
+			if (dialog == null || !dialog.isActiveAndEnabled)
+			{
+				continue;
+			}
+			Button[] buttons = Traverse.Create(dialog).Field("cachedButtons").GetValue<Button[]>();
+			if (buttons == null)
+			{
+				continue;
+			}
+			foreach (Button button in buttons)
+			{
+				if (button == null || !button.isActiveAndEnabled || !Pointed(button))
+				{
+					continue;
+				}
+				string note = Note(button);
+				if (note.Length > 0)
+				{
+					Draw(button, note, buttons);
+				}
+				return;
+			}
+		}
+	}
+
+	private bool Pointed(Button button)
+	{
+		if (_useSelection)
+		{
+			return EventSystem.current != null && EventSystem.current.currentSelectedGameObject == button.gameObject;
+		}
+		Canvas canvas = button.GetComponentInParent<Canvas>();
+		Camera cam = canvas == null || canvas.rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.rootCanvas.worldCamera;
+		return RectTransformUtility.RectangleContainsScreenPoint((RectTransform)button.transform, _lastMouse, cam);
+	}
+
+	private static string Note(Button button)
+	{
+		DiceOption dice = button.GetComponent<DiceOption>();
+		string key = null;
+		if (dice != null)
+		{
+			Text source = Traverse.Create(dice).Field("_sourceText").GetValue<Text>();
+			key = source != null && source.text != null ? source.text.Split('|')[0] : null;
+		}
+		else
+		{
+			OptionInfoPatch.ButtonKeys.TryGetValue(button, out key);
+		}
+		return key != null ? OptionInfoPatch.OptionNote(key) : "";
+	}
+
+	private void Draw(Button button, string note, Button[] group)
+	{
+		float scale = Mathf.Min(Screen.width / 1920f, Screen.height / 1080f);
+		if (_style == null || ModFont.NeedsRebuild(scale, _scale, _fontMode))
+		{
+			_scale = scale;
+			_fontMode = ModFont.Mode;
+			_style = PanelTheme.Toast(scale, 18);
+		}
+		// 按钮在屏幕上的范围（IMGUI 坐标，原点左上）
+		var corners = new Vector3[4];
+		((RectTransform)button.transform).GetWorldCorners(corners);
+		Canvas canvas = button.GetComponentInParent<Canvas>();
+		Camera cam = canvas == null || canvas.rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : canvas.rootCanvas.worldCamera;
+		Vector2 min = RectTransformUtility.WorldToScreenPoint(cam, corners[0]);
+		Vector2 max = RectTransformUtility.WorldToScreenPoint(cam, corners[2]);
+		// 整组选项的上下沿：提示框放在整组下面（放不下放上面），不压住别的选项
+		float bottom = min.y, top = max.y;
+		foreach (Button other in group)
+		{
+			if (other != null && other.isActiveAndEnabled)
+			{
+				((RectTransform)other.transform).GetWorldCorners(corners);
+				bottom = Mathf.Min(bottom, RectTransformUtility.WorldToScreenPoint(cam, corners[0]).y);
+				top = Mathf.Max(top, RectTransformUtility.WorldToScreenPoint(cam, corners[2]).y);
+			}
+		}
+		var content = new GUIContent(TextConverter.ForDisplay(note));
+		float width = Mathf.Min(Mathf.Max(max.x - min.x, 360f * scale), Screen.width - 16f * scale);
+		float height = _style.CalcHeight(content, width);
+		float x = Mathf.Clamp(min.x, 8f * scale, Screen.width - width - 8f * scale);
+		float y = Screen.height - bottom + 4f * scale;
+		if (y + height > Screen.height - 8f * scale)
+		{
+			y = Screen.height - top - height - 4f * scale;
+		}
+		GUI.Box(new Rect(x, y, width, height), content, PanelTheme.Sync(_style));
 	}
 }

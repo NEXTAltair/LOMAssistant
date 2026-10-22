@@ -72,7 +72,7 @@ _Screenshots show the Chinese UI._
     <img src="media/story-endings.webp" width="640" alt="Endings: endings, deaths and achievements, filter by reached or missing">
 
 - **Pick dice outcomes**: click a line on the dice wheel to choose that result.
-- **Option results**: dialogue options show what they will change, and locked options show their real unlock conditions. 「一键设置」 next to a locked option sets the missing conditions so it unlocks.
+- **Option results**: dialogue options show what they will change, and locked options show their real unlock conditions. 「一键设置」 next to a locked option sets the missing conditions so it unlocks. 「选项后果」 in the story group of the settings page shows these always, only on hover (or when selected with a gamepad), or never.
 
   <img src="media/option-hint.webp" width="640" alt="Option results and unlock conditions after each option">
 

@@ -106,6 +106,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			if (ConfigManager.EnableOptionInfo.Value)
 			{
 				TryPatchAll(typeof(OptionInfoPatch));
+				OptionHoverHint.Ensure(base.gameObject);
 				LogInfo("选项信息补丁已应用。");
 			}
 			if (ConfigManager.EnableManualDiceSelection.Value)

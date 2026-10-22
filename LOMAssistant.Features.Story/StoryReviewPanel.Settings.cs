@@ -94,6 +94,7 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.EnableEventPicker, "随机事件自选"),
 				Row(ConfigManager.EnableOneClickUnlock, "锁住的选项一键设置"),
 				Row(ConfigManager.EnableOptionInfo, "选项提示、判定记录"),
+				new SettingRow { Element = ConfigManager.OptionResultMode, Name = "选项后果", Choices = new[] { "总是显示", "鼠标悬停", "不显示" } },
 				Row(ConfigManager.EnableManualDiceSelection, "骰子手动选择"),
 				Row(ConfigManager.EnableStoryReview, "节点存档（自动收录剧情节点）"),
 				Row(ConfigManager.FontScale, "对白文字大小（%）", 50f, 200f),

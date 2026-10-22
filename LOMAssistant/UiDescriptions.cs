@@ -18,6 +18,7 @@ public static class UiDescriptions
 	private static readonly Dictionary<string, string[]> Table = new Dictionary<string, string[]>
 	{
 		{ "EnableOptionInfo", new[] { "선택지 정보(결과·해금 조건), 장소 이벤트 알림, 회상의 판정 기록을 켭니다.", "選択肢の情報（結果・解放条件）、場所イベントの案内、回想の判定記録を有効にします。" } },
+		{ "OptionResultMode", new[] { "대화 선택지 뒤의 결과 설명(고르면 어떻게 되는지, 해금 조건): 항상 표시 / 마우스를 올리거나 게임패드로 고를 때만 표시 / 표시 안 함.", "会話の選択肢の後ろに出る結果の説明（選ぶとどうなるか、解放条件）：常に表示／マウスを乗せたり、ゲームパッドで選んだりしたときだけ表示／表示しない。" } },
 		{ "EnableManualDiceSelection", new[] { "주사위 판정 때 갈래를 눌러 그 결과를 직접 고릅니다.", "ダイス判定でルートをクリックすると、その結果を選べます。" } },
 		{ "EnableLibraryDisplay", new[] { "강경당을 모두 해금된 상태로 표시합니다.", "講経堂をすべて解放済みとして表示します。" } },
 		{ "EnableCombatAssist", new[] { "결투 중 ESC 메뉴에 「즉시 승리」 버튼을 추가합니다.", "決闘中の ESC メニューに「即勝利」ボタンを追加します。" } },
