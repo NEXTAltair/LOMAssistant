@@ -149,6 +149,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			TryPatchAll(typeof(DuelPacePatch));
 			TryPatchAll(typeof(SkillColumnsPatch));
 			TryPatchAll(typeof(CombatStackTipPatch));
+			TryPatchAll(typeof(LOMAssistant.Features.Story.LegendExportButton));
 			TryPatchAll(typeof(FlowSpeedup.UniverseJsonPatch));
 			TryPatchAll(typeof(FlowSpeedup.FlagIndexPatch));
 			TryPatchAll(typeof(FlowSpeedup.LogPatch));
