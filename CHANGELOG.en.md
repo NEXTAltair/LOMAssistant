@@ -16,7 +16,7 @@ Changes in each version, newest first. Versions before 2.7.0 are only in Chinese
 
 **New features**
 
-- **Dark mode**: under 「窗口配色」 (window colors) in the Coffee Companion group of the settings tab, choose light, dark or follow Windows. Dark mode is ink-black with paper-colored text, easier on the eyes at night.
+- **Dark mode**: under 「窗口配色」 (window colors) in the Coffee Companion group of the settings tab, choose light, dark or follow Windows. Dark mode is ink-black with paper-colored text.
 - **Event hints on the training map**: hover over a building to see its main and side quests (whether they can trigger now, time window and conditions, met in green and unmet in red) and the odds of each random event. Buildings with events you haven't seen yet stay lit. Can be turned off in the training group of the settings tab.
 - **Where flags, books and items are used**: on the stats tab, click a name or its description to list every story that changes it (set, add or subtract, gain, lose) and every place that checks it, with the quest, time, place and how to get there. Each entry can jump to the story graph.
 - **Flag categories**: flags on the stats tab are split into sect favor, characters, the Six Paths, story, events and side quests, dialogue options, combat, training and facilities, and other.

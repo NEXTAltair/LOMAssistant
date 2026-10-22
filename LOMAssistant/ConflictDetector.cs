@@ -46,6 +46,7 @@ public static class ConflictDetector
 
 			// owner -> 和本 Mod 撞到的方法
 			var clashes = new Dictionary<string, List<string>>();
+			var owners = new Dictionary<string, Assembly>();
 			foreach (MethodBase method in ours.GetPatchedMethods())
 			{
 				Patches info = Harmony.GetPatchInfo(method);
@@ -60,6 +61,17 @@ public static class ConflictDetector
 					{
 						continue;
 					}
+					// 日语补丁（LOM_JP_…）：和本 Mod 一起装测试过，只是同一处游戏代码各改各的（翻译、字体），不算冲突
+					Assembly assembly = OwnerAssembly(info, owner);
+					if (assembly != null && assembly.GetName().Name.StartsWith("LOM_JP_", StringComparison.OrdinalIgnoreCase))
+					{
+						FileLogger.Log($"[冲突检测] 日语补丁（{assembly.GetName().Name}）也改了 {method.DeclaringType?.Name}.{method.Name}，已兼容，不提示");
+						continue;
+					}
+					if (assembly != null && !owners.ContainsKey(owner))
+					{
+						owners[owner] = assembly;
+					}
 					if (!clashes.TryGetValue(owner, out List<string> list))
 					{
 						clashes[owner] = list = new List<string>();
@@ -70,7 +82,8 @@ public static class ConflictDetector
 
 			foreach (KeyValuePair<string, List<string>> clash in clashes)
 			{
-				string name = pluginNames.TryGetValue(clash.Key, out string n) ? n : clash.Key;
+				// Harmony 实例没起名字（harmony-auto-…）时，用补丁所在的程序集找出是哪个插件
+				string name = pluginNames.TryGetValue(clash.Key, out string n) ? n : owners.TryGetValue(clash.Key, out Assembly asm) ? PluginName(asm, pluginNames) : clash.Key;
 				string methods = string.Join("、", clash.Value.Distinct().ToArray());
 				string message = $"检测到冲突的 Mod：{name}（{clash.Key}），和本 Mod 同时修改了 {clash.Value.Distinct().Count()} 处游戏代码：{methods}。可能导致骰子或选项显示异常。请删除旧版骰子大师、多功能 Mod、活侠传助手等同类 Mod 后重新覆盖安装。";
 				LOMAssistantPlugin.LogWarning(message);
@@ -116,6 +129,44 @@ public static class ConflictDetector
 			}
 		}
 		return names;
+	}
+
+	// 某个 Harmony 实例（owner）打在这个方法上的补丁所在的程序集
+	private static Assembly OwnerAssembly(Patches info, string owner)
+	{
+		foreach (Patch patch in info.Prefixes.Concat(info.Postfixes).Concat(info.Transpilers).Concat(info.Finalizers))
+		{
+			if (patch.owner == owner && patch.PatchMethod?.DeclaringType != null)
+			{
+				return patch.PatchMethod.DeclaringType.Assembly;
+			}
+		}
+		return null;
+	}
+
+	// 程序集对应的插件名（插件列表里实例在这个程序集里的那个），找不到就用程序集名
+	private static string PluginName(Assembly assembly, Dictionary<string, string> pluginNames)
+	{
+		try
+		{
+			Type chainloader = AccessTools.TypeByName("BepInEx.Unity.Mono.Bootstrap.UnityChainloader");
+			object loader = chainloader != null ? AccessTools.Property(chainloader, "Instance")?.GetValue(null, null) : null;
+			if (loader != null && AccessTools.Property(loader.GetType(), "Plugins")?.GetValue(loader, null) is IDictionary plugins)
+			{
+				foreach (DictionaryEntry entry in plugins)
+				{
+					object instance = AccessTools.Property(entry.Value.GetType(), "Instance")?.GetValue(entry.Value, null);
+					if (instance != null && instance.GetType().Assembly == assembly && pluginNames.TryGetValue((string)entry.Key, out string name))
+					{
+						return name;
+					}
+				}
+			}
+		}
+		catch
+		{
+		}
+		return assembly.GetName().Name;
 	}
 
 	// GUID -> 插件名。用反射读 BepInEx 的插件列表，读不到就返回空。
