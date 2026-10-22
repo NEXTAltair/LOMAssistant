@@ -2,6 +2,14 @@
 
 Changes in each version, newest first. Versions before 2.7.0 are only in Chinese; see CHANGELOG.md.
 
+## 2.8.1 (2026-10-22)
+
+- **Three modes for option results**: 「选项后果」 in the story group of the settings page shows them always (default, as before), only on hover (when the mouse is over a dialogue option or dice line, or it is selected with a gamepad; no spoilers unless you look), or never.
+- **「总是」 and 「不出」 for random events**: each event in the random event picker can be set to always or never; the rule is remembered and applies even with the picker off.
+- **Pick branches decided by a random number**: branch checks that roll a random number (such as being pulled into a run by 小梅 while training) now open the picker too, listing the paths, where they lead and their odds; the other conditions are still checked. Each path can also be set to always or never.
+- **Fixed flag notices overlapping or appearing on the right**: several notices at once are now stacked in the middle of the screen.
+- **Fixed the note box on the original save screen**: the title was hidden behind the input box, and clicking Save or Cancel could load the save underneath.
+
 ## 2.8.0 (2026-10-22)
 
 **New**
