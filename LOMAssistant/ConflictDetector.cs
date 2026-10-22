@@ -24,6 +24,7 @@ public static class ConflictDetector
 		// 其他 Mod 可能在 Awake 之后才打补丁，等几秒再查
 		yield return new UnityEngine.WaitForSeconds(5f);
 		StoryWorkbenchCompat.Apply();
+		JapanesePatchCompat.Apply();
 		Check(ours);
 	}
 
@@ -31,6 +32,7 @@ public static class ConflictDetector
 	{
 		Warnings.Clear();
 		Warnings.AddRange(BepInEx5Plugins.Notices);
+		Warnings.AddRange(JapanesePatchCompat.Notices);
 		try
 		{
 			Dictionary<string, string> pluginNames = LoadedPluginNames();
@@ -83,7 +85,7 @@ public static class ConflictDetector
 	}
 
 	// GUID -> 插件名。用反射读 BepInEx 的插件列表，读不到就返回空。
-	private static Dictionary<string, string> LoadedPluginNames()
+	internal static Dictionary<string, string> LoadedPluginNames()
 	{
 		var result = new Dictionary<string, string>();
 		try

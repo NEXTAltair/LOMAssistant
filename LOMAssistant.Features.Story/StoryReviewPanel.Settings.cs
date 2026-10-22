@@ -233,6 +233,12 @@ public partial class StoryReviewPanel
 		{
 			return;
 		}
+		// 日语补丁切换注音显示的 F7 写死在它的代码里，绑上了按一下两边都响
+		if (key == JapanesePatchCompat.RubyKey && JapanesePatchCompat.Present)
+		{
+			Notice($"{InputGuard.KeyName(key)} 是日语补丁切换注音显示的键，不能改，请换一个键");
+			return;
+		}
 		if (key != KeyCode.None)
 		{
 			foreach (var (_, rows) in _settingSections ?? BuildSettingSections())
@@ -290,6 +296,12 @@ public partial class StoryReviewPanel
 				GUILayout.FlexibleSpace();
 				GUILayout.EndHorizontal();
 			}
+			// 热键这一组后面列出日语补丁写死的键，让人知道 F7 为什么绑不上
+			if (shown.Any(row => row.Element == ConfigManager.AnytimeLoadKey) && JapanesePatchCompat.Present)
+			{
+				DrawFixedKey("日语补丁：切换注音显示（不能改）", JapanesePatchCompat.RubyKey,
+					"日语补丁按 F7 切换注音显示（Ctrl+F7 清空显示过的记录），键写死在它的代码里，不能改；本 Mod 的热键不能绑 F7。", rowWidth);
+			}
 			if (shown.Any(row => row.Element == ConfigManager.ActionMode) && ActionModePatch.Mode != ActionModePatch.Normal)
 			{
 				GUILayout.Label(Red((ActionModePatch.Mode == ActionModePatch.Unlimited ? "行动点剩 1 点后不再消耗，用 ESC「空过」结束本旬。" : "")
@@ -298,6 +310,24 @@ public partial class StoryReviewPanel
 		}
 		GUILayout.EndScrollView();
 		GUILayout.EndArea();
+	}
+
+	// 别的 Mod 写死、这里改不了的键：和热键一行的样子一样，只是按钮点不了
+	private void DrawFixedKey(string name, KeyCode key, string description, float width)
+	{
+		GUILayout.BeginHorizontal();
+		GUILayout.BeginHorizontal(_card, GUILayout.Width(width - S(10)));
+		GUIStyle line = Middle(_label);
+		float nameWidth = S(232);
+		GUILayout.Label(Fit(TextConverter.ForDisplay(name), line, nameWidth), line, GUILayout.Width(nameWidth), Ctl());
+		Hover(GUILayoutUtility.GetLastRect(), description);
+		GUILayout.FlexibleSpace();
+		GUI.enabled = false;
+		GUILayout.Button(InputGuard.KeyName(key), _button, GUILayout.Width(S(130)), Ctl());
+		GUI.enabled = true;
+		GUILayout.EndHorizontal();
+		GUILayout.FlexibleSpace();
+		GUILayout.EndHorizontal();
 	}
 
 	// 各语言用自己的写法，不跟着界面语言翻译
