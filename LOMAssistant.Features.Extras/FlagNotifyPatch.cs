@@ -1,9 +1,12 @@
 using System;
+using System.Collections;
 using HarmonyLib;
 using LOMAssistant.Config;
 using Mortal.Core;
 using Mortal.Story;
+using UnityEngine;
 using UnityEngine.UI;
+using Object = UnityEngine.Object;
 
 namespace LOMAssistant.Features.Extras;
 
@@ -90,8 +93,9 @@ public static class FlagNotifyPatch
 	}
 
 	/// <summary>
-	/// 游戏的提示只停 1 秒、按游戏时间算，开倍速时一闪就没。把刚弹出的这条改成按真实时间停留配置的秒数，
-	/// 往上飘的距离不变（停得久就飘得慢）。
+	/// 游戏的提示只停 1 秒、按游戏时间算，开倍速时一闪就没；而且弹出时就把停留时间读走了，事后改字段不起作用，
+	/// 切场景时还会跟着场景一起销毁。所以把刚弹出的这条停掉游戏的动画，挪到一块跨场景保留的画布上（屏幕位置和大小不变），
+	/// 由本 Mod 按真实时间停留配置的秒数、往上飘，再淡出。
 	/// </summary>
 	private static void Linger(StoryMainUI ui)
 	{
@@ -106,17 +110,75 @@ public static class FlagNotifyPatch
 			return;
 		}
 		FloatingText text = panel.transform.GetChild(panel.transform.childCount - 1).GetComponent<FloatingText>();
-		if (text == null)
+		Canvas source = panel.GetComponentInParent<Canvas>();
+		if (text == null || source == null)
 		{
 			return;
 		}
-		var tr = Traverse.Create(text);
-		float original = tr.Field("_showTime").GetValue<float>();
-		float scaled = seconds * UnityEngine.Mathf.Max(0.01f, UnityEngine.Time.timeScale);
-		tr.Field("_showTime").SetValue(scaled);
-		if (original > 0f)
+		CanvasGroup group = Traverse.Create(text).Field("_canvasGroup").GetValue<CanvasGroup>();
+		if (group == null)
 		{
-			tr.Field("_moveSpeed").SetValue(tr.Field("_moveSpeed").GetValue<float>() * original / scaled);
+			return;
+		}
+		text.StopAllCoroutines();
+		Canvas root = source.rootCanvas;
+		Camera cam = root.renderMode == RenderMode.ScreenSpaceOverlay ? null : root.worldCamera;
+		Vector2 screen = RectTransformUtility.WorldToScreenPoint(cam, text.transform.position);
+		NoticeCanvas host = NoticeCanvas.Get(root);
+		text.transform.SetParent(host.transform, worldPositionStays: false);
+		text.transform.position = screen;
+		host.StartCoroutine(Float(text, group, seconds));
+	}
+
+	private static IEnumerator Float(FloatingText text, CanvasGroup group, float seconds)
+	{
+		const float Rise = 60f; // 停留期间往上飘的距离（参考分辨率下的像素）
+		var rt = (RectTransform)text.transform;
+		float elapsed = 0f;
+		while (text != null && group != null && group.alpha > 0f)
+		{
+			float dt = Time.unscaledDeltaTime;
+			elapsed += dt;
+			rt.anchoredPosition += new Vector2(0f, Rise * dt / seconds);
+			if (elapsed > seconds)
+			{
+				group.alpha -= 3f * dt;
+			}
+			yield return null;
+		}
+		if (text != null)
+		{
+			Object.Destroy(text.gameObject);
+		}
+	}
+
+	/// <summary>跨场景保留的提示画布，缩放设置照抄游戏的主画布，挪过来的提示大小不变。</summary>
+	private sealed class NoticeCanvas : MonoBehaviour
+	{
+		private static NoticeCanvas _instance;
+
+		public static NoticeCanvas Get(Canvas like)
+		{
+			if (_instance == null)
+			{
+				var go = new GameObject("LOMAssistant.FlagNotice", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler));
+				Object.DontDestroyOnLoad(go);
+				var canvas = go.GetComponent<Canvas>();
+				canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+				canvas.sortingOrder = 30000;
+				_instance = go.AddComponent<NoticeCanvas>();
+			}
+			CanvasScaler from = like.GetComponent<CanvasScaler>();
+			CanvasScaler to = _instance.GetComponent<CanvasScaler>();
+			if (from != null)
+			{
+				to.uiScaleMode = from.uiScaleMode;
+				to.referenceResolution = from.referenceResolution;
+				to.screenMatchMode = from.screenMatchMode;
+				to.matchWidthOrHeight = from.matchWidthOrHeight;
+				to.scaleFactor = from.scaleFactor;
+			}
+			return _instance;
 		}
 	}
 
