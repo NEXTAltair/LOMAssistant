@@ -147,6 +147,7 @@ public partial class StoryReviewPanel
 			// Mod 自己的设置：窗口的样子、日志、更新检查（界面语言在搜索框右边）
 			("咖啡伴侣", new List<SettingRow>
 			{
+				new SettingRow { Element = ConfigManager.PanelTheme, Name = "窗口配色", Choices = new[] { "浅色", "深色", "跟随系统" } },
 				new SettingRow { Element = ConfigManager.PanelFont, Name = "窗口字体", Choices = new[] { "思源宋体", "微软雅黑" } },
 				Row(ConfigManager.PanelOpacity, "咖啡伴侣窗口不透明度", 0.3f, 1f),
 				Row(ConfigManager.EnableDebugPanel, "数值面板热键"),

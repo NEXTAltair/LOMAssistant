@@ -75,6 +75,8 @@ public static class ConfigManager
 
 	public static ConfigElement<int> PanelFont;
 
+	public static ConfigElement<int> PanelTheme;
+
 	public static ConfigElement<int> UiLanguage;
 
 	public static ConfigElement<KeyCode> HideUIKey;
@@ -286,6 +288,7 @@ public static class ConfigManager
 		FlagNoticeSeconds = new ConfigElement<float>("FlagNoticeSeconds", "剧情旗标变化提示在屏幕上停留几秒（按真实时间，开倍速也一样；原版 1 秒）。0=按游戏原样", 4f);
 		FontScale = new ConfigElement<int>("FontScale", "剧情对白的文字大小（百分比，只放大对白框里的字，不放大界面）。100=原样，120=大两成", 100);
 		UiLanguage = new ConfigElement<int>("UiLanguage", "咖啡伴侣窗口等 Mod 界面的语言：0=跟随游戏（装了日语补丁时显示日语），1=简体中文，2=繁体中文，3=韩语，4=日语", 0);
+		PanelTheme = new ConfigElement<int>("PanelTheme", "咖啡伴侣窗口的配色：0=浅色（宣纸底，默认），1=深色（夜里不刺眼），2=跟随系统（Windows 的应用模式）", 0);
 		PanelFont = new ConfigElement<int>("PanelFont", "咖啡伴侣窗口等 Mod 界面的字体：0=思源宋体（游戏对话用的字体，默认），1=微软雅黑（系统字体）", 0);
 		EnableBackgroundRun = new ConfigElement<bool>("EnableBackgroundRun", "后台继续运行：切到别的窗口时游戏不暂停，背景音乐也不停。true=开，false=关（游戏原本的做法：切走就停）", defaultValue: true);
 		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "隐藏界面看 CG：剧情里按热键（HideUIKey，默认鼠标右键）隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次恢复。true=开，false=关", defaultValue: true);

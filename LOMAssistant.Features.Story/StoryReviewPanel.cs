@@ -31,16 +31,19 @@ public partial class StoryReviewPanel : MonoBehaviour
 	private float _redNoticeScale;
 	private string _tooltip = "";
 
-	// 配色：宣纸底、墨色字、朱砂点睛，和游戏的水墨画风搭
-	private static readonly Color Paper = new Color(0.95f, 0.92f, 0.85f, 1f);
-	private static readonly Color PaperDeep = new Color(0.9f, 0.86f, 0.77f, 1f);
-	private static readonly Color PaperLight = new Color(0.98f, 0.96f, 0.91f, 1f);
-	private static readonly Color Ink = new Color(0.17f, 0.14f, 0.11f, 1f);
-	private static readonly Color InkMuted = new Color(0.45f, 0.39f, 0.33f, 1f);
-	private static readonly Color InkLine = new Color(0.3f, 0.25f, 0.2f, 0.7f);
-	private static readonly Color Edge = new Color(0.55f, 0.45f, 0.33f, 1f);
-	private static readonly Color Cinnabar = new Color(0.7f, 0.17f, 0.13f, 1f);
-	private static readonly Color Jade = new Color(0.22f, 0.45f, 0.36f, 1f);
+	// 配色：宣纸底、墨色字、朱砂点睛，和游戏的水墨画风搭；深色模式是夜里的墨色底、宣纸色字（见 PanelTheme）
+	private static Color Paper => PanelTheme.Dark ? new Color(0.13f, 0.12f, 0.11f, 1f) : new Color(0.95f, 0.92f, 0.85f, 1f);
+	private static Color PaperDeep => PanelTheme.Dark ? new Color(0.24f, 0.21f, 0.18f, 1f) : new Color(0.9f, 0.86f, 0.77f, 1f);
+	private static Color PaperLight => PanelTheme.Dark ? new Color(0.17f, 0.155f, 0.14f, 1f) : new Color(0.98f, 0.96f, 0.91f, 1f);
+	private static Color Ink => PanelTheme.Dark ? new Color(0.9f, 0.86f, 0.79f, 1f) : new Color(0.17f, 0.14f, 0.11f, 1f);
+	private static Color InkMuted => PanelTheme.Dark ? new Color(0.66f, 0.61f, 0.54f, 1f) : new Color(0.45f, 0.39f, 0.33f, 1f);
+	private static Color InkLine => PanelTheme.Dark ? new Color(0.8f, 0.74f, 0.65f, 0.45f) : new Color(0.3f, 0.25f, 0.2f, 0.7f);
+	private static Color Edge => PanelTheme.Dark ? new Color(0.46f, 0.39f, 0.31f, 1f) : new Color(0.55f, 0.45f, 0.33f, 1f);
+	private static Color Cinnabar => PanelTheme.Dark ? new Color(0.76f, 0.24f, 0.19f, 1f) : new Color(0.7f, 0.17f, 0.13f, 1f);
+	private static Color Jade => PanelTheme.Dark ? new Color(0.42f, 0.7f, 0.58f, 1f) : new Color(0.22f, 0.45f, 0.36f, 1f);
+	// 朱砂按钮、印章上的字：两种模式都是宣纸色
+	private static readonly Color OnCinnabar = new Color(0.98f, 0.96f, 0.91f, 1f);
+	private bool _dark;
 
 	private GUIStyle _window, _label, _rich, _small, _muted, _heading, _tabOff, _tabOn, _button, _primary, _field, _boxTitle, _boxSmall, _tag, _center, _card, _seal;
 
@@ -180,6 +183,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 		_scale = scale;
 		_fontMode = ModFont.Mode;
 		_opacity = PanelOpacity;
+		_dark = PanelTheme.Dark;
 		Color Faded(Color c) => new Color(c.r, c.g, c.b, c.a * _opacity);
 		_textures.Clear();
 		_oneLine.Clear();
@@ -223,12 +227,12 @@ public partial class StoryReviewPanel : MonoBehaviour
 		_tabOn = new GUIStyle(_tabOff) { fontStyle = FontStyle.Bold };
 		_tabOn.normal.textColor = _tabOn.hover.textColor = Ink;
 		_button = Outlined(new Color(0, 0, 0, 0), PaperDeep, Edge, Ink, 17);
-		_primary = Outlined(Cinnabar, new Color(0.8f, 0.24f, 0.18f, 1f), Cinnabar, PaperLight, 17);
+		_primary = Outlined(Cinnabar, new Color(0.8f, 0.24f, 0.18f, 1f), Cinnabar, OnCinnabar, 17);
 		_field = new GUIStyle(GUI.skin.textField) { fontSize = Mathf.RoundToInt(18 * scale), alignment = TextAnchor.MiddleLeft };
 		ModFont.Apply(_field);
 		_field.normal.background = _field.hover.background = Framed(PaperLight, Edge);
 		// 点中时边框变朱砂红，看得出正在输入
-		_field.focused.background = Framed(new Color(1f, 0.99f, 0.96f, 1f), Cinnabar);
+		_field.focused.background = Framed(_dark ? new Color(0.21f, 0.19f, 0.17f, 1f) : new Color(1f, 0.99f, 0.96f, 1f), Cinnabar);
 		_field.border = new RectOffset(2, 2, 2, 2);
 		_field.normal.textColor = _field.focused.textColor = _field.hover.textColor = Ink;
 		_field.padding = new RectOffset((int)S(8), (int)S(8), (int)S(4), (int)S(4));
@@ -246,7 +250,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 		_card.border = new RectOffset(2, 2, 2, 2);
 		_card.padding = new RectOffset((int)S(10), (int)S(10), (int)S(8), (int)S(8));
 		_card.margin = new RectOffset(0, 0, (int)S(4), (int)S(4));
-		_seal = Plain(18, PaperLight, false);
+		_seal = Plain(18, OnCinnabar, false);
 		_seal.alignment = TextAnchor.MiddleCenter;
 		_seal.fontStyle = FontStyle.Bold;
 		// 只调透明度时不动窗口位置（可能被拖过）
@@ -267,7 +271,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 		{
 			return;
 		}
-		if (ModFont.NeedsRebuild(scale, _scale, _fontMode) || !Mathf.Approximately(PanelOpacity, _opacity))
+		if (ModFont.NeedsRebuild(scale, _scale, _fontMode) || !Mathf.Approximately(PanelOpacity, _opacity) || _dark != PanelTheme.Dark)
 		{
 			BuildStyles(scale);
 		}
@@ -297,7 +301,21 @@ public partial class StoryReviewPanel : MonoBehaviour
 		_messageUntil = Time.realtimeSinceStartup + 6f;
 	}
 
+	// 画窗口期间，文字里的颜色标签按深浅色换（PanelTheme.MapColors）
 	private void DrawWindow(int id)
+	{
+		PanelTheme.Painting = true;
+		try
+		{
+			DrawWindowContent(id);
+		}
+		finally
+		{
+			PanelTheme.Painting = false;
+		}
+	}
+
+	private void DrawWindowContent(int id)
 	{
 		_tooltip = "";
 		float w = _windowRect.width, pad = S(18);

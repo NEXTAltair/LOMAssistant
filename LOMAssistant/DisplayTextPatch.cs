@@ -59,7 +59,7 @@ public static class DisplayTextPatch
 			return null;
 		}
 		string original = content.text;
-		string converted = TextConverter.ForDisplay(original);
+		string converted = PanelTheme.MapColors(TextConverter.ForDisplay(original));
 		if (converted == original)
 		{
 			return null;
