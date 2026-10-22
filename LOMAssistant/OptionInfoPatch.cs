@@ -147,7 +147,7 @@ internal static class OptionInfoPatch
 			{
 				string condition = RichText.Strip(DataHelper.ParseConditionCheckpoint(locked.Condition));
 				string effects = locked.Unlocked != null && LuaParser.Instance.OptionResult.TryGetValue(locked.Unlocked, out var unlockedActions)
-					? RichText.Strip(TextConverter.ToSimplified(LuaParser.Description(unlockedActions)))
+					? RichText.Strip(TextConverter.ToSimplifiedUnlessJapanese(LuaParser.Description(unlockedActions)))
 					: "";
 				if (!condition.IsNullOrWhiteSpace())
 				{
@@ -170,7 +170,7 @@ internal static class OptionInfoPatch
 			}
 			if (LuaParser.Instance.OptionResult.TryGetValue(key, out var value))
 			{
-				string text = TextConverter.ToSimplified(LuaParser.Description(value));
+				string text = TextConverter.ToSimplifiedUnlessJapanese(LuaParser.Description(value));
 				if (jumps.Length > 0)
 				{
 					text = text.IsNullOrWhiteSpace() ? jumps : text + "；" + jumps;

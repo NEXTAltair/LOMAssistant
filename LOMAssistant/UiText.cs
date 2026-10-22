@@ -107,8 +107,8 @@ public static class UiText
 	}
 
 	// 旗标名：常拼在条件、提示里（「名字 (编号) 需=1」「【旗标】名字  0 → 1」），比日期、界面词先换，免得名字里的字先被换掉。
-	// 三个字以内的（「天道」「投票」「古文」这类）容易撞上别的文字，只在后面紧跟「 (编号)」、两个空格或整段结尾时换。
-	// 备注末尾常带着 \r、\t、空格（「抢劫\t (M20013)」），中间隔着空白也算
+	// 三个字以内的（「天道」「投票」「古文」这类）容易撞上别的文字，只在后面紧跟「 (编号)」、「=值」「 值」（选项结果里的
+	// 「设置名字=1」）、两个空格或整段结尾时换。备注末尾常带着 \r、\t、空格（「抢劫\t (M20013)」），中间隔着空白也算
 	private static (Regex, MatchEvaluator) FlagNames(string[][] table)
 	{
 		var map = new Dictionary<string, string>();
@@ -117,9 +117,23 @@ public static class UiText
 			map[row[0]] = row[1];
 		}
 		string Alternatives(IEnumerable<string> names) => string.Join("|", names.OrderByDescending(n => n.Length).Select(Regex.Escape).ToArray());
-		var regex = new Regex("(?:" + Alternatives(map.Keys.Where(n => n.Length > 3)) + ")|(?:" + Alternatives(map.Keys.Where(n => n.Length <= 3)) + ")(?=\\s*\\(|\\s{2}|\\s*$)");
+		var regex = new Regex("(?:" + Alternatives(map.Keys.Where(n => n.Length > 3)) + ")|(?:" + Alternatives(map.Keys.Where(n => n.Length <= 3)) + ")(?=\\s*\\(|\\s*=|\\s+[+-]?\\d|\\s{2}|\\s*$)");
 		return (regex, m => map[m.Value]);
 	}
+
+	// 选项结果（LuaParser）拼出来的动作说明里的词：「设置X=1」「X好感 +3」「天赋X lv1」「丢弃X」「X向心力 +1」「后续: …」「对决」「混战」。
+	// 只在这种格式里换（「设置页」不换）。韩语为 null 的照旧显示中文
+	private static readonly (string Pattern, string Korean, string Japanese)[] ActionWords =
+	{
+		("设置(?=[^、；]*?(?:=| )-?\\d)", "설정 ", "セット "),
+		("丢弃", null, "破棄 "),
+		("好感 (?=[+-]?\\d)", " 호감 ", " 好感度 "),
+		("天赋(?=[^、；]+ lv\\d)", "천부 ", "天賦 "),
+		("向心力 (?=[+-]?\\d)", " 단합 ", " 団結 "),
+		("后续: ", null, "分岐先で: "),
+		("对决", "결투", "決闘"),
+		("混战", null, "乱戦"),
+	};
 
 	private class Lang
 	{
@@ -133,6 +147,14 @@ public static class UiText
 			if (column == 2)
 			{
 				Words.Add(FlagNames(UiFlagNames.Japanese));
+			}
+			foreach (var (pattern, korean, japanese) in ActionWords)
+			{
+				string text = column == 1 ? korean : japanese;
+				if (text != null)
+				{
+					Words.Add((new Regex(pattern), _ => text));
+				}
 			}
 			Words.AddRange(column == 1 ? KoreanDates : JapaneseDates);
 			foreach (string[] row in Terms.OrderByDescending(r => r[0].Length))

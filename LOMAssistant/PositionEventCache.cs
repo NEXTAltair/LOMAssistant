@@ -183,7 +183,7 @@ public class PositionEventCache
 			return "";
 		}
 		List<LOMAssistant.LuaParse.Action> actions = LuaParser.Instance.ExtractActionsFromLua(prefix + "_" + eventData.ResultType);
-		return TextConverter.ToSimplified(LuaParser.Description(actions.Where((LOMAssistant.LuaParse.Action a) => !a.IsConditional).ToList()));
+		return TextConverter.ToSimplifiedUnlessJapanese(LuaParser.Description(actions.Where((LOMAssistant.LuaParse.Action a) => !a.IsConditional).ToList()));
 	}
 
 	private string GenerateStaticDesc(PositionEventData eventData)
