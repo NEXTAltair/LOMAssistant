@@ -993,6 +993,13 @@ internal class InstallerForm : Form
 				return;
 			}
 			Logo();
+			// GitHub 上有新版但没下载下来（多半是网络连不上 GitHub）：装的是压缩包自带的旧版，要说清楚，不能只说「安装完成」
+			if (_downloadError != null && _latest != null && now < _latest && Short(now) != Short(_latest))
+			{
+				Finish(true, F("没能从 GitHub 下载最新版 {0}（{1}），这次装的是压缩包自带的 {2}。\n\n要更新到 {0}，请到 B站视频简介里的夸克网盘链接或 GitHub 的 Releases 页下载新的压缩包，解压后运行里面的安装器。", Short(_latest), _downloadError, Short(now)),
+					L("没能更新到最新版"), MessageBoxIcon.Warning);
+				return;
+			}
 			Finish(true, F("安装完成，当前版本 {0}。\n\n正常启动游戏即可，游戏里按 F8 打开设置，Tab 打开咖啡伴侣窗口。", Short(now)));
 		}
 		catch (UnauthorizedAccessException e)
@@ -1020,8 +1027,12 @@ internal class InstallerForm : Form
 	}
 
 	// 有更新的版本就从 GitHub 下载；否则（或下载失败）用压缩包自带的
+	// 这次安装时下载最新版失败的原因；没下载或下载成功为 null
+	private string _downloadError;
+
 	private string ChooseSource()
 	{
+		_downloadError = null;
 		Version bundled = BundledVersion();
 		bool hasBundled = bundled != null;
 		if (_latest != null && _latestUrl != null && (bundled == null || Short(_latest) != Short(bundled) && _latest > bundled))
@@ -1032,6 +1043,7 @@ internal class InstallerForm : Form
 			}
 			catch (Exception e)
 			{
+				_downloadError = e.Message;
 				Log(F("下载最新版失败（{0}）。", e.Message));
 			}
 		}
@@ -1188,7 +1200,7 @@ internal class InstallerForm : Form
 		return a != null && b != null && string.Equals(Path.GetFullPath(a).TrimEnd('\\'), Path.GetFullPath(b).TrimEnd('\\'), StringComparison.OrdinalIgnoreCase);
 	}
 
-	private void Finish(bool ok, string message, string title = null)
+	private void Finish(bool ok, string message, string title = null, MessageBoxIcon? icon = null)
 	{
 		Log(message.Replace("\n\n", " "));
 		BeginInvoke(new Action(() =>
@@ -1202,7 +1214,7 @@ internal class InstallerForm : Form
 			SetGame(_game);
 			_install.Enabled = true;
 			_browse.Enabled = true;
-			MessageBox.Show(this, message, title ?? L(ok ? "安装完成" : "安装失败"), MessageBoxButtons.OK, ok ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+			MessageBox.Show(this, message, title ?? L(ok ? "安装完成" : "安装失败"), MessageBoxButtons.OK, icon ?? (ok ? MessageBoxIcon.Information : MessageBoxIcon.Error));
 		}));
 	}
 

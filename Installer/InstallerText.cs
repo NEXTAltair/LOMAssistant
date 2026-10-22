@@ -219,6 +219,8 @@ internal static class InstallerText
 		new[] { "安装失败：{0}", "Install failed: {0}", "インストールに失敗しました：{0}", "설치 실패: {0}" },
 		new[] { "设置开头 Logo 失败（{0}），不影响 Mod 使用。", "Failed to set the opening logos ({0}); the mod still works.", "冒頭ロゴの設定に失敗しました（{0}）。MOD の動作には影響しません。", "시작 로고 설정 실패({0}). Mod 사용에는 지장이 없습니다." },
 		new[] { "下载最新版失败（{0}）。", "Failed to download the latest version ({0}).", "最新版のダウンロードに失敗しました（{0}）。", "최신 버전 다운로드 실패({0})." },
+		new[] { "没能更新到最新版", "Could not update to the latest version", "最新版に更新できませんでした", "최신 버전으로 업데이트하지 못했습니다" },
+		new[] { "没能从 GitHub 下载最新版 {0}（{1}），这次装的是压缩包自带的 {2}。\n\n要更新到 {0}，请到 B站视频简介里的夸克网盘链接或 GitHub 的 Releases 页下载新的压缩包，解压后运行里面的安装器。", "Could not download the latest version {0} from GitHub ({1}), so the version in the zip, {2}, was installed.\n\nTo update to {0}, download the new zip from Nexus Mods or the GitHub Releases page, extract it and run the installer inside.", "GitHub から最新版 {0} をダウンロードできなかったため（{1}）、ZIP に同梱の {2} をインストールしました。\n\n{0} に更新するには、Nexus Mods か GitHub の Releases ページから新しい ZIP をダウンロードし、展開して中のインストーラーを実行してください。", "GitHub에서 최신 버전 {0}을(를) 내려받지 못해({1}) 압축 파일에 든 {2}을(를) 설치했습니다.\n\n{0}(으)로 업데이트하려면 Nexus Mods나 GitHub의 Releases 페이지에서 새 압축 파일을 내려받아 풀고, 안에 있는 설치 프로그램을 실행하세요." },
 		new[] { "安装压缩包自带的版本 {0}。", "Installing the version in the zip: {0}.", "ZIP に同梱の版 {0} をインストールします。", "압축 파일에 든 버전 {0}을(를) 설치합니다." },
 		new[] { "正在从 GitHub 下载 {0}…", "Downloading {0} from GitHub…", "GitHub から {0} をダウンロード中…", "GitHub에서 {0} 내려받는 중…" },
 		new[] { "下载的压缩包里没有 Mod 文件", "The downloaded zip has no mod files", "ダウンロードした ZIP に MOD のファイルがありません", "내려받은 압축 파일에 Mod 파일이 없습니다" },
