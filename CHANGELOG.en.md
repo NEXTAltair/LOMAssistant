@@ -2,7 +2,7 @@
 
 Changes in each version, newest first. Versions before 2.7.0 are only in Chinese; see CHANGELOG.md.
 
-## 2.7.0 (2026-10-22)
+## 2.7.0 (2026-10-21)
 
 **New features**
 
