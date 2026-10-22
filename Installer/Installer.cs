@@ -1,4 +1,5 @@
 ﻿using System;
+using static InstallerText;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -84,22 +85,24 @@ internal class InstallerForm : Form
 
 	private readonly string _payload = AppDomain.CurrentDomain.BaseDirectory;
 	private readonly TextBox _gameBox = new TextBox { ReadOnly = true, Dock = DockStyle.Fill, BorderStyle = BorderStyle.FixedSingle };
-	private readonly Label _versionFrom = new Label { AutoSize = true, Font = new Font("Microsoft YaHei UI", 18f, FontStyle.Bold), ForeColor = Color.FromArgb(120, 110, 98), Margin = new Padding(0) };
-	private readonly Label _versionTo = new Label { AutoSize = true, Font = new Font("Microsoft YaHei UI", 18f, FontStyle.Bold), ForeColor = Color.FromArgb(140, 47, 38), Margin = new Padding(0) };
+	private readonly Label _versionFrom = new Label { AutoSize = true, Font = new Font(FontName, 18f, FontStyle.Bold), ForeColor = Color.FromArgb(120, 110, 98), Margin = new Padding(0) };
+	private readonly Label _versionTo = new Label { AutoSize = true, Font = new Font(FontName, 18f, FontStyle.Bold), ForeColor = Color.FromArgb(140, 47, 38), Margin = new Padding(0) };
 	private readonly Label _versionNote = new Label { AutoSize = true, ForeColor = Color.FromArgb(120, 110, 98), Margin = new Padding(0, 2, 0, 0) };
 	private readonly RichTextBox _notes = new RichTextBox { Dock = DockStyle.Fill, ReadOnly = true, BorderStyle = BorderStyle.None, DetectUrls = false, ScrollBars = RichTextBoxScrollBars.Vertical };
-	private readonly Button _tabNotes = new Button { Text = "更新内容", AutoSize = true, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(0, 0, 4, 0), Padding = new Padding(8, 2, 8, 2) };
-	private readonly Button _tabLog = new Button { Text = "日志", AutoSize = true, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(0), Padding = new Padding(8, 2, 8, 2) };
+	private readonly Button _tabNotes = new Button { Text = L("更新内容"), AutoSize = true, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(0, 0, 4, 0), Padding = new Padding(8, 2, 8, 2) };
+	private readonly Button _tabLog = new Button { Text = L("日志"), AutoSize = true, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand, Margin = new Padding(0), Padding = new Padding(8, 2, 8, 2) };
 	private string _changelog = ReadResource("Installer.CHANGELOG.md") ?? "";
-	private readonly Label _pluginsHint = new Label { AutoSize = true, ForeColor = Color.FromArgb(120, 110, 98), Text = "勾选的移到「已停用的Mod」，不删除" };
-	private readonly Label _pluginsNone = new Label { AutoSize = true, Text = "没有发现其他 Mod。", ForeColor = Color.FromArgb(120, 110, 98) };
+	// 更新内容的译文（英、日、韩），没翻的版本照旧显示中文，见 InstallerText.Changelog
+	private string _changelogTranslated = ChangelogSuffix != null ? ReadResource("Installer.CHANGELOG." + ChangelogSuffix + ".md") : null;
+	private readonly Label _pluginsHint = new Label { AutoSize = true, ForeColor = Color.FromArgb(120, 110, 98), Text = L("勾选的移到「已停用的Mod」，不删除") };
+	private readonly Label _pluginsNone = new Label { AutoSize = true, Text = L("没有发现其他 Mod。"), ForeColor = Color.FromArgb(120, 110, 98) };
 	private readonly CheckedListBox _plugins = new CheckedListBox { Dock = DockStyle.Fill, CheckOnClick = true, IntegralHeight = false, HorizontalScrollbar = true, BorderStyle = BorderStyle.FixedSingle, Height = 110 };
 	private readonly TextBox _log = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, BorderStyle = BorderStyle.None };
-	private readonly CheckBox _skipLogo = new CheckBox { Text = "跳过游戏开头 Logo（想恢复就取消勾选再安装一次）", AutoSize = true, Checked = true, Margin = new Padding(0, 4, 0, 6) };
-	private readonly Button _install = new Button { Text = "一键安装 / 更新", Dock = DockStyle.Fill, Height = 46, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-	private readonly Button _uninstall = new Button { Text = "卸载本 Mod", Dock = DockStyle.Fill, Height = 40, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-	private readonly Button _export = new Button { Text = "导出诊断（Mod 不生效时用，打包日志发给作者）", Dock = DockStyle.Fill, Height = 40, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
-	private readonly Button _browse = new Button { Text = "选择…", AutoSize = true, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+	private readonly CheckBox _skipLogo = new CheckBox { Text = L("跳过游戏开头 Logo（想恢复就取消勾选再安装一次）"), AutoSize = true, Checked = true, Margin = new Padding(0, 4, 0, 6) };
+	private readonly Button _install = new Button { Text = L("一键安装 / 更新"), Dock = DockStyle.Fill, Height = 46, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+	private readonly Button _uninstall = new Button { Text = L("卸载本 Mod"), Dock = DockStyle.Fill, Height = 40, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+	private readonly Button _export = new Button { Text = L("导出诊断（Mod 不生效时用，打包日志发给作者）"), Dock = DockStyle.Fill, Height = 40, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
+	private readonly Button _browse = new Button { Text = L("选择…"), AutoSize = true, FlatStyle = FlatStyle.Flat, Cursor = Cursors.Hand };
 	private readonly List<string> _pluginPaths = new List<string>();
 
 	private string _game;
@@ -118,8 +121,8 @@ internal class InstallerForm : Form
 	public InstallerForm(string game, string autoLog)
 	{
 		_autoLog = autoLog;
-		Text = "咖啡伴侣 安装器";
-		Font = new Font("Microsoft YaHei UI", 10f);
+		Text = L("咖啡伴侣 安装器");
+		Font = new Font(FontName, 10f);
 		AutoScaleMode = AutoScaleMode.Dpi;
 		ClientSize = new Size(1280, 900);
 		MinimumSize = new Size(900, 680);
@@ -153,17 +156,17 @@ internal class InstallerForm : Form
 		var buttons = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, AutoSize = true, Margin = new Padding(0, 8, 0, 0) };
 		buttons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
 		buttons.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50f));
-		_export.Text = "导出诊断";
+		_export.Text = L("导出诊断");
 		_export.Margin = new Padding(0, 0, 6, 0);
 		_uninstall.Margin = new Padding(6, 0, 0, 0);
 		buttons.Controls.Add(_export, 0, 0);
 		buttons.Controls.Add(_uninstall, 1, 0);
 		Control[] rows =
 		{
-			Heading("游戏目录"),
+			Heading(L("游戏目录")),
 			dirRow,
 			VersionCard(),
-			Heading("其他 Mod"),
+			Heading(L("其他 Mod")),
 			_pluginsHint,
 			_pluginsNone,
 			_plugins,
@@ -207,7 +210,7 @@ internal class InstallerForm : Form
 		_plugins.BackColor = Card;
 		_install.BackColor = Accent;
 		_install.ForeColor = Color.White;
-		_install.Font = new Font("Microsoft YaHei UI", 13f, FontStyle.Bold);
+		_install.Font = new Font(FontName, 13f, FontStyle.Bold);
 		_install.Height = 52;
 		_install.FlatAppearance.BorderSize = 0;
 		_install.FlatAppearance.MouseOverBackColor = AccentHover;
@@ -236,11 +239,11 @@ internal class InstallerForm : Form
 		_export.Click += delegate { ExportDiagnostics(); };
 		_uninstall.Click += delegate { Uninstall(); };
 
-		Log("咖啡伴侣 安装器");
+		Log(L("咖啡伴侣 安装器"));
 		SetGame(game ?? FindGame());
 		if (_game == null)
 		{
-			Log("没有自动找到游戏目录，请点「选择…」手动选择游戏目录（里面有 Mortal.exe）。");
+			Log(L("没有自动找到游戏目录，请点「选择…」手动选择游戏目录（里面有 Mortal.exe）。"));
 		}
 		CheckOnline();
 		// 小屏幕（1366x768 笔记本）放不下就缩到屏幕工作区里，不让下面的按钮跑到任务栏底下
@@ -317,7 +320,7 @@ internal class InstallerForm : Form
 	{
 		try
 		{
-			Stream stream = typeof(InstallerForm).Assembly.GetManifestResourceStream("Installer.banner.jpg");
+			Stream stream = typeof(InstallerForm).Assembly.GetManifestResourceStream("Installer.banner." + BannerSuffix + ".jpg");
 			return stream == null ? null : Image.FromStream(stream);
 		}
 		catch
@@ -333,9 +336,9 @@ internal class InstallerForm : Form
 		card.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 		card.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
 		card.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100f));
-		var fromCaption = new Label { Text = "已安装", AutoSize = true, ForeColor = Muted, Margin = new Padding(0) };
-		var toCaption = new Label { Text = "将安装", AutoSize = true, ForeColor = Muted, Margin = new Padding(0) };
-		var arrow = new Label { Text = "→", AutoSize = true, ForeColor = Muted, Font = new Font("Microsoft YaHei UI", 16f), Margin = new Padding(14, 10, 14, 0) };
+		var fromCaption = new Label { Text = L("已安装"), AutoSize = true, ForeColor = Muted, Margin = new Padding(0) };
+		var toCaption = new Label { Text = L("将安装"), AutoSize = true, ForeColor = Muted, Margin = new Padding(0) };
+		var arrow = new Label { Text = "→", AutoSize = true, ForeColor = Muted, Font = new Font(FontName, 16f), Margin = new Padding(14, 10, 14, 0) };
 		card.Controls.Add(fromCaption, 0, 0);
 		card.Controls.Add(toCaption, 2, 0);
 		card.Controls.Add(_versionFrom, 0, 1);
@@ -366,7 +369,7 @@ internal class InstallerForm : Form
 	private void RenderNotes(Version installed, Version target)
 	{
 		var sections = new List<(Version Version, string Title, List<string> Lines)>();
-		foreach (string line in _changelog.Split('\n'))
+		foreach (string line in Changelog(_changelog, _changelogTranslated).Split('\n'))
 		{
 			Match m = VersionHeading.Match(line);
 			if (m.Success)
@@ -387,23 +390,23 @@ internal class InstallerForm : Form
 		string heading;
 		if (shown.Count > 0)
 		{
-			heading = "从 " + Short(installed) + " 更新到 " + Short(shown[0].Version) + " 的新内容";
+			heading = F("从 {0} 更新到 {1} 的新内容", Short(installed), Short(shown[0].Version));
 		}
 		else
 		{
 			shown = sections.Where(x => target == null || x.Version <= target).Take(1).ToList();
-			heading = shown.Count > 0 ? Short(shown[0].Version) + " 的更新内容" : "更新内容";
+			heading = shown.Count > 0 ? F("{0} 的更新内容", Short(shown[0].Version)) : L("更新内容");
 		}
 		_notes.Clear();
-		Append(heading + "\n", new Font("Microsoft YaHei UI", 13f, FontStyle.Bold), Ink);
+		Append(heading + "\n", new Font(FontName, 13f, FontStyle.Bold), Ink);
 		if (shown.Count == 0)
 		{
-			Append("\n没有找到更新说明。", Font, Muted);
+			Append("\n" + L("没有找到更新说明。"), Font, Muted);
 			return;
 		}
 		foreach (var section in shown)
 		{
-			Append("\n" + section.Title + "\n", new Font("Microsoft YaHei UI", 11.5f, FontStyle.Bold), Accent);
+			Append("\n" + section.Title + "\n", new Font(FontName, 11.5f, FontStyle.Bold), Accent);
 			foreach (string raw in section.Lines)
 			{
 				string line = raw.TrimEnd();
@@ -467,27 +470,27 @@ internal class InstallerForm : Form
 		if (!_onlineDone)
 		{
 			target = bundled;
-			note = "正在检查 GitHub 上的最新版…";
+			note = L("正在检查 GitHub 上的最新版…");
 		}
 		else if (_latest != null && (bundled == null || _latest > bundled && Short(_latest) != Short(bundled)))
 		{
 			target = _latest;
-			note = "将从 GitHub 下载最新版";
+			note = L("将从 GitHub 下载最新版");
 		}
 		else if (bundled != null)
 		{
 			target = bundled;
-			note = _latest != null ? "压缩包里的就是最新版" : "GitHub 连不上，安装压缩包自带的版本";
+			note = _latest != null ? L("压缩包里的就是最新版") : L("GitHub 连不上，安装压缩包自带的版本");
 		}
 		else
 		{
-			note = "连不上 GitHub，这个安装器也不在解压后的压缩包里";
+			note = L("连不上 GitHub，这个安装器也不在解压后的压缩包里");
 		}
 		if (installed != null && target != null && (Short(installed) == Short(target) || installed > target))
 		{
-			note = "已经是最新版";
+			note = L("已经是最新版");
 		}
-		_versionFrom.Text = _game == null ? "-" : installed != null ? Short(installed) : "未安装";
+		_versionFrom.Text = _game == null ? "-" : installed != null ? Short(installed) : L("未安装");
 		_versionTo.Text = target != null ? Short(target) : "-";
 		_versionNote.Text = note;
 		RenderNotes(installed, target);
@@ -597,7 +600,7 @@ internal class InstallerForm : Form
 
 	private void BrowseGame()
 	{
-		using (var dialog = new FolderBrowserDialog { Description = "选择《活侠传》游戏目录（里面有 Mortal.exe）" })
+		using (var dialog = new FolderBrowserDialog { Description = L("选择《活侠传》游戏目录（里面有 Mortal.exe）") })
 		{
 			if (dialog.ShowDialog(this) != DialogResult.OK)
 			{
@@ -605,7 +608,7 @@ internal class InstallerForm : Form
 			}
 			if (!IsGameDir(dialog.SelectedPath))
 			{
-				MessageBox.Show(this, "这个文件夹里没有 Mortal.exe，不是游戏目录。\n\nSteam 中右键《活侠传》→ 管理 → 浏览本地文件，打开的就是游戏目录。", "选错了", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+				MessageBox.Show(this, L("这个文件夹里没有 Mortal.exe，不是游戏目录。\n\nSteam 中右键《活侠传》→ 管理 → 浏览本地文件，打开的就是游戏目录。"), L("选错了"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
 				return;
 			}
 			SetGame(dialog.SelectedPath);
@@ -637,12 +640,12 @@ internal class InstallerForm : Form
 	private void SetGame(string dir)
 	{
 		_game = IsGameDir(dir) ? RealCase(dir) : null;
-		_gameBox.Text = _game ?? "（未找到，请点「选择…」）";
+		_gameBox.Text = _game ?? L("（未找到，请点「选择…」）");
 		UpdateVersions();
 		RefreshPlugins();
 		if (_game != null)
 		{
-			Log("游戏目录：" + _game);
+			Log(F("游戏目录：{0}", _game));
 		}
 	}
 
@@ -691,7 +694,7 @@ internal class InstallerForm : Form
 				name = rel;
 			}
 			_pluginPaths.Add(dll);
-			_plugins.Items.Add(name + (known != null ? " （已知冲突：" + known + "）" : ""), known != null);
+			_plugins.Items.Add(known != null ? F("{0} （已知冲突：{1}）", name, L(known)) : name, known != null);
 		}
 	}
 
@@ -702,7 +705,7 @@ internal class InstallerForm : Form
 		foreach (string dll in Directory.GetFiles(patchers, "*.dll", SearchOption.AllDirectories))
 		{
 			_pluginPaths.Add(dll);
-			_plugins.Items.Add(@"patchers\" + dll.Substring(patchers.Length + 1) + "　【预加载补丁：本 Mod 不需要，可能导致 BepInEx 启动失败】", true);
+			_plugins.Items.Add(F("{0}　【预加载补丁：本 Mod 不需要，可能导致 BepInEx 启动失败】", @"patchers\" + dll.Substring(patchers.Length + 1)), true);
 		}
 	}
 
@@ -714,22 +717,22 @@ internal class InstallerForm : Form
 	{
 		if (_game == null)
 		{
-			MessageBox.Show(this, "请先选择游戏目录。", "卸载", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			MessageBox.Show(this, L("请先选择游戏目录。"), L("卸载"), MessageBoxButtons.OK, MessageBoxIcon.Information);
 			return;
 		}
 		if (Process.GetProcessesByName("Mortal").Length > 0)
 		{
-			MessageBox.Show(this, "游戏正在运行，请先退出游戏再卸载。", "卸载", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+			MessageBox.Show(this, L("游戏正在运行，请先退出游戏再卸载。"), L("卸载"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
 			return;
 		}
 		RefreshPlugins();
 		int others = _pluginPaths.Count;
-		string question = "确定卸载咖啡伴侣吗？\n\n"
+		string question = L("确定卸载咖啡伴侣吗？") + "\n\n"
 			+ (others > 0
-				? "还有 " + others + " 个别的 Mod，BepInEx 加载器会留给它们用，只删本 Mod。"
-				: "没有别的 Mod 了，BepInEx 加载器也一起删掉，游戏回到没装 Mod 的样子。")
-			+ "\n\n存档不受影响（随时存档、剧情回顾收录的节点也留着，以后重装还能接着用）。";
-		if (MessageBox.Show(this, question, "卸载", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
+				? F("还有 {0} 个别的 Mod，BepInEx 加载器会留给它们用，只删本 Mod。", others)
+				: L("没有别的 Mod 了，BepInEx 加载器也一起删掉，游戏回到没装 Mod 的样子。"))
+			+ "\n\n" + L("存档不受影响（随时存档、剧情回顾收录的节点也留着，以后重装还能接着用）。");
+		if (MessageBox.Show(this, question, L("卸载"), MessageBoxButtons.OKCancel, MessageBoxIcon.Question) != DialogResult.OK)
 		{
 			return;
 		}
@@ -741,7 +744,7 @@ internal class InstallerForm : Form
 			}
 			catch (Exception e)
 			{
-				Log("恢复开头 Logo 失败（" + e.Message + "）。");
+				Log(F("恢复开头 Logo 失败（{0}）。", e.Message));
 			}
 			DeletePath(@"BepInEx\plugins\LOMAssistant");
 			DeletePath(@"BepInEx\config\LOMAssistant.cfg");
@@ -762,7 +765,7 @@ internal class InstallerForm : Form
 				}
 			}
 			bool disabled = Directory.Exists(Path.Combine(_game, DisabledFolder));
-			Finish(true, "已卸载咖啡伴侣。" + (disabled ? "\n\n以前停用的别的 Mod 还在「BepInEx\\已停用的Mod」里，想用的话自己挪回去。" : ""), "卸载");
+			Finish(true, L("已卸载咖啡伴侣。") + (disabled ? "\n\n" + L("以前停用的别的 Mod 还在「BepInEx\\已停用的Mod」里，想用的话自己挪回去。") : ""), L("卸载"));
 		}
 		catch (UnauthorizedAccessException)
 		{
@@ -770,7 +773,7 @@ internal class InstallerForm : Form
 		}
 		catch (Exception e)
 		{
-			Finish(false, "卸载没有完成：" + e.Message + "\n\n请确认游戏已退出，再试一次。", "卸载");
+			Finish(false, F("卸载没有完成：{0}\n\n请确认游戏已退出，再试一次。", e.Message), L("卸载"));
 		}
 	}
 
@@ -789,7 +792,7 @@ internal class InstallerForm : Form
 		{
 			return;
 		}
-		Log("已删除 " + rel);
+		Log(F("已删除 {0}", rel));
 	}
 
 	// ---------------- 联网检查 ----------------
@@ -839,10 +842,34 @@ internal class InstallerForm : Form
 				{
 					// 取不到就用安装器里自带的那份
 				}
+				if (ChangelogSuffix != null)
+				{
+					try
+					{
+						var notes = (HttpWebRequest)WebRequest.Create("https://api.github.com/repos/" + Repo + "/contents/CHANGELOG." + ChangelogSuffix + ".md");
+						notes.UserAgent = "LOMAssistant-Installer";
+						notes.Accept = "application/vnd.github.raw";
+						notes.Timeout = 8000;
+						notes.ReadWriteTimeout = 8000;
+						using (var response = notes.GetResponse())
+						using (var reader = new StreamReader(response.GetResponseStream(), Encoding.UTF8))
+						{
+							string text = reader.ReadToEnd().Replace("\r\n", "\n");
+							if (text.Contains("\n## "))
+							{
+								_changelogTranslated = text;
+							}
+						}
+					}
+					catch
+					{
+						// 取不到就用安装器里自带的那份译文
+					}
+				}
 			}
 			catch (Exception e)
 			{
-				Log("连不上 GitHub（" + e.Message + "），将安装压缩包自带的版本。");
+				Log(F("连不上 GitHub（{0}），将安装压缩包自带的版本。", e.Message));
 			}
 			_onlineDone = true;
 			BeginInvoke(new Action(() =>
@@ -860,7 +887,7 @@ internal class InstallerForm : Form
 		try
 		{
 			string path = Diagnostics.Export(_game, _log.Text);
-			Log("已导出诊断：" + path);
+			Log(F("已导出诊断：{0}", path));
 			try
 			{
 				Clipboard.SetText(path);
@@ -874,12 +901,12 @@ internal class InstallerForm : Form
 				Close();
 				return;
 			}
-			MessageBox.Show(this, "已导出到桌面：\n" + Path.GetFileName(path) + "\n\n路径已复制。反馈问题时把这个压缩包发给作者（QQ 群 496887060）。", "导出诊断", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			MessageBox.Show(this, F("已导出到桌面：\n{0}\n\n路径已复制。反馈问题时把这个压缩包发给作者（QQ 群 496887060）。", Path.GetFileName(path)), L("导出诊断"), MessageBoxButtons.OK, MessageBoxIcon.Information);
 		}
 		catch (Exception e)
 		{
-			Log("导出诊断失败：" + e.Message);
-			MessageBox.Show(this, "导出失败：" + e.Message, "导出诊断", MessageBoxButtons.OK, MessageBoxIcon.Error);
+			Log(F("导出诊断失败：{0}", e.Message));
+			MessageBox.Show(this, F("导出失败：{0}", e.Message), L("导出诊断"), MessageBoxButtons.OK, MessageBoxIcon.Error);
 		}
 	}
 
@@ -889,12 +916,12 @@ internal class InstallerForm : Form
 	{
 		if (_game == null)
 		{
-			MessageBox.Show(this, "请先选择游戏目录。", "安装", MessageBoxButtons.OK, MessageBoxIcon.Information);
+			MessageBox.Show(this, L("请先选择游戏目录。"), L("安装"), MessageBoxButtons.OK, MessageBoxIcon.Information);
 			return;
 		}
 		if (Process.GetProcessesByName("Mortal").Length > 0)
 		{
-			MessageBox.Show(this, "游戏正在运行，请先退出游戏再安装。", "安装", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+			MessageBox.Show(this, L("游戏正在运行，请先退出游戏再安装。"), L("安装"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
 			return;
 		}
 		var disable = new List<string>();
@@ -933,37 +960,37 @@ internal class InstallerForm : Form
 			{
 				DisablePlugins(disable);
 				Logo();
-				Finish(true, "已经是最新版本 " + Short(installed) + "，不需要重新安装。" + (disable.Count > 0 ? "\n\n勾选的 Mod 已移到「BepInEx\\已停用的Mod」。" : ""));
+				Finish(true, F("已经是最新版本 {0}，不需要重新安装。", Short(installed)) + (disable.Count > 0 ? "\n\n" + L("勾选的 Mod 已移到「BepInEx\\已停用的Mod」。") : ""));
 				return;
 			}
 			string source = ChooseSource();
 			if (source == null)
 			{
-				Finish(false, "没有可安装的文件：压缩包里没有安装文件，也没能从 GitHub 下载。请把整个压缩包解压后再运行安装器。");
+				Finish(false, L("没有可安装的文件：压缩包里没有安装文件，也没能从 GitHub 下载。请把整个压缩包解压后再运行安装器。"));
 				return;
 			}
 			DisablePlugins(disable);
 			RemoveBepInEx5Core();
 			int copied = CopyTree(source, _game);
-			Log("已复制 " + copied + " 个文件。");
+			Log(F("已复制 {0} 个文件。", copied));
 			Version now = DllVersion(Path.Combine(_game, ModDll));
 			if (now == null || !File.Exists(Path.Combine(_game, "winhttp.dll")))
 			{
-				Finish(false, "安装后检查失败：游戏目录里缺少 Mod 文件。");
+				Finish(false, L("安装后检查失败：游戏目录里缺少 Mod 文件。"));
 				return;
 			}
 			Logo();
-			Finish(true, "安装完成，当前版本 " + Short(now) + "。\n\n正常启动游戏即可，游戏里按 F8 打开设置，Tab 打开咖啡伴侣窗口。");
+			Finish(true, F("安装完成，当前版本 {0}。\n\n正常启动游戏即可，游戏里按 F8 打开设置，Tab 打开咖啡伴侣窗口。", Short(now)));
 		}
 		catch (UnauthorizedAccessException e)
 		{
 			// 写进日志是哪个文件被拒绝（只读、杀毒软件拦截、文件夹权限），导出诊断时看得到
-			Log("写入被拒绝：" + e.Message);
+			Log(F("写入被拒绝：{0}", e.Message));
 			BeginInvoke(new Action(AskElevate));
 		}
 		catch (Exception e)
 		{
-			Finish(false, "安装失败：" + e.Message);
+			Finish(false, F("安装失败：{0}", e.Message));
 		}
 	}
 
@@ -975,7 +1002,7 @@ internal class InstallerForm : Form
 		}
 		catch (Exception e)
 		{
-			Log("设置开头 Logo 失败（" + e.Message + "），不影响 Mod 使用。");
+			Log(F("设置开头 Logo 失败（{0}），不影响 Mod 使用。", e.Message));
 		}
 	}
 
@@ -992,12 +1019,12 @@ internal class InstallerForm : Form
 			}
 			catch (Exception e)
 			{
-				Log("下载最新版失败（" + e.Message + "）。");
+				Log(F("下载最新版失败（{0}）。", e.Message));
 			}
 		}
 		if (hasBundled)
 		{
-			Log("安装压缩包自带的版本 " + Short(bundled) + "。");
+			Log(F("安装压缩包自带的版本 {0}。", Short(bundled)));
 			return _payload;
 		}
 		return null;
@@ -1012,7 +1039,7 @@ internal class InstallerForm : Form
 		}
 		Directory.CreateDirectory(temp);
 		string zip = Path.Combine(temp, "LOMAssistant.zip");
-		Log("正在从 GitHub 下载 " + Short(_latest) + "…");
+		Log(F("正在从 GitHub 下载 {0}…", Short(_latest)));
 		var request = (HttpWebRequest)WebRequest.Create(_latestUrl);
 		request.UserAgent = "LOMAssistant-Installer";
 		request.Timeout = 15000;
@@ -1027,9 +1054,9 @@ internal class InstallerForm : Form
 		ZipFile.ExtractToDirectory(zip, extracted, Encoding.UTF8);
 		if (DllVersion(Path.Combine(extracted, ModDll)) == null)
 		{
-			throw new InvalidDataException("下载的压缩包里没有 Mod 文件");
+			throw new InvalidDataException(L("下载的压缩包里没有 Mod 文件"));
 		}
-		Log("下载完成。");
+		Log(L("下载完成。"));
 		return extracted;
 	}
 
@@ -1071,7 +1098,7 @@ internal class InstallerForm : Form
 			{
 				File.Move(item, dest);
 			}
-			Log("已停用：" + (isPatcher ? @"patchers\" : "") + item.Substring(root.Length + 1) + "（移到 " + DisabledFolder + "）");
+			Log(F("已停用：{0}（移到 {1}）", (isPatcher ? @"patchers\" : "") + item.Substring(root.Length + 1), DisabledFolder));
 		}
 	}
 
@@ -1092,7 +1119,7 @@ internal class InstallerForm : Form
 		}
 		if (removed.Count > 0)
 		{
-			Log("清理了混进来的 BepInEx 5 文件：" + string.Join("、", removed.ToArray()));
+			Log(F("清理了混进来的 BepInEx 5 文件：{0}", string.Join("、", removed.ToArray())));
 		}
 	}
 
@@ -1103,7 +1130,7 @@ internal class InstallerForm : Form
 	{
 		if (SamePath(source, dest))
 		{
-			Log("安装文件已经在游戏目录里，跳过复制。");
+			Log(L("安装文件已经在游戏目录里，跳过复制。"));
 			return 0;
 		}
 		// 只复制安装包里本 Mod 的东西：加载器的几个文件、BepInEx\core、BepInEx\plugins\LOMAssistant。
@@ -1135,7 +1162,7 @@ internal class InstallerForm : Form
 			if (File.Exists(target) && (File.GetAttributes(target) & FileAttributes.ReadOnly) != 0)
 			{
 				File.SetAttributes(target, File.GetAttributes(target) & ~FileAttributes.ReadOnly);
-				Log("已去掉只读属性：" + rel);
+				Log(F("已去掉只读属性：{0}", rel));
 			}
 			File.Copy(file, target, overwrite: true);
 			count++;
@@ -1162,7 +1189,7 @@ internal class InstallerForm : Form
 			SetGame(_game);
 			_install.Enabled = true;
 			_browse.Enabled = true;
-			MessageBox.Show(this, message, title ?? (ok ? "安装完成" : "安装失败"), MessageBoxButtons.OK, ok ? MessageBoxIcon.Information : MessageBoxIcon.Error);
+			MessageBox.Show(this, message, title ?? L(ok ? "安装完成" : "安装失败"), MessageBoxButtons.OK, ok ? MessageBoxIcon.Information : MessageBoxIcon.Error);
 		}));
 	}
 
@@ -1176,10 +1203,10 @@ internal class InstallerForm : Form
 		_browse.Enabled = true;
 		bool admin = new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent())
 			.IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator);
-		Log("没有写入游戏目录的权限（安装器" + (admin ? "已经是" : "不是") + "以管理员身份运行）。");
+		Log(L(admin ? "没有写入游戏目录的权限（安装器已经是以管理员身份运行）。" : "没有写入游戏目录的权限（安装器不是以管理员身份运行）。"));
 		string message = admin
-			? "已经以管理员身份运行，还是写不进游戏目录。\n\n多半是杀毒软件拦住了：先退出 360、火绒、电脑管家等杀毒软件（或把游戏目录加进信任），再点一次「一键安装 / 更新」。\n\n还不行的话，点「导出诊断」把桌面上的压缩包发到 QQ 群。"
-			: "没有写入游戏目录的权限（游戏可能装在 Program Files 里，或者被杀毒软件拦住了）。\n\n请关掉安装器，右键「咖啡伴侣安装器.exe」→「以管理员身份运行」，再点「一键安装 / 更新」。\n\n还不行的话，先退出 360、火绒、电脑管家等杀毒软件（或把游戏目录加进信任）再试。";
-		MessageBox.Show(this, message, "没有写入权限", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+			? L("已经以管理员身份运行，还是写不进游戏目录。\n\n多半是杀毒软件拦住了：先退出 360、火绒、电脑管家等杀毒软件（或把游戏目录加进信任），再点一次「一键安装 / 更新」。\n\n还不行的话，点「导出诊断」把桌面上的压缩包发到 QQ 群。")
+			: L("没有写入游戏目录的权限（游戏可能装在 Program Files 里，或者被杀毒软件拦住了）。\n\n请关掉安装器，右键「咖啡伴侣安装器.exe」→「以管理员身份运行」，再点「一键安装 / 更新」。\n\n还不行的话，先退出 360、火绒、电脑管家等杀毒软件（或把游戏目录加进信任）再试。");
+		MessageBox.Show(this, message, L("没有写入权限"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
 	}
 }

@@ -21,18 +21,18 @@ internal static class SplashPatch
 		string path = Path.Combine(game, File_);
 		if (!File.Exists(path))
 		{
-			return "没有找到游戏设置文件，没有改动开头 Logo。";
+			return InstallerText.L("没有找到游戏设置文件，没有改动开头 Logo。");
 		}
 		byte[] data = File.ReadAllBytes(path);
 		int at = Find(data);
 		if (at < 0)
 		{
-			return "游戏设置文件的格式和预期不同（可能游戏更新了），没有改动开头 Logo。";
+			return InstallerText.L("游戏设置文件的格式和预期不同（可能游戏更新了），没有改动开头 Logo。");
 		}
 		byte want = skip ? (byte)0 : (byte)1;
 		if (data[at] == want)
 		{
-			return skip ? "开头 Logo 已经是跳过的。" : "开头 Logo 保持原样。";
+			return skip ? InstallerText.L("开头 Logo 已经是跳过的。") : InstallerText.L("开头 Logo 保持原样。");
 		}
 		// 走到这里说明开关还是游戏原样：每次都重新备份，游戏更新后留着的旧备份是上一版的文件，不能再用
 		string backup = path + ".lom-original";
@@ -45,7 +45,7 @@ internal static class SplashPatch
 			stream.Position = at;
 			stream.WriteByte(want);
 		}
-		return skip ? "已设置跳过开头 Logo（改了游戏设置文件里的一个开关，原文件备份为 globalgamemanagers.lom-original）。" : "已恢复开头 Logo。";
+		return skip ? InstallerText.L("已设置跳过开头 Logo（改了游戏设置文件里的一个开关，原文件备份为 globalgamemanagers.lom-original）。") : InstallerText.L("已恢复开头 Logo。");
 	}
 
 	private static int Find(byte[] data)
