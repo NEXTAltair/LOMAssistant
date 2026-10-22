@@ -175,9 +175,11 @@
 
 **選項結果不顯示、骰子不能自選？** 和舊版骰子大師、多功能 Mod 沖突，用安裝器會自動處理，手動安裝請刪掉 `BepInEx\plugins` 裡的舊 Mod。
 
-**能和立繪替換 Mod「邪神認知污染ON」一起用嗎？** 能。它是 BepInEx 5 的插件，本 Mod 會幫它加載起來。只裝它的「1_必裝_插件」，**不要**裝它的「2_只有沒裝過BepInEx才裝」（裝了會把 BepInEx 5 混進來，本 Mod 起不來；真裝了就重新運行一次本 Mod 的安裝器，會自動清掉）。它的 F8、F9 改不了，檢測到它時本 Mod 的設置頁、存檔備註、數值頁熱鍵會讓給它，可以按 Tab 打開窗口再點對應的頁，或在設置頁另綁別的鍵。
+**能和立繪替換 Mod「邪神認知污染ON」一起用嗎？** 能。它是 BepInEx 5 的插件，本 Mod 會幫它加載起來。只裝它的「1_必裝_插件」，**不要**裝它的「2_只有沒裝過BepInEx才裝」（裝了會把 BepInEx 5 混進來，本 Mod 起不來；真裝了就重新運行一次本 Mod 的安裝器，會自動清掉）。快捷鍵撞了的處理見下一條。
 
-**能和「劇情隨行」一起用嗎？** 能。xiaozhanshang 的 [劇情隨行](https://github.com/xiaozhanshang/MortalStoryWorkbench) 可以和本 Mod 同時安裝：兩邊重疊的功能自動用本 Mod 的，它的快捷鍵改成 Ctrl+F6 / F8 / F9。
+**能和「劇情隨行」一起用嗎？** 能。xiaozhanshang 的 [劇情隨行](https://github.com/xiaozhanshang/MortalStoryWorkbench) 可以和本 Mod 同時安裝：兩邊重疊的功能自動用本 Mod 的，快捷鍵撞了的處理見下一條。
+
+**和別的 Mod 快捷鍵撞了？** 本 Mod 識別到別的 Mod（日語補丁、邪神認知污染ON、劇情隨行，以及在自己配置文件裡設了快捷鍵的 Mod）佔著同一個鍵時，會把本 Mod 的那個熱鍵改成不綁定，在設置頁最上面提示一次。之後可以按 Tab 打開窗口再點對應的頁，或在設置頁「熱鍵」裡另綁別的鍵；每個熱鍵也都能手動設成「不綁定」。
 
 **Linux / Steam Deck？** 手動安裝後，在 Steam 啟動選項裡加 `WINEDLLOVERRIDES="winhttp=n,b" %command%`。
 

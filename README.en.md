@@ -91,6 +91,8 @@ Edit stats, martial arts, sect values, relationships, talents, training points, 
 
 **Nothing happens after installing?** Quit Steam completely from the tray and start the game again. If it still does not work, use 「导出诊断」 in the installer.
 
+**Hotkey clash with another mod?** When the mod detects another mod using the same key (the Japanese patch, 邪神认知污染ON, 剧情随行, or any mod that sets the key in its own config file), it unbinds its own hotkey and shows a notice once at the top of the settings tab. Open the window with Tab and pick the tab, or bind another key under 「热键」 (Hotkeys) in settings; every hotkey can also be set to 「不绑定」 (unbound) by hand.
+
 **Linux / Steam Deck?** Install manually and add `WINEDLLOVERRIDES="winhttp=n,b" %command%` to the Steam launch options.
 
 ## Settings
