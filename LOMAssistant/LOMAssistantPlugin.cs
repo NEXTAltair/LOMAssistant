@@ -176,6 +176,8 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			EventPicker.Ensure(base.gameObject);
 			UiHider.Ensure(base.gameObject);
 			SkipReadToggle.Ensure(base.gameObject);
+			MapEventHints.Ensure(base.gameObject);
+			TryPatchAll(typeof(MapEventHints));
 			TryPatchAll(typeof(StatLimitPatch));
 			TryPatchAll(typeof(TitlePatch));
 			TryPatchAll(typeof(DisplayTextPatch));

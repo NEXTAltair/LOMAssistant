@@ -112,6 +112,7 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.PinballScoreMultiplier, "弹珠得分倍率", 0f, 100f),
 				Row(ConfigManager.PinballFixedScore, "弹珠固定总分（-1=关）", -1f, 9999999f),
 				Row(ConfigManager.EnableSkipAction, "养成「空过」按钮"),
+				Row(ConfigManager.EnableMapHints, "地图建筑事件提示"),
 			}),
 			("战斗", new List<SettingRow>
 			{

@@ -175,6 +175,12 @@ public class PositionEventCache
 		};
 	}
 
+	/// <summary>事件结果的剧本名；没读过这个事件池返回 null。</summary>
+	public string ResultScript(PositionEventData eventData)
+	{
+		return scriptPrefixCache.TryGetValue(eventData, out var prefix) ? prefix + "_" + eventData.ResultType : null;
+	}
+
 	/// <summary>事件一定会带来的变化（不含条件分支），一行。</summary>
 	public string GetCertainEffects(PositionEventData eventData)
 	{
