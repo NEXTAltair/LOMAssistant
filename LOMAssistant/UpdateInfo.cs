@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using LOMAssistant.Config;
 using Newtonsoft.Json.Linq;
@@ -11,7 +12,7 @@ using UnityEngine.Networking;
 namespace LOMAssistant;
 
 /// <summary>
-/// 更新内容和新版本检查：更新内容来自嵌在 DLL 里的 CHANGELOG.md；新版本看 GitHub 最新发布的版本号，
+/// 更新内容和新版本检查：更新内容来自嵌在 DLL 里的 CHANGELOG.md（韩语、日语界面先用 CHANGELOG.ko.md / ja.md 里有的版本，没翻的版本照旧显示中文）；新版本看 GitHub 最新发布的版本号，
 /// 每次启动只发这一个请求（几 KB）；有新版时再取一次最近的发布列表，把还没装的每一版说明都加在最前面。在后台做，失败了不提示，只记日志。
 /// </summary>
 public static class UpdateInfo
@@ -37,7 +38,29 @@ public static class UpdateInfo
 
 	public static bool HasNewer => Latest != null && Latest > Current;
 
-	public static List<Entry> Entries { get; private set; } = Parse(ReadEmbedded());
+	private static readonly List<Entry> Chinese = Parse(ReadEmbedded("LOMAssistant.CHANGELOG.md"));
+	// GitHub 上还没进内置 CHANGELOG 的新版本说明（中文）
+	private static readonly List<Entry> Fetched = new List<Entry>();
+	private static List<Entry> _entries;
+	private static string _entriesLanguage;
+
+	/// <summary>按界面语言的更新内容，新的在前：有译文的版本用译文，没有的用中文。</summary>
+	public static List<Entry> Entries
+	{
+		get
+		{
+			string language = TextConverter.DisplayLanguage;
+			if (_entries == null || _entriesLanguage != language)
+			{
+				string file = language == UiText.Korean ? "ko" : language == UiText.Japanese ? "ja" : null;
+				List<Entry> translated = file != null ? Parse(ReadEmbedded("LOMAssistant.CHANGELOG." + file + ".md")) : new List<Entry>();
+				_entries = Fetched.Concat(Chinese).Select(e => translated.Find(x => x.Version == e.Version) ?? e).ToList();
+				_entries.Sort((a, b) => b.Version.CompareTo(a.Version));
+				_entriesLanguage = language;
+			}
+			return _entries;
+		}
+	}
 
 	/// <summary>这次启动时是刚更新过（上次记下的版本和现在不一样）：窗口题头提示一下，这次启动内一直显示。</summary>
 	public static readonly bool JustUpdated = ConfigManager.LastSeenVersion.Value != Current.ToString();
@@ -99,7 +122,7 @@ public static class UpdateInfo
 			{
 				Version version = ReleaseVersion(release);
 				if (version != null && version > Current && (bool?)release["draft"] != true && (bool?)release["prerelease"] != true
-					&& !Entries.Exists(e => e.Version == version) && !added.Exists(e => e.Version == version))
+					&& !Chinese.Exists(e => e.Version == version) && !added.Exists(e => e.Version == version))
 				{
 					added.Add(FromRelease(release, version));
 				}
@@ -111,9 +134,8 @@ public static class UpdateInfo
 		}
 		if (added.Count > 0)
 		{
-			added.AddRange(Entries);
-			added.Sort((a, b) => b.Version.CompareTo(a.Version));
-			Entries = added;
+			Fetched.AddRange(added);
+			_entries = null;
 		}
 	}
 
@@ -164,11 +186,15 @@ public static class UpdateInfo
 
 	private static Version Trim(Version v) => new Version(v.Major, v.Minor, Math.Max(0, v.Build));
 
-	private static string ReadEmbedded()
+	private static string ReadEmbedded(string name)
 	{
 		try
 		{
-			using Stream stream = typeof(UpdateInfo).Assembly.GetManifestResourceStream("LOMAssistant.CHANGELOG.md");
+			using Stream stream = typeof(UpdateInfo).Assembly.GetManifestResourceStream(name);
+			if (stream == null)
+			{
+				return "";
+			}
 			using var reader = new StreamReader(stream);
 			return reader.ReadToEnd();
 		}

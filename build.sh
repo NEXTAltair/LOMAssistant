@@ -29,6 +29,8 @@ mkdir -p bin
 	-resource:LOMAssistant.Features.AnytimeSave/contract.tsv.gz,LOMAssistant.AnytimeSave.contract.tsv.gz \
 	-resource:LOMAssistant/conditions.json.gz,LOMAssistant.conditions.json.gz \
 	-resource:CHANGELOG.md,LOMAssistant.CHANGELOG.md \
+	-resource:CHANGELOG.ja.md,LOMAssistant.CHANGELOG.ja.md \
+	-resource:CHANGELOG.ko.md,LOMAssistant.CHANGELOG.ko.md \
 	-resource:bin/BepInEx.dll,LOMAssistant.BepInEx5Shim.dll \
 	$(find . -name '*.cs' -not -path './bin/*' -not -path './Installer/*' -not -path './tools/*')
 
