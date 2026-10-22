@@ -185,7 +185,7 @@ public class MapEventHints : MonoBehaviour
 		// 先铺一层不透明的深色底：游戏默认的 box 半透明，压在浅色地图上字看不清
 		var rect = new Rect(Mathf.Max(0f, x), y, width, height);
 		Color oldColor = GUI.color;
-		GUI.color = new Color(0.11f, 0.09f, 0.08f, 0.94f);
+		GUI.color = new Color(0.11f, 0.09f, 0.08f, Mathf.Clamp(ConfigManager.MapHintsOpacity.Value, 0.3f, 1f));
 		GUI.DrawTexture(rect, Texture2D.whiteTexture);
 		GUI.color = oldColor;
 		GUI.backgroundColor = new Color(0f, 0f, 0f, 2.5f);
