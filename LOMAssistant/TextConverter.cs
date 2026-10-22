@@ -86,7 +86,9 @@ public static class TextConverter
 	}
 
 	private static bool _japanesePatch;
-	private static int _japaneseCheckedAt = int.MinValue;
+	// 还没看过时为 null。以前用 int.MinValue 当「很久以前」，但 TickCount 是正数（开机不到 24.9 天）时
+	// TickCount - int.MinValue 溢出成负数，永远「不到 3 秒」，一次都不看，装了日语补丁也显示中文
+	private static int? _japaneseCheckedAt;
 
 	/// <summary>
 	/// 装了玩家做的日语补丁（活俠傳日本語制作会，BepInEx 插件都叫 LOM_JP_…）。
@@ -96,7 +98,8 @@ public static class TextConverter
 	{
 		get
 		{
-			if (_japanesePatch || Environment.TickCount - _japaneseCheckedAt < 3000)
+			// 两个 TickCount 相减，TickCount 绕回负数时差值照样对
+			if (_japanesePatch || _japaneseCheckedAt.HasValue && Environment.TickCount - _japaneseCheckedAt.Value < 3000)
 			{
 				return _japanesePatch;
 			}
