@@ -159,6 +159,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			TryPatchAll(typeof(FlowSpeedup.SkipPatch));
 			LogInfo("决斗修改补丁已应用。");
 			TryPatchAll(typeof(SaveSlotPatch));
+			TryPatchAll(typeof(LegendSlotPager));
 			LogInfo("存档栏位补丁已应用。");
 			TryPatchAll(typeof(SaveNotePatch));
 			LogInfo("存档备注补丁已应用。");

@@ -99,6 +99,7 @@ _Screenshots show the Chinese UI._
 
   <img src="media/save-browser.webp" width="640" alt="New load screen: save list with portraits and notes, love interest and the first lines after loading">
 
+- **5 pages of legend slots** (1 page of 12 in the base game, adjustable): the legend save screen and the legend page in the library get page buttons, and saving opens the first page with a free slot.
 - **100 manual save slots** (20 in the base game), **save notes**, and **5 extra old copies** of each auto save.
 
 ### Training and combat
