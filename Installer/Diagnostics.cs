@@ -59,6 +59,10 @@ internal static class Diagnostics
 		sb.AppendLine("Steam 在运行：" + (Process.GetProcessesByName("steam").Length > 0 ? "是" : "否"));
 		sb.AppendLine("游戏在运行：" + (Process.GetProcessesByName("Mortal").Length > 0 ? "是" : "否"));
 		sb.AppendLine("游戏目录：" + (game ?? "（没找到）"));
+		if (InstallerText.NonAsciiPath(game))
+		{
+			sb.AppendLine("【注意】游戏目录路径里有中文或其他非英文字符：BepInEx 预加载会失败（IL Compile Error），Mod 不生效。要移到只有英文、数字的路径。");
+		}
 		if (game == null)
 		{
 			return sb.ToString();

@@ -65,6 +65,23 @@ internal static class InstallerText
 
 	public static string F(string format, params object[] args) => string.Format(L(format), args);
 
+	/// <summary>路径里有中文等非 ASCII 字符：游戏装在这种路径下，BepInEx 预加载会失败（Harmony 报 IL Compile Error），Mod 不生效。</summary>
+	public static bool NonAsciiPath(string path)
+	{
+		if (string.IsNullOrEmpty(path))
+		{
+			return false;
+		}
+		foreach (char c in path)
+		{
+			if (c > 127)
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	/// <summary>中文更新内容里有译文的版本换成译文（按「## 版本」分段），没翻的版本照旧；繁体整篇转繁体。</summary>
 	public static string Changelog(string chinese, string translated)
 	{
@@ -221,6 +238,11 @@ internal static class InstallerText
 			"No permission to write to the game folder (the game may be in Program Files, or your antivirus is blocking it).\n\nClose the installer, right-click 「咖啡伴侣安装器.exe」 → 「Run as administrator」, then click 「Install / Update」.\n\nIf that still fails, quit your antivirus (or add the game folder to its trusted list) and try again.",
 			"ゲームフォルダへの書き込み権限がありません（ゲームが Program Files にあるか、ウイルス対策ソフトがブロックしています）。\n\nインストーラーを閉じ、「咖啡伴侣安装器.exe」を右クリック →「管理者として実行」してから「インストール／更新」を押してください。\n\nそれでもだめなら、ウイルス対策ソフトを終了するか、ゲームフォルダを信頼済みに追加してから再度お試しください。",
 			"게임 폴더에 쓸 권한이 없습니다(게임이 Program Files에 있거나 백신 프로그램이 막고 있습니다).\n\n설치 프로그램을 닫고 「咖啡伴侣安装器.exe」를 우클릭 → 「관리자 권한으로 실행」한 뒤 「설치 / 업데이트」를 누르세요.\n\n그래도 안 되면 백신을 잠시 끄거나 게임 폴더를 신뢰 목록에 추가한 뒤 다시 시도하세요." },
+		new[] { "游戏目录的路径里有中文或其他非英文字符，BepInEx 会加载失败，Mod 不会生效。请把整个游戏文件夹移到只有英文、数字的路径下（比如 D:\\Games\\LegendOfMortal；Steam 版在库里右键活侠传 → 属性 → 已安装文件 → 移动安装文件夹），再运行安装器。",
+			"The game folder path contains Chinese or other non-English characters, so BepInEx fails to load and the mod won't work. Move the whole game folder to a path with only English letters and numbers (for example D:\\Games\\LegendOfMortal; for the Steam version, right-click the game in your library → Properties → Installed Files → Move install folder), then run the installer again.",
+			"ゲームフォルダのパスに中国語などの英語以外の文字が含まれているため、BepInEx の読み込みに失敗し、MOD が動作しません。ゲームフォルダ全体を英数字だけのパス（例：D:\\Games\\LegendOfMortal。Steam 版はライブラリで右クリック → プロパティ → インストール済みファイル → インストールフォルダを移動）に移してから、インストーラーを実行し直してください。",
+			"게임 폴더 경로에 중국어 등 영어가 아닌 문자가 있어 BepInEx 로딩에 실패하고 Mod가 작동하지 않습니다. 게임 폴더 전체를 영문·숫자만 있는 경로(예: D:\\Games\\LegendOfMortal, Steam 버전은 라이브러리에서 우클릭 → 속성 → 설치된 파일 → 설치 폴더 이동)로 옮긴 뒤 설치 프로그램을 다시 실행하세요." },
+		new[] { "仍然要安装吗？", "Install anyway?", "それでもインストールしますか？", "그래도 설치할까요?" },
 		new[] { "没有写入权限", "No write permission", "書き込み権限なし", "쓰기 권한 없음" },
 		// 开头 Logo（SplashPatch）
 		new[] { "没有找到游戏设置文件，没有改动开头 Logo。", "Game settings file not found; the opening logos were left as they are.", "ゲームの設定ファイルが見つからないため、冒頭ロゴは変更していません。", "게임 설정 파일을 찾지 못해 시작 로고를 바꾸지 않았습니다." },

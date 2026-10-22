@@ -94,6 +94,8 @@ internal class InstallerForm : Form
 	private string _changelog = ReadResource("Installer.CHANGELOG.md") ?? "";
 	// 更新内容的译文（英、日、韩），没翻的版本照旧显示中文，见 InstallerText.Changelog
 	private string _changelogTranslated = ChangelogSuffix != null ? ReadResource("Installer.CHANGELOG." + ChangelogSuffix + ".md") : null;
+	// 游戏目录路径里有中文等非英文字符时的提醒：BepInEx 预加载会失败（IL Compile Error），Mod 不生效
+	private readonly Label _pathWarning = new Label { AutoSize = true, ForeColor = Color.FromArgb(178, 43, 33), MaximumSize = new Size(560, 0), Margin = new Padding(0, 4, 0, 4), Visible = false };
 	private readonly Label _pluginsHint = new Label { AutoSize = true, ForeColor = Color.FromArgb(120, 110, 98), Text = L("勾选的移到「已停用的Mod」，不删除") };
 	private readonly Label _pluginsNone = new Label { AutoSize = true, Text = L("没有发现其他 Mod。"), ForeColor = Color.FromArgb(120, 110, 98) };
 	private readonly CheckedListBox _plugins = new CheckedListBox { Dock = DockStyle.Fill, CheckOnClick = true, IntegralHeight = false, HorizontalScrollbar = true, BorderStyle = BorderStyle.FixedSingle, Height = 110 };
@@ -165,6 +167,7 @@ internal class InstallerForm : Form
 		{
 			Heading(L("游戏目录")),
 			dirRow,
+			_pathWarning,
 			VersionCard(),
 			Heading(L("其他 Mod")),
 			_pluginsHint,
@@ -643,9 +646,15 @@ internal class InstallerForm : Form
 		_gameBox.Text = _game ?? L("（未找到，请点「选择…」）");
 		UpdateVersions();
 		RefreshPlugins();
+		_pathWarning.Text = L("游戏目录的路径里有中文或其他非英文字符，BepInEx 会加载失败，Mod 不会生效。请把整个游戏文件夹移到只有英文、数字的路径下（比如 D:\\Games\\LegendOfMortal；Steam 版在库里右键活侠传 → 属性 → 已安装文件 → 移动安装文件夹），再运行安装器。");
+		_pathWarning.Visible = NonAsciiPath(_game);
 		if (_game != null)
 		{
 			Log(F("游戏目录：{0}", _game));
+			if (_pathWarning.Visible)
+			{
+				Log(_pathWarning.Text);
+			}
 		}
 	}
 
@@ -917,6 +926,10 @@ internal class InstallerForm : Form
 		if (_game == null)
 		{
 			MessageBox.Show(this, L("请先选择游戏目录。"), L("安装"), MessageBoxButtons.OK, MessageBoxIcon.Information);
+			return;
+		}
+		if (NonAsciiPath(_game) && MessageBox.Show(this, L("游戏目录的路径里有中文或其他非英文字符，BepInEx 会加载失败，Mod 不会生效。请把整个游戏文件夹移到只有英文、数字的路径下（比如 D:\\Games\\LegendOfMortal；Steam 版在库里右键活侠传 → 属性 → 已安装文件 → 移动安装文件夹），再运行安装器。") + "\n\n" + L("仍然要安装吗？"), L("安装"), MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) != DialogResult.Yes)
+		{
 			return;
 		}
 		if (Process.GetProcessesByName("Mortal").Length > 0)
