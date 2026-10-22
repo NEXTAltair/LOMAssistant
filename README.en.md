@@ -4,7 +4,7 @@
 
 [简体中文](README.md) · [繁體中文](README.zh-Hant.md) · **English** · [日本語](README.ja.md) · [한국어](README.ko.md)
 
-A BepInEx 6 plugin for *Legend of Mortal* (活侠传), formerly known as 「活侠传拓展」. The name 咖啡伴侣 ("coffee companion") comes from 「咖啡」 (coffee), the players' nickname for the heroine 瑞杏 (Ruixing), whose name sounds like the Chinese coffee chain Luckin Coffee (瑞幸, Ruixing). It supports the latest version of the game and adds a story overview, branch picking, a stat editor, a better save/load screen, save-anywhere and more.
+A BepInEx 6 plugin for *Legend of Mortal* (活侠传). The name 咖啡伴侣 ("coffee companion") comes from 「咖啡」 (coffee), the players' nickname for the heroine 瑞杏 (Ruixing), whose name sounds like the Chinese coffee chain Luckin Coffee (瑞幸, Ruixing). It supports the latest version of the game and adds a story overview, branch picking, a stat editor, a better save/load screen, save-anywhere and more.
 
 The mod's own windows are shown in Simplified Chinese, Traditional Chinese, Korean or Japanese (no English UI). Screenshots below are in Chinese.
 
