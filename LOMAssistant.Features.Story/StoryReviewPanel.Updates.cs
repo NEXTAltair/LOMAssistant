@@ -79,7 +79,7 @@ public partial class StoryReviewPanel
 			Fill(bar, new Color(Cinnabar.r, Cinnabar.g, Cinnabar.b, 0.1f));
 			float bw = S(150);
 			GUI.Label(new Rect(bar.x + S(12), bar.y, bar.width - bw * 2 - S(40), bar.height),
-				Red("有新版本 " + UpdateInfo.Latest) + "：退出游戏后运行新版的「咖啡伴侣安装器.exe」更新，存档和设置不受影响。", _barStyle ??= new GUIStyle(Middle(_label)) { richText = true });
+				Red("有新版本 " + UpdateInfo.Latest) + "：退出游戏后运行新版的「咖啡伴侣安装器 Installer.exe」更新，存档和设置不受影响。", _barStyle ??= new GUIStyle(Middle(_label)) { richText = true });
 			if (GUI.Button(new Rect(bar.xMax - bw * 2 - S(18), bar.y + S(4), bw, bar.height - S(8)), "GitHub 下载", _button))
 			{
 				Application.OpenURL(UpdateInfo.DownloadPage);

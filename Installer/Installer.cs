@@ -20,7 +20,7 @@ namespace LOMAssistantInstaller;
 /// <summary>
 /// 咖啡伴侣一键安装器。放在发布压缩包根目录，和 BepInEx\、winhttp.dll 等安装文件放在一起。
 /// 1. 自动从 Steam 库里找游戏目录（找不到可手动选）。
-/// 2. 列出 BepInEx\plugins 里的其他 Mod，已知会冲突的默认勾选，安装时移到「已停用的Mod」文件夹（不删除）。
+/// 2. 列出 BepInEx\plugins 里的其他 Mod，已知会冲突的默认勾选，安装时移到「DisabledMods」文件夹（不删除）。
 /// 3. 先从 GitHub 下载最新版安装；连不上或下载失败，就安装压缩包里自带的这一版。
 /// 4. 不覆盖 BepInEx\config 里的配置。
 /// </summary>
@@ -60,7 +60,9 @@ internal class InstallerForm : Form
 {
 	private const string Repo = "kevinnie2003/LOMAssistant";
 	private const string ModDll = @"BepInEx\plugins\LOMAssistant\LOMAssistant.dll";
-	private const string DisabledFolder = @"BepInEx\已停用的Mod";
+	private const string DisabledFolder = @"BepInEx\DisabledMods";
+	// 2.8.2 及以前停用的 Mod 放在这里（中文文件夹名），不去搬动
+	private const string OldDisabledFolder = @"BepInEx\已停用的Mod";
 
 	// 文件名包含这些字样的插件，已知和本 Mod 改的是同一批游戏代码
 	private static readonly string[][] KnownConflicts =
@@ -96,7 +98,7 @@ internal class InstallerForm : Form
 	private string _changelogTranslated = ChangelogSuffix != null ? ReadResource("Installer.CHANGELOG." + ChangelogSuffix + ".md") : null;
 	// 游戏目录路径里有中文等非英文字符时的提醒：BepInEx 预加载会失败（IL Compile Error），Mod 不生效
 	private readonly Label _pathWarning = new Label { AutoSize = true, ForeColor = Color.FromArgb(178, 43, 33), MaximumSize = new Size(560, 0), Margin = new Padding(0, 4, 0, 4), Visible = false };
-	private readonly Label _pluginsHint = new Label { AutoSize = true, ForeColor = Color.FromArgb(120, 110, 98), Text = L("勾选的移到「已停用的Mod」，不删除") };
+	private readonly Label _pluginsHint = new Label { AutoSize = true, ForeColor = Color.FromArgb(120, 110, 98), Text = L("勾选的移到「DisabledMods」，不删除") };
 	private readonly Label _pluginsNone = new Label { AutoSize = true, Text = L("没有发现其他 Mod。"), ForeColor = Color.FromArgb(120, 110, 98) };
 	private readonly CheckedListBox _plugins = new CheckedListBox { Dock = DockStyle.Fill, CheckOnClick = true, IntegralHeight = false, HorizontalScrollbar = true, BorderStyle = BorderStyle.FixedSingle, Height = 110 };
 	private readonly TextBox _log = new TextBox { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, BorderStyle = BorderStyle.None };
@@ -721,7 +723,7 @@ internal class InstallerForm : Form
 	// ---------------- 卸载 ----------------
 
 	// 删掉本 Mod 和它的配置，恢复开头 Logo。还有别的 Mod 就把 BepInEx 加载器留给它们；没有了就连加载器一起删，
-	// 游戏目录回到没装 Mod 的样子。「已停用的Mod」、别的 Mod 的配置和存档（在游戏存档文件夹里，含随时存档、剧情回顾收录）都不动
+	// 游戏目录回到没装 Mod 的样子。「DisabledMods」、别的 Mod 的配置和存档（在游戏存档文件夹里，含随时存档、剧情回顾收录）都不动
 	private void Uninstall()
 	{
 		if (_game == null)
@@ -763,7 +765,7 @@ internal class InstallerForm : Form
 				{
 					DeletePath(rel);
 				}
-				// 剩下的文件夹里没有文件了就删掉（「已停用的Mod」、别的 Mod 的配置还在的话会留下）
+				// 剩下的文件夹里没有文件了就删掉（「DisabledMods」、别的 Mod 的配置还在的话会留下）
 				foreach (string rel in new[] { @"BepInEx\plugins", @"BepInEx\patchers", @"BepInEx\config", "BepInEx" })
 				{
 					string dir = Path.Combine(_game, rel);
@@ -773,8 +775,8 @@ internal class InstallerForm : Form
 					}
 				}
 			}
-			bool disabled = Directory.Exists(Path.Combine(_game, DisabledFolder));
-			Finish(true, L("已卸载咖啡伴侣。") + (disabled ? "\n\n" + L("以前停用的别的 Mod 还在「BepInEx\\已停用的Mod」里，想用的话自己挪回去。") : ""), L("卸载"));
+			bool disabled = Directory.Exists(Path.Combine(_game, DisabledFolder)) || Directory.Exists(Path.Combine(_game, OldDisabledFolder));
+			Finish(true, L("已卸载咖啡伴侣。") + (disabled ? "\n\n" + L("以前停用的别的 Mod 还在「BepInEx\\DisabledMods」里，想用的话自己挪回去。") : ""), L("卸载"));
 		}
 		catch (UnauthorizedAccessException)
 		{
@@ -973,7 +975,7 @@ internal class InstallerForm : Form
 			{
 				DisablePlugins(disable);
 				Logo();
-				Finish(true, F("已经是最新版本 {0}，不需要重新安装。", Short(installed)) + (disable.Count > 0 ? "\n\n" + L("勾选的 Mod 已移到「BepInEx\\已停用的Mod」。") : ""));
+				Finish(true, F("已经是最新版本 {0}，不需要重新安装。", Short(installed)) + (disable.Count > 0 ? "\n\n" + L("勾选的 Mod 已移到「BepInEx\\DisabledMods」。") : ""));
 				return;
 			}
 			string source = ChooseSource();
@@ -1231,7 +1233,7 @@ internal class InstallerForm : Form
 		Log(L(admin ? "没有写入游戏目录的权限（安装器已经是以管理员身份运行）。" : "没有写入游戏目录的权限（安装器不是以管理员身份运行）。"));
 		string message = admin
 			? L("已经以管理员身份运行，还是写不进游戏目录。\n\n多半是杀毒软件拦住了：先退出 360、火绒、电脑管家等杀毒软件（或把游戏目录加进信任），再点一次「一键安装 / 更新」。\n\n还不行的话，点「导出诊断」把桌面上的压缩包发到 QQ 群。")
-			: L("没有写入游戏目录的权限（游戏可能装在 Program Files 里，或者被杀毒软件拦住了）。\n\n请关掉安装器，右键「咖啡伴侣安装器.exe」→「以管理员身份运行」，再点「一键安装 / 更新」。\n\n还不行的话，先退出 360、火绒、电脑管家等杀毒软件（或把游戏目录加进信任）再试。");
+			: L("没有写入游戏目录的权限（游戏可能装在 Program Files 里，或者被杀毒软件拦住了）。\n\n请关掉安装器，右键「咖啡伴侣安装器 Installer.exe」→「以管理员身份运行」，再点「一键安装 / 更新」。\n\n还不行的话，先退出 360、火绒、电脑管家等杀毒软件（或把游戏目录加进信任）再试。");
 		MessageBox.Show(this, message, L("没有写入权限"), MessageBoxButtons.OK, MessageBoxIcon.Warning);
 	}
 }

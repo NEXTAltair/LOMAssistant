@@ -108,7 +108,12 @@ internal static class Diagnostics
 			sb.AppendLine();
 			sb.AppendLine("游戏目录里有 " + preloaderLogs.Length + " 个 preloader_*.log：BepInEx 预加载失败过，最新的已打包。");
 		}
-		string disabled = Path.Combine(game, @"BepInEx\已停用的Mod");
+		// 新的文件夹名是英文；2.8.2 及以前是中文的旧名字，两个都看
+		string disabled = Path.Combine(game, @"BepInEx\DisabledMods");
+		if (!Directory.Exists(disabled))
+		{
+			disabled = Path.Combine(game, @"BepInEx\已停用的Mod");
+		}
 		if (Directory.Exists(disabled))
 		{
 			sb.AppendLine();

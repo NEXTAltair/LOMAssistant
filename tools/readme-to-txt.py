@@ -1,4 +1,4 @@
-"""把 README.md 转成发布压缩包里的「使用说明.txt」（纯文本，记事本打开好读）。
+"""把各语言 README 转成发布压缩包里的说明文件（「使用说明.txt」「使用說明.txt」等，纯文本，记事本打开好读）。
 
 内容和 README 一致，只做格式转换：去掉图片和「开发」一节（玩家用不到），
 标题加下划线，加粗、行内代码去掉标记，链接写成「文字（网址）」，表格转成两列对齐的行。
@@ -8,7 +8,9 @@ import re
 import sys
 import unicodedata
 
-SKIP_SECTIONS = {'开发'}
+SKIP_SECTIONS = {'开发', '開發', 'Building'}
+# 只是展示用的徽章，说明文件里不写
+SKIP_BADGES = {'下载次数', '下載次數', 'Downloads', 'ダウンロード数', '다운로드 수'}
 
 
 def width(text):
@@ -20,6 +22,9 @@ def inline(text):
     text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
     text = re.sub(r'`([^`]+)`', r'\1', text)
     return text
+
+
+Q, A, NOTE = '问：', '答：', '注意：'
 
 
 def convert(lines):
@@ -57,10 +62,10 @@ def convert(lines):
         badges = re.findall(r'\[!\[([^\]]*)\]\([^)]*\)\]\(([^)]+)\)', stripped)
         if badges and stripped.startswith('[!['):
             # 下载次数这类只是展示用的徽章，说明文件里不写
-            out += [f'- {name}：{link}' for name, link in badges if name != '下载次数']
+            out += [f'- {name}：{link}' for name, link in badges if name not in SKIP_BADGES]
             continue
         # 顶上切换 README 语言的一行，说明文件里不写
-        if 'README.en.md' in stripped:
+        if stripped.count('(README') >= 3:
             continue
         if stripped.startswith('![') or stripped.startswith('<img'):
             continue
@@ -71,12 +76,12 @@ def convert(lines):
             flush_table()
         if stripped.startswith('>'):
             indent = line[:len(line) - len(line.lstrip())]
-            out.append(indent + inline(stripped.lstrip('> ').replace('⚠️ ', '注意：')))
+            out.append(indent + inline(stripped.lstrip('> ').replace('⚠️ ', NOTE)))
             continue
         # 常见问题「**问？** 答」拆成两行
-        qa = re.match(r'^\*\*(.+？)\*\* (.+)$', line)
+        qa = re.match(r'^\*\*(.+[？?])\*\* (.+)$', line)
         if qa:
-            out += ['问：' + inline(qa.group(1)), '答：' + inline(qa.group(2))]
+            out += [Q + inline(qa.group(1)), A + inline(qa.group(2))]
             continue
         text = inline(line)
         # 顶上一行「下载 · 网盘 · 视频 · 群」拆成一行一个
@@ -101,6 +106,17 @@ def convert(lines):
 
 if __name__ == '__main__':
     src, dst = sys.argv[1], sys.argv[2]
+    # 问答、注意的前缀按 README 的语言写
+    if src.endswith('README.zh-Hant.md'):
+        Q, A, NOTE = '問：', '答：', '注意：'
+    elif src.endswith('README.md'):
+        Q, A, NOTE = '问：', '答：', '注意：'
+    elif src.endswith('README.ja.md'):
+        Q, A, NOTE = 'Q：', 'A：', '注意：'
+    elif src.endswith('README.ko.md'):
+        Q, A, NOTE = 'Q: ', 'A: ', '주의: '
+    else:
+        Q, A, NOTE = 'Q: ', 'A: ', 'Note: '
     text = convert(open(src, encoding='utf-8').read().splitlines())
     with open(dst, 'w', encoding='utf-8-sig', newline='\r\n') as f:  # 带 BOM、CRLF：老记事本也不乱码
         f.write(text)
