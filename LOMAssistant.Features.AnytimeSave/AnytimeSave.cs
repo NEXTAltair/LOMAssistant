@@ -577,17 +577,26 @@ public partial class AnytimeSave : MonoBehaviour
 			if (keep != null)
 			{
 				var keepSet = new HashSet<string>(keep);
+				// 存档时不在台上的角色整个撤下。不能只看现在看不看得见：快进时退场的淡出没走完、留在台上但透明的角色，
+				// 之后每句对白调亮、调暗台上角色（Stage 的 DimPortraits）都会把颜色设回不透明，人就莫名冒出来了
 				foreach (var character in UObject.FindObjectsOfType<Character>())
 				{
-					if (keepSet.Contains(character.name) || !IsVisible(character)) continue;
-					foreach (var image in character.State.allPortraits)
+					var state = character.State;
+					if (keepSet.Contains(character.name) || state == null || !(state.onScreen || IsVisible(character))) continue;
+					foreach (var image in state.allPortraits ?? new List<Image>())
 					{
-						if (image == null || !image.gameObject.activeSelf) continue;
+						if (image == null) continue;
 						LeanTween.cancel(image.gameObject);
+						if (!image.gameObject.activeSelf) continue;
 						image.gameObject.SetActive(false);
 						hidden++;
 					}
-					FileLogger.Log("[随时存档] 存档时不在台上，隐藏：" + character.name);
+					state.onScreen = false;
+					foreach (var stage in Stage.ActiveStages)
+					{
+						if (stage != null) stage.CharactersOnStage.Remove(character);
+					}
+					FileLogger.Log("[随时存档] 存档时不在台上，撤下：" + character.name);
 				}
 			}
 			FileLogger.Log("[随时存档] 读档后台上立绘：" + string.Join("，", visible.ToArray()) + (hidden > 0 ? "；清理了 " + hidden + " 张残留" : ""));
