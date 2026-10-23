@@ -2,6 +2,14 @@
 
 Changes in each version, newest first. Versions before 2.7.0 are only in Chinese; see CHANGELOG.md.
 
+## 2.8.2 (2026-10-23)
+
+- **The save and load screens open on the save you made last**, scrolled into view.
+- **Save list order**: 「存档列表排序」 in the save group of the settings page lists manual saves by slot (default) or newest first.
+- **Choose who appears on the title screen**: 「标题画面人物」 in the other group of the settings page follows your ending (default), shows no one, or shows a chosen character. Only the title screen changes, not your ending records.
+- **Relationship lookup**: click a name under relationships on the stats page to list the scenes that check that relationship, with links to the story map.
+- **Map hints no longer list quests tied to the 修罗场 (jealousy) event while they cannot trigger.**
+
 ## 2.8.1 (2026-10-22)
 
 - **Three modes for option results**: 「选项后果」 in the story group of the settings page shows them always (default, as before), only on hover (when the mouse is over a dialogue option or dice line, or it is selected with a gamepad; no spoilers unless you look), or never.
