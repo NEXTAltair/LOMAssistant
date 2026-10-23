@@ -24,6 +24,7 @@ public partial class StoryReviewPanel
 		public string Name;
 		public float Min, Max; // 数字的范围
 		public string[] Choices; // 几选一的数字（0、1、2…）
+		public bool Dropdown; // 选项多时做成下拉框：平时只显示当前选的，点开再列出全部
 		public Action<int> Choose; // 选了第几个（不设就直接写配置）
 		public float[] Speeds; // 倍速档位
 
@@ -76,6 +77,9 @@ public partial class StoryReviewPanel
 	private string _settingsSearch = "";
 	private readonly Dictionary<string, string> _settingInputs = new Dictionary<string, string>();
 	private SettingRow _capturing;
+
+	// 现在展开着的下拉框
+	private SettingRow _dropdown;
 
 	private static SettingRow Row(IConfigElement element, string name, float min = 0f, float max = 0f)
 	{
@@ -144,6 +148,7 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.EnableFlowSpeedup, "流程提速"),
 				Row(ConfigManager.EnableLibraryDisplay, "讲经堂解锁显示"),
 				Row(ConfigManager.EnableShopAllItems, "四师兄卖全部物品"),
+				new SettingRow { Element = ConfigManager.TitlePartnerChoice, Name = "标题画面人物", Choices = LOMAssistant.Features.Extras.TitlePartnerPatch.Names, Dropdown = true },
 			}),
 			// Mod 自己的设置：窗口的样子、日志、更新检查（界面语言在搜索框右边）
 			("咖啡伴侣", new List<SettingRow>
@@ -380,6 +385,35 @@ public partial class StoryReviewPanel
 				AssignKey(row, KeyCode.None);
 			}
 			GUI.enabled = true;
+		}
+		else if (row.Choices != null && row.Dropdown && value is int picked)
+		{
+			bool open = _dropdown == row;
+			int current = Mathf.Clamp(picked, 0, row.Choices.Length - 1);
+			GUILayout.BeginVertical(GUILayout.Width(S(170)));
+			if (GUILayout.Button(row.Choices[current] + (open ? "  ▲" : "  ▼"), open ? _primary : _button, GUILayout.Width(S(170)), Ctl()))
+			{
+				_dropdown = open ? null : row;
+			}
+			if (open)
+			{
+				for (int i = 0; i < row.Choices.Length; i++)
+				{
+					if (i != current && GUILayout.Button(row.Choices[i], _button, GUILayout.Width(S(170)), Ctl()))
+					{
+						if (row.Choose != null)
+						{
+							row.Choose(i);
+						}
+						else
+						{
+							element.BoxedValue = i;
+						}
+						_dropdown = null;
+					}
+				}
+			}
+			GUILayout.EndVertical();
 		}
 		else if (row.Choices != null && value is int choice)
 		{
