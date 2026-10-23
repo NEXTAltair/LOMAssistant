@@ -2,6 +2,14 @@
 
 Changes in each version, newest first. Versions before 2.7.0 are only in Chinese; see CHANGELOG.md.
 
+## 2.8.3 (2026-10-23)
+
+- **More stat locks**: mood, 性情, 处世, 修养, 道德, yin-yang and silver each have a lock on the stats page, and several can be locked at once. A locked stat can't be changed by story, options or training; changing it by hand on the stats page still works. Locks stay on across restarts and saves.
+- **Fixed leftover portraits after loading an anytime save or rewinding with F4.**
+- **「后台继续运行」 (keep running in the background) is now off by default**, including for players who had turned it on; turn it on in the other group of the settings page if you want it.
+- **Friendlier package for non-Chinese players**: the installer is now 「咖啡伴侣安装器 Installer.exe」; conflicting old mods are moved to `BepInEx\DisabledMods`; the readme comes in Simplified Chinese, Traditional Chinese, Japanese and Korean.
+- The stats page's +/- buttons are right-aligned.
+
 ## 2.8.2 (2026-10-23)
 
 - **The save and load screens open on the save you made last**, scrolled into view.
