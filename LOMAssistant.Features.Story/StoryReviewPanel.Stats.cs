@@ -275,6 +275,8 @@ public partial class StoryReviewPanel
 			GUILayout.EndHorizontal();
 			return;
 		}
+		// 加减按钮靠右：一行多出来的宽度留在数值和按钮之间，不堆在「设定」后面
+		GUILayout.FlexibleSpace();
 		// 锁住时，游戏自己的变化被拦，这里手动加减、输入数值照常可用
 		bool locked = row.LockStat != null && LOMAssistant.Features.Extras.MoodLockPatch.IsLocked(row.LockStat);
 		if (row.LockStat != null)
