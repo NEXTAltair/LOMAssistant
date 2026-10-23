@@ -201,7 +201,8 @@ public partial class StoryReviewPanel
 			GUILayout.BeginHorizontal();
 			string count = flags ? $"共 {total} 面，按编号或中文说明搜" : pages > 1 ? $"共 {total} 项" : "";
 			// 旗标、书籍、物品能反查：标题后面提示一句
-			string hint = rows.Any(row => row.Uses != null) ? "点名字看在哪些剧情里改动、判定" : "";
+			// 好感只反查判定的地方
+			string hint = !rows.Any(row => row.Uses != null) ? "" : title == "好感" ? "点名字看在哪些剧情里判定" : "点名字看在哪些剧情里改动、判定";
 			string small(string s) => $"　<size={Mathf.RoundToInt(16 * _scale)}><color=#73644F>{s}</color></size>";
 			GUILayout.Label(title + (count.Length > 0 ? small(count) : "") + (hint.Length > 0 ? small(hint) : ""), _heading);
 			GUILayout.FlexibleSpace();
@@ -261,7 +262,7 @@ public partial class StoryReviewPanel
 			_usageScroll = Vector2.zero;
 		}
 		Rect extraRect = GUILayoutUtility.GetLastRect();
-		string full = row.Name + (row.Note.Length > 0 ? "\n" + row.Note : "") + (row.Uses != null ? "\n点名字看在哪些剧情里改动、判定" : "");
+		string full = row.Name + (row.Note.Length > 0 ? "\n" + row.Note : "") + (row.Uses == null ? "" : row.Id.StartsWith("rel:") ? "\n点名字看在哪些剧情里判定" : "\n点名字看在哪些剧情里改动、判定");
 		if (full != row.Name || Fit(row.Name, line, nameWidth) != row.Name)
 		{
 			Hover(nameRect, full);
@@ -380,6 +381,8 @@ public partial class StoryReviewPanel
 				Name = RelationshipName(s),
 				Get = () => s.Value,
 				Set = v => s.SetValue(v),
+				// 好感只反查判定的地方（剧情里加减好感的地方太多，列出来没用）
+				Uses = () => StoryUsage.Relation(RelationshipName(s)),
 			});
 		}
 		sections.Add(("好感", favor));

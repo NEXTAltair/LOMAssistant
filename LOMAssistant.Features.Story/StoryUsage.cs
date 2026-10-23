@@ -37,6 +37,13 @@ public static class StoryUsage
 	// 条件里的物品：「杂物_烤鱼 需>=1」
 	private static readonly Regex ItemInCondition = new Regex(@"(书籍|杂物|贵重品)_(\S+?)(?= 需)");
 	private static readonly Regex Clauses = new Regex(@" 且 | 或 |\n");
+	// 条件里的好感：「好感度_虞小梅 需>=30」
+	private static readonly Regex RelationInCondition = new Regex(@"好感度_(\S+?)(?= 需)");
+	// 好感（按人名，简体）：只收判定的地方（分支判定、选项条件、任务触发条件）
+	private static readonly Dictionary<string, List<StoryUse>> Relations = new Dictionary<string, List<StoryUse>>(StringComparer.Ordinal);
+
+	/// <summary>这个人的好感在哪些剧情里被判定（人名用简体）。剧本还没读完返回 null。</summary>
+	public static List<StoryUse> Relation(string name) => Ensure() ? Relations.TryGetValue(name, out var list) ? list : new List<StoryUse>() : null;
 
 	/// <summary>剧本还没读完返回 null。</summary>
 	public static List<StoryUse> Flag(string id) => Ensure() ? Flags.TryGetValue(id, out var list) ? list : new List<StoryUse>() : null;
@@ -65,6 +72,7 @@ public static class StoryUsage
 		var timer = Stopwatch.StartNew();
 		Flags.Clear();
 		Items.Clear();
+		Relations.Clear();
 		Dictionary<string, string> itemNames = ItemNames();
 		var seen = new HashSet<string>(StringComparer.Ordinal);
 		foreach (StoryScript script in StoryScripts.All)
@@ -143,6 +151,10 @@ public static class StoryUsage
 			{
 				string id = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Success ? m.Groups[2].Value : m.Groups[3].Value;
 				Add(Flags, id, Copy(template, kind, shown), seen);
+			}
+			foreach (Match m in RelationInCondition.Matches(clause))
+			{
+				Add(Relations, TextConverter.ToSimplified(m.Groups[1].Value), Copy(template, kind, shown), seen);
 			}
 			foreach (Match m in ItemInCondition.Matches(clause))
 			{
