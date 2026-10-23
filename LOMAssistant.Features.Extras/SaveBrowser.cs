@@ -168,7 +168,8 @@ public class SaveBrowser : MonoBehaviour
 			{
 				return;
 			}
-			browser._selected = 0;
+			// -1：刚打开，刷新时选中上次保存的那个存档并滚到它
+			browser._selected = -1;
 			browser.Refresh();
 		}
 		catch (Exception e)
@@ -285,7 +286,7 @@ public class SaveBrowser : MonoBehaviour
 			return;
 		}
 		_tab = tab;
-		_selected = 0;
+		_selected = -1;
 		Refresh();
 	}
 
@@ -445,6 +446,9 @@ public class SaveBrowser : MonoBehaviour
 					e.Current = real && !string.IsNullOrEmpty(current) && e.Slot == current;
 				}
 			}
+			int jumpTo = -1;
+				jumpTo = Mathf.Max(0, entries.FindIndex(e => e.LastSaved));
+				_selected = jumpTo;
 			foreach (Transform child in _listContent)
 			{
 				Destroy(child.gameObject);
@@ -488,6 +492,8 @@ public class SaveBrowser : MonoBehaviour
 			Show(_rows.Count > 0 ? _rows[_selected].Entry : null);
 			Localize(_root);
 			Reselect();
+			if (jumpTo >= 0 && jumpTo < _rows.Count)
+				ScrollTo((RectTransform)_rows[jumpTo].Button.transform);
 			if (timer.ElapsedMilliseconds >= 50)
 			{
 				FileLogger.Log($"[存档界面] 刷新 {_rows.Count} 条用时 {timer.ElapsedMilliseconds} 毫秒");
