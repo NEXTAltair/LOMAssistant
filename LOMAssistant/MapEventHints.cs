@@ -323,10 +323,31 @@ public class MapEventHints : MonoBehaviour
 		return $"第{r / 36 + 1}年{r % 36 / 3 + 1}月{StoryAtlas.StageText(r % 3 + 1)}";
 	}
 
+	private static bool IsJealousy(MissionCheckData check, string series)
+	{
+		StoryMission mission = StoryAtlas.Ready ? StoryAtlas.Find(check.Key) : null;
+		string title = mission?.Title ?? TextConverter.ToSimplified(series ?? check.Key);
+		if (title.Contains("修罗场") || title.Contains("修羅場"))
+		{
+			return true;
+		}
+		// 条件里要「启动修罗场事件」「发生修罗场事件」这类旗标的（各女角的「陪×」等）
+		foreach (ConditionResultItem condition in check.GetFieldValue<ConditionResultItem[]>("_conditions") ?? new ConditionResultItem[0])
+		{
+			string line = condition != null ? RichText.Strip(DataHelper.ExtractConditions(condition, out _)) : "";
+			if (line.Contains("修罗场") || line.Contains("修羅場"))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private static string Describe(PositionController position)
 	{
 		PositionType place = Position(position);
-		var missions = Missions(place).ToList();
+		// 修罗场（任务名或条件里提到修罗场）：大部分玩家走不到，不满足条件时就不列出来，免得每次都看到一条「还不能触发」
+		var missions = Missions(place).Where(m => !(IsJealousy(m.Check, m.Series) && !Triggerable(m.Check, m.Main))).ToList();
 		List<PositionEventData> events = Events(position);
 		var text = new StringBuilder();
 		text.Append($"<b>{TextConverter.ToSimplified(place.ToString())}：{missions.Count + events.Count} 个事件</b>");
