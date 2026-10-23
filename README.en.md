@@ -91,7 +91,7 @@ All keys can be changed or unbound under 「热键」 (Hotkeys) on the settings 
 
   <img src="media/anytime-save.webp" width="640" alt="Save-anywhere page: all saves, load, note, delete">
 
-- **New save/load screen** (can switch back to the original): a list with your love interest's portrait, date and note, and a detail pane with their full portrait and the first lines after loading; manual and auto saves on separate pages.
+- **New save/load screen** (can switch back to the original): a list with your love interest's portrait, date and note, and a detail pane with their full portrait and the first lines after loading; manual and auto saves on separate pages. It opens on the save you made last; in settings, saves can be listed newest first.
 
   <img src="media/save-browser.webp" width="640" alt="New load screen: save list with portraits and notes, and a detail pane with the portrait and the dialogue after loading">
 
@@ -125,7 +125,7 @@ Stats, martial arts, sects, relationships (everyone), talents, training and craf
 - Your **love interest** is shown by name; the **mood lock** keeps story and options from changing your mood.
 - **Titles**: pick any title or write your own.
 - **Flags**: over a thousand, grouped by sect favour, characters, story and more.
-- **Reverse lookup**: click a flag, book or item to list the scenes that change or check it, with a link to the story map.
+- **Reverse lookup**: click a flag, book or item to list the scenes that change or check it; click a name under relationships to list the scenes that check it. Each links to the story map.
 
 <img src="media/stats.webp" width="640" alt="Stats page: stats, martial arts, sects, titles, relationships and more, all editable">
 
@@ -140,7 +140,7 @@ Changing values or flags at random can break the story; save first.
 - **Conflict detection**: warns about conflicting old mods at the top of settings; if another mod uses the same key, this mod gives it up.
 - **Export legend**: export this playthrough's legend as a txt at any time from 「状态 → 传奇」.
 - **Faster start**: the title animation is sped up, and the installer can skip the opening logos.
-- **Also**: the lecture hall shows everything unlocked; the game keeps running in the background; the window's top right shows each version's changes and a red note when a new version is out.
+- **Also**: choose who appears on the title screen; the lecture hall shows everything unlocked; the game keeps running in the background; the window's top right shows each version's changes and a red note when a new version is out.
 
 ## FAQ
 
