@@ -139,6 +139,8 @@ public static class ConfigManager
 
 	public static ConfigElement<string> CustomTitle;
 	public static ConfigElement<string> EventRules;
+
+	public static ConfigElement<string> LockedStats;
 	public static ConfigElement<int> OptionResultMode;
 
 	public static ConfigElement<int> AnytimeSaveLimit;
@@ -347,6 +349,7 @@ public static class ConfigManager
 		// 老的配置名 EnableBackgroundRun 在玩家配置里存着 true，换个名字让所有人都从「关」开始
 		EnableBackgroundRun = new ConfigElement<bool>("KeepRunningInBackground", "后台继续运行：切到别的窗口时游戏不暂停，背景音乐也不停。true=开，false=关（默认，游戏原本的做法：切走就停）", defaultValue: false);
 		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "隐藏界面看 CG：剧情里按热键（HideUIKey，默认鼠标右键）隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次恢复。已不用：不想要就把 HideUIKey 设成 None", defaultValue: true);
+		LockedStats = new ConfigElement<string>("LockedStats", "数值页锁住的数值（在数值页点锁，自动记录）：数值名，逗号隔开。清空就全部解锁", "");
 		EventRules = new ConfigElement<string>("EventRules", "随机事件的「总是」「不出」（在随机事件选择框里点，自动记录）：事件编号=1 总是触发、=2 不出，分号隔开。清空就全部取消", "");
 		OptionResultMode = new ConfigElement<int>("OptionResultMode", "对话选项后面的后果说明（选了会怎样、解锁条件）：0=总是显示（默认），1=鼠标停在选项上（或手柄选中）才显示，2=不显示", 0);
 		CustomTitle = new ConfigElement<string>("CustomTitle", "自定义称号：对话框名字上方、人物介绍、属性页显示的称号换成这个（空=照游戏原样）。在数值页「称号」里改", "");

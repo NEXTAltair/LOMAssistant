@@ -281,7 +281,7 @@ public partial class StoryReviewPanel
 		bool locked = row.LockStat != null && LOMAssistant.Features.Extras.MoodLockPatch.IsLocked(row.LockStat);
 		if (row.LockStat != null)
 		{
-			// 锁：点一下锁住（数值固定不变），再点解锁；重启、读档都会自动解锁
+			// 锁：点一下锁住（数值固定不变），再点解锁；锁住的记在配置里，重启、换存档都还锁着
 			// 锁上：朱砂红底 + 白色合上的锁；没锁：浅色底 + 深色开着的锁
 			Color oldContent = GUI.contentColor;
 			GUI.contentColor = locked ? Color.white : Ink;
@@ -292,7 +292,7 @@ public partial class StoryReviewPanel
 				LOMAssistant.Features.Extras.MoodLockPatch.Toggle(row.LockStat);
 				_statInputs.Remove(row.Id);
 			}
-			Hover(GUILayoutUtility.GetLastRect(), string.Format(locked ? "{0}已锁定，游戏里的变化不会影响它（这里仍可手动加减）。点击解锁；重启游戏、读档会自动解锁" : "点击锁定{0}：锁定后数值固定不变", row.Name));
+			Hover(GUILayoutUtility.GetLastRect(), string.Format(locked ? "{0}已锁定，游戏里的变化不会影响它（这里仍可手动加减）。重启游戏、换存档后仍然锁着，点击解锁" : "点击锁定{0}：锁定后数值固定不变", row.Name));
 		}
 		bool wasEnabled = GUI.enabled;
 		if (GUILayout.Button("-" + row.Step, StepButton(), GUILayout.Width(S(58)), Ctl()))
