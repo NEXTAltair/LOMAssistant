@@ -343,7 +343,9 @@ public static class ConfigManager
 		UiLanguage = new ConfigElement<int>("UiLanguage", "咖啡伴侣窗口等 Mod 界面的语言：0=跟随游戏（装了日语补丁时显示日语），1=简体中文，2=繁体中文，3=韩语，4=日语", 0);
 		PanelTheme = new ConfigElement<int>("PanelTheme", "咖啡伴侣窗口的配色：0=浅色（宣纸底，默认），1=深色（墨色底），2=跟随系统（Windows 的应用模式）", 0);
 		PanelFont = new ConfigElement<int>("PanelFont", "咖啡伴侣窗口等 Mod 界面的字体：0=思源宋体（游戏对话用的字体，默认），1=微软雅黑（系统字体）", 0);
-		EnableBackgroundRun = new ConfigElement<bool>("EnableBackgroundRun", "后台继续运行：切到别的窗口时游戏不暂停，背景音乐也不停。true=开，false=关（游戏原本的做法：切走就停）", defaultValue: true);
+		// 2.8.3 起默认关（开着时切到别的窗口，背景音乐不停，鼠标经过地图建筑还会响，玩家以为是 bug）。
+		// 老的配置名 EnableBackgroundRun 在玩家配置里存着 true，换个名字让所有人都从「关」开始
+		EnableBackgroundRun = new ConfigElement<bool>("KeepRunningInBackground", "后台继续运行：切到别的窗口时游戏不暂停，背景音乐也不停。true=开，false=关（默认，游戏原本的做法：切走就停）", defaultValue: false);
 		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "隐藏界面看 CG：剧情里按热键（HideUIKey，默认鼠标右键）隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次恢复。已不用：不想要就把 HideUIKey 设成 None", defaultValue: true);
 		EventRules = new ConfigElement<string>("EventRules", "随机事件的「总是」「不出」（在随机事件选择框里点，自动记录）：事件编号=1 总是触发、=2 不出，分号隔开。清空就全部取消", "");
 		OptionResultMode = new ConfigElement<int>("OptionResultMode", "对话选项后面的后果说明（选了会怎样、解锁条件）：0=总是显示（默认），1=鼠标停在选项上（或手柄选中）才显示，2=不显示", 0);
