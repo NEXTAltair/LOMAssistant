@@ -134,6 +134,7 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.LegendSlotPages, "传奇栏位页数", 1f, 50f),
 				Row(ConfigManager.AutoSaveHistory, "自动存档多留旧档", 0f, 50f),
 				Row(ConfigManager.EnableSaveBrowser, "新版存档、读档界面"),
+				new SettingRow { Element = ConfigManager.SaveListOrder, Name = "存档列表排序", Choices = new[] { "按栏位", "最近在上" } },
 			}),
 			("其他", new List<SettingRow>
 			{

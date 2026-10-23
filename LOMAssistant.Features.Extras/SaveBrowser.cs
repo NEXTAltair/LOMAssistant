@@ -447,8 +447,11 @@ public class SaveBrowser : MonoBehaviour
 				}
 			}
 			int jumpTo = -1;
+			if (_selected < 0)
+			{
 				jumpTo = Mathf.Max(0, entries.FindIndex(e => e.LastSaved));
 				_selected = jumpTo;
+			}
 			foreach (Transform child in _listContent)
 			{
 				Destroy(child.gameObject);
@@ -493,7 +496,9 @@ public class SaveBrowser : MonoBehaviour
 			Localize(_root);
 			Reselect();
 			if (jumpTo >= 0 && jumpTo < _rows.Count)
+			{
 				ScrollTo((RectTransform)_rows[jumpTo].Button.transform);
+			}
 			if (timer.ElapsedMilliseconds >= 50)
 			{
 				FileLogger.Log($"[存档界面] 刷新 {_rows.Count} 条用时 {timer.ElapsedMilliseconds} 毫秒");
@@ -505,7 +510,21 @@ public class SaveBrowser : MonoBehaviour
 		}
 	}
 
-	private List<Entry> ManualEntries(bool includeEmpty)
+	private List<Entry> ManualEntries(bool includeEmpty) => SortManual(ManualEntriesBySlot(includeEmpty));
+
+	// 设置里选了「最近在上」：「开始新游戏」仍在最上面，有存档的按保存时间从新到旧，空栏位放最后（按栏位号）
+	private static List<Entry> SortManual(List<Entry> list)
+	{
+		if (ConfigManager.SaveListOrder.Value != 1)
+		{
+			return list;
+		}
+		return list.OrderBy(e => e.Caption == NewGame ? 0 : e.Data != null ? 1 : 2)
+			.ThenByDescending(e => e.Caption != NewGame && e.Data != null ? e.Data.TimeTick : 0L)
+			.ToList();
+	}
+
+	private List<Entry> ManualEntriesBySlot(bool includeEmpty)
 	{
 		var list = new List<Entry>();
 		if (_isLoad)
