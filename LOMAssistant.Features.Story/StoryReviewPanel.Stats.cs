@@ -22,7 +22,7 @@ public partial class StoryReviewPanel
 		public Func<string> Extra; // 数值后面的小字，如加成、心上人是谁、等级上限
 		public bool NoValue; // 数值没有意义（功法已练满、锻造未开发等），显示「—」不显示 0
 		public int Of; // 大于 0 时数值写成「当前/Of」，如本层点数 2/5
-		public GameStat LockStat; // 有值时这一行多一个锁按钮（心相用）
+		public GameStat LockStat; // 有值时这一行多一个锁按钮（心相、四种性格、阴阳、银两）
 		public string Group; // 旗标的分类（见 FlagGroup）
 		public Func<List<StoryUse>> Uses; // 有就能点名字看在哪些剧情里用到（剧本没读完返回 null）
 	}
@@ -236,7 +236,7 @@ public partial class StoryReviewPanel
 		// 文字竖直居中、每个控件一样高（和设置页一样），一行里的字和框才对得齐
 		GUIStyle line = Middle(_label);
 		GUIStyle muted = Middle(_muted);
-		// 心相一行在加减按钮前面多一个锁：附加值那一栏（如「(+5)」）让出位置，后面的按钮和别的行对齐
+		// 能锁的行在加减按钮前面多一个锁：附加值那一栏（如「(+5)」）让出位置，后面的按钮和别的行对齐
 		float nameWidth = S(120), extraWidth = row.LockStat != null ? S(80) - S(36) - _button.margin.left : S(80);
 		// 旗标、物品的名字能点，点了看它在哪些剧情里用到（标题后面有提示）
 		if (row.Uses != null)
@@ -275,11 +275,11 @@ public partial class StoryReviewPanel
 			GUILayout.EndHorizontal();
 			return;
 		}
-		// 心相锁住时，游戏自己的变化被拦，这里手动加减、输入数值照常可用
-		bool locked = row.LockStat != null && LOMAssistant.Features.Extras.MoodLockPatch.IsLocked;
+		// 锁住时，游戏自己的变化被拦，这里手动加减、输入数值照常可用
+		bool locked = row.LockStat != null && LOMAssistant.Features.Extras.MoodLockPatch.IsLocked(row.LockStat);
 		if (row.LockStat != null)
 		{
-			// 锁：点一下锁住心相（数值固定不变），再点解锁；重启、读档都会自动解锁
+			// 锁：点一下锁住（数值固定不变），再点解锁；重启、读档都会自动解锁
 			// 锁上：朱砂红底 + 白色合上的锁；没锁：浅色底 + 深色开着的锁
 			Color oldContent = GUI.contentColor;
 			GUI.contentColor = locked ? Color.white : Ink;
@@ -290,7 +290,7 @@ public partial class StoryReviewPanel
 				LOMAssistant.Features.Extras.MoodLockPatch.Toggle(row.LockStat);
 				_statInputs.Remove(row.Id);
 			}
-			Hover(GUILayoutUtility.GetLastRect(), locked ? "心相已锁定，游戏里的变化不会影响它（这里仍可手动加减）。点击解锁；重启游戏、读档会自动解锁" : "点击锁定心相：锁定后数值固定不变");
+			Hover(GUILayoutUtility.GetLastRect(), string.Format(locked ? "{0}已锁定，游戏里的变化不会影响它（这里仍可手动加减）。点击解锁；重启游戏、读档会自动解锁" : "点击锁定{0}：锁定后数值固定不变", row.Name));
 		}
 		bool wasEnabled = GUI.enabled;
 		if (GUILayout.Button("-" + row.Step, StepButton(), GUILayout.Width(S(58)), Ctl()))
@@ -784,7 +784,7 @@ public partial class StoryReviewPanel
 			|| type == GameStatType.稱號 || type == GameStatType.娘化;
 		return new StatRow
 		{
-			LockStat = type == GameStatType.心理衛生 ? s : null,
+			LockStat = Array.IndexOf(LOMAssistant.Features.Extras.MoodLockPatch.Lockable, type) >= 0 ? s : null,
 			Id = "stat:" + (int)type,
 			Name = Localized(s.GetLocaleKey(), OwnNames.TryGetValue(type, out string own) ? own : TextConverter.ToSimplified(type.ToString())),
 			Get = () => s.FinalValue,

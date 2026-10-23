@@ -122,7 +122,7 @@ Also:
 Stats, martial arts, sects, relationships (everyone), talents, training and crafting points, facilities, books, items and flags on one page; add, subtract or set any value, and search by name, ID or description.
 
 - **Books and items**: set the count directly; quests advance as if bought in a shop.
-- Your **love interest** is shown by name; the **mood lock** keeps story and options from changing your mood.
+- Your **love interest** is shown by name; mood, the four personality stats, yin-yang and silver each have a **lock** that keeps story and options from changing them.
 - **Titles**: pick any title or write your own.
 - **Flags**: over a thousand, grouped by sect favour, characters, story and more.
 - **Reverse lookup**: click a flag, book or item to list the scenes that change or check it; click a name under relationships to list the scenes that check it. Each links to the story map.

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using HarmonyLib;
 using Mortal.Core;
 using UnityEngine;
@@ -6,25 +7,35 @@ using UnityEngine;
 namespace LOMAssistant.Features.Extras;
 
 /// <summary>
-/// 锁定心相：咖啡伴侣窗口「数值」页的「心相」一行有个小锁，点一下锁住，游戏里的剧情、选项、修炼等对心相的增减都不生效；
-/// 这一页的加减、设定照常能改。再点一下解锁。
+/// 锁定心相、四种性格（性情、处世、修养、道德）、阴阳、银两：咖啡伴侣窗口「数值」页这几行各有个小锁，点一下锁住，
+/// 游戏里的剧情、选项、修炼等对它的增减都不生效；这一页的加减、设定照常能改。再点一下解锁。
 /// 锁定状态不保存：重启游戏、读档、开新档都会自动解锁（不然读档时旧值会留在新档里）。
 /// </summary>
 public static class MoodLockPatch
 {
-	/// <summary>被锁住的心相属性；为空表示没锁。</summary>
-	private static GameStat _locked;
+	/// <summary>能上锁的数值。</summary>
+	public static readonly GameStatType[] Lockable =
+	{
+		GameStatType.心理衛生, GameStatType.性情, GameStatType.處世, GameStatType.修養, GameStatType.道德,
+		GameStatType.陰陽內功, GameStatType.銀兩,
+	};
+
+	/// <summary>被锁住的属性。</summary>
+	private static readonly HashSet<GameStat> _locked = new HashSet<GameStat>();
 
 	private static Texture2D _closed, _open;
 
 	/// <summary>面板里手动加减、输入数值时置真：锁只拦游戏自己的变化，不拦玩家手动改。</summary>
 	private static bool _manual;
 
-	public static bool IsLocked => _locked != null;
+	public static bool IsLocked(GameStat stat) => _locked.Contains(stat);
 
 	public static void Toggle(GameStat stat)
 	{
-		_locked = _locked == null ? stat : null;
+		if (!_locked.Remove(stat))
+		{
+			_locked.Add(stat);
+		}
 	}
 
 	/// <summary>执行一次手动修改，这期间不拦截。</summary>
@@ -43,7 +54,7 @@ public static class MoodLockPatch
 
 	// ---------- 拦截数值变化 ----------
 
-	private static bool Allow(GameStat stat) => _locked == null || _manual || stat != _locked;
+	private static bool Allow(GameStat stat) => _locked.Count == 0 || _manual || !_locked.Contains(stat);
 
 	[HarmonyPrefix]
 	[HarmonyPatch(typeof(GameStat), "AddValue")]
@@ -57,14 +68,14 @@ public static class MoodLockPatch
 	[HarmonyPatch(typeof(GameStat), "Reset")]
 	public static bool Reset_Prefix(GameStat __instance) => Allow(__instance);
 
-	// 读档和重置前先解锁，免得旧存档的心相带进新存档
+	// 读档和重置前先解锁，免得旧存档的数值带进新存档
 	[HarmonyPrefix]
 	[HarmonyPatch(typeof(PlayerStatManagerData), "ResetData")]
-	public static void ResetData_Prefix() => _locked = null;
+	public static void ResetData_Prefix() => _locked.Clear();
 
 	[HarmonyPrefix]
 	[HarmonyPatch(typeof(PlayerStatManagerData), "Load")]
-	public static void Load_Prefix() => _locked = null;
+	public static void Load_Prefix() => _locked.Clear();
 
 	// ---------- 画锁（不依赖任何游戏图片或字体） ----------
 
