@@ -594,6 +594,8 @@ public static class UiTextEnglish
 		["游戏里没有这一层的数据，不能改。"] = "The game has no data for this layer, so it can't be changed.",
 		["第{0}/{1}层"] = "Layer {0}/{1}",
 		["第{0}层无数据"] = "Layer {0}: no data",
+		["第{0}层"] = "Layer {0}",
+		["每层练成时的加成："] = "Bonus for each layer:",
 		["{0}：本级开发点数，满 {1} 点升到下一级，和在{2}界面升级一样；多的点数算到下一级。"] = "{0}: points in this level; {1} points move up a level, as on the {2} screen. Extra points carry over.",
 		["只能升级不能降级，减点只减本级点数。"] = "Levels only go up; lowering only lowers this level's points.",
 		["{0}：还没开发或已经满级。"] = "{0}: not developed yet, or at max level.",

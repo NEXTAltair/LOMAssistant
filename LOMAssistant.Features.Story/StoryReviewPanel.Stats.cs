@@ -600,7 +600,7 @@ public partial class StoryReviewPanel
 			{
 				Id = "item:" + (int)it.ItemType + ":" + it.Id,
 				Name = Localized(it.GetNameKey(), it.Id),
-				Note = (warning != null ? "【注意】" + warning + "\n" : "") + (consumable ? "消耗品的数量不写进存档，这里只显示。\n" : "") + desc,
+				Note = (warning != null ? "【注意】" + warning + "\n" : "") + (consumable ? "消耗品的数量不写进存档，这里只显示。\n" : "") + desc + (it is Book book ? BookBonus(book) : ""),
 				Get = () => it.CurrentCount,
 				Set = consumable ? null : v =>
 				{
@@ -624,6 +624,55 @@ public partial class StoryReviewPanel
 	}
 
 	/// <summary>拥有的武学书：本层的修炼点数。加满一层就用游戏自己的 DirectLevelUp 升层（和修炼界面升层一样加上这层的加成，只是不花修炼次数），多的点数算到下一层。</summary>
+	/// <summary>
+	/// 武学书每一层练成时加的属性（游戏数据 MartialLevelData.LevelUpStat），一层一行：「第1层：体力 +2、内力 +1」。
+	/// 已经练成的层前面打勾；性格这类「往 50 靠」的写成「往中间 N」。不是武学书、没有加成的返回空。
+	/// </summary>
+	private static string BookBonus(Book book)
+	{
+		if (book == null || !book.IsMartial || book.LevelData == null || book.LevelData.Length == 0)
+		{
+			return "";
+		}
+		var lines = new List<string>();
+		for (int i = 0; i < book.LevelData.Length; i++)
+		{
+			MartialLevelData level = book.LevelData[i];
+			if (level?.LevelUpStat == null || level.LevelUpStat.Count == 0)
+			{
+				continue;
+			}
+			var parts = new List<string>();
+			foreach (MartialModifyStat stat in level.LevelUpStat)
+			{
+				if (stat == null)
+				{
+					continue;
+				}
+				string name;
+				try
+				{
+					name = Localized(stat.GetNameKey(), "");
+				}
+				catch
+				{
+					name = "";
+				}
+				if (name.Length == 0)
+				{
+					continue;
+				}
+				int v = stat.ModifyValue;
+				parts.Add(stat.Center ? name + " 往中间 " + Mathf.Abs(v) : name + " " + (v >= 0 ? "+" : "") + v);
+			}
+			if (parts.Count > 0)
+			{
+				lines.Add((i < book.CurrentMartialLevel ? "✓ " : "") + string.Format("第{0}层", i + 1) + "：" + string.Join("、", parts.ToArray()));
+			}
+		}
+		return lines.Count == 0 ? "" : "\n每层练成时的加成：\n" + string.Join("\n", lines.ToArray());
+	}
+
 	private static List<StatRow> MartialRows()
 	{
 		var rows = new List<StatRow>();
@@ -641,7 +690,7 @@ public partial class StoryReviewPanel
 			{
 				Id = "martial:" + b.Id,
 				Name = Localized(b.GetNameKey(), b.Id),
-				Note = open ? "本层修炼点数，满 " + need + " 点升到下一层，和在修炼界面升层一样加上这层的加成；多的点数算到下一层。\n只能升层不能降层：游戏没有撤回加成的办法，减点只减本层点数。" : b.CurrentMartialLevel >= max && max > 0 ? "已经练满。" : "游戏里没有这一层的数据，不能改。",
+				Note = (open ? "本层修炼点数，满 " + need + " 点升到下一层，和在修炼界面升层一样加上这层的加成；多的点数算到下一层。\n只能升层不能降层：游戏没有撤回加成的办法，减点只减本层点数。" : b.CurrentMartialLevel >= max && max > 0 ? "已经练满。" : "游戏里没有这一层的数据，不能改。") + BookBonus(b),
 				Get = () => b.CurrentLevelPoints,
 				Set = open && need > 0 ? v => SetMartialPoints(b, v) : (Action<int>)null,
 				// 一层只有几点的按 1 加减，点数多的按 5
