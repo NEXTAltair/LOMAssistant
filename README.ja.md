@@ -162,6 +162,10 @@ ZIP には BepInEx が同梱されています。
 
 <img src="media/settings.webp" width="640" alt="設定タブ：スイッチ・数値・ゲーム速度・ホットキーをグループごとに">
 
+**プリセット**：設定タブの一番上で「原作どおり」「アシスト」「すべてオン」にワンクリックで切り替えられます。変わるのはストーリーの表示、育成・戦闘の補助、チート類のスイッチだけで、セーブ・高速化・画面・ホットキーはそのままです。どれか一つでも変えると「カスタム」になり、あとで戻せます。新しく入れたプレイヤーは、初めてウィンドウを開いたときに一度選びます。選ばなければ「アシスト」のままです。
+
+<img src="media/presets.webp" width="640" alt="プリセットの選択：3 つのカードに、向いている人と変わる内容">
+
 ## クレジット
 
 [中国語版 README](README.md#致谢) を参照してください。本プロジェクトは爱死氏の「活侠传助手」をもとにしており、MortalAnytimeSave、赵活系统、LOM_SaveSlotExpander の機能やコードを参考・移植しています。伝奇スロットのページ送りは [iampigcheng](https://github.com/iampigcheng) さんの [issue #21](https://github.com/kevinnie2003/LOMAssistant/issues/21) の設計に沿っています。[lxsb222-spec](https://github.com/lxsb222-spec)、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair) のプルリクエストに感謝します。

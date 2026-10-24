@@ -329,6 +329,16 @@ public partial class StoryReviewPanel : MonoBehaviour
 				Event.current.Use();
 			}
 		}
+		// 第一次打开时的选预设弹窗，和确认框一样先接住输入
+		bool chooser = _confirming == null && !ConfigManager.PresetChooserShown.Value;
+		if (chooser && input)
+		{
+			DrawPresetChooser();
+			if (Event.current.type != EventType.Used && Event.current.type != EventType.Ignore)
+			{
+				Event.current.Use();
+			}
+		}
 		// 输入框的光标、选中颜色：皮肤默认是白色，宣纸底上看不见
 		Color cursor = GUI.skin.settings.cursorColor, selection = GUI.skin.settings.selectionColor;
 		GUI.skin.settings.cursorColor = Ink;
@@ -389,6 +399,10 @@ public partial class StoryReviewPanel : MonoBehaviour
 		if (_confirming != null && !input)
 		{
 			DrawConfirm();
+		}
+		else if (chooser && !input)
+		{
+			DrawPresetChooser();
 		}
 		else if (_tooltip.Length > 0)
 		{

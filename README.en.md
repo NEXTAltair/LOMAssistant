@@ -162,6 +162,10 @@ Everything is on the settings page of the window (F8). Changes are saved immedia
 
 <img src="media/settings.webp" width="640" alt="Settings page: switches, numbers, game speed and hotkeys by group">
 
+**Presets**: at the top of the settings page you can switch in one click to 「原汁原味」 (as the game intended), 「辅助」 (assist) or 「全开」 (everything on). They only change story hints, life-sim and combat aids and cheats; saves, speed-ups, interface and hotkeys stay as they are. Changing any of those switches makes it 「自定义」 (custom), which you can switch back to later. New players pick one the first time they open the window; if they don't, it stays on 「辅助」.
+
+<img src="media/presets.webp" width="640" alt="Choosing a preset: three cards saying who each one suits and what it changes">
+
 ## Building
 
 You need the .NET 8 SDK and a game folder with the mod installed (the build references the game's and BepInEx's assemblies; no game files are in this repository).

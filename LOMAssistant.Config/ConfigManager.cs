@@ -139,6 +139,10 @@ public static class ConfigManager
 	public static ConfigElement<string> EventRules;
 
 	public static ConfigElement<string> LockedStats;
+
+	public static ConfigElement<string> PresetCustom;
+
+	public static ConfigElement<bool> PresetChooserShown;
 	public static ConfigElement<int> OptionResultMode;
 
 	public static ConfigElement<int> AnytimeSaveLimit;
@@ -159,8 +163,21 @@ public static class ConfigManager
 
 	public static void Init()
 	{
+		// 配置文件已经有了、却还没有选预设弹窗这一项：是从 2.x 更新上来的老玩家，不弹
+		bool updated = false;
+		try
+		{
+			updated = System.IO.File.Exists(Config.ConfigFilePath) && !System.IO.File.ReadAllText(Config.ConfigFilePath).Contains("PresetChooserShown");
+		}
+		catch (Exception)
+		{
+		}
 		CreateConfigElements();
 		LoadConfig();
+		if (updated)
+		{
+			PresetChooserShown.Value = true;
+		}
 		MigrateStoryReviewKey();
 		MigrateHideUIKey();
 		MigrateHotkeyToggles();
@@ -316,9 +333,9 @@ public static class ConfigManager
 		PinballFixedScore = new ConfigElement<int>("PinballFixedScore", "弹珠小游戏固定总分：离开小游戏时总分直接改为该值（影响剧情判定）。-1=关闭", -1);
 		PanelKey = new ConfigElement<KeyCode>("PanelKey", "打开咖啡伴侣窗口「设置」页的热键", KeyCode.F8);
 		SaveNoteKey = new ConfigElement<KeyCode>("SaveNoteKey", "存档备注：在存档/读档界面选中手动存档后按这个键写备注（和设置页热键相同时，在存档界面优先写备注）", KeyCode.F8);
-		CheatUnlimitedTraining = new ConfigElement<bool>("CheatUnlimitedTraining", "无限修炼次数：修炼时可用次数和武学点用完自动补满，可以一直修炼。true=开，false=关", defaultValue: false);
-		CheatUnlimitedUpgrade = new ConfigElement<bool>("CheatUnlimitedUpgrade", "无限锻造、炼丹次数：可用次数和锻造点、炼丹点用完自动补满，可以一直锻造、炼丹。true=开，false=关", defaultValue: false);
-		CheatFreeUpgradeMoney = new ConfigElement<bool>("CheatFreeUpgradeMoney", "锻造、炼丹不消耗银两，银两不够也能升级。true=开，false=关", defaultValue: false);
+		CheatUnlimitedTraining = new ConfigElement<bool>("CheatUnlimitedTraining", "无限修炼次数：修炼时可用次数和武学点用完自动补满，可以一直修炼。true=开，false=关", defaultValue: true);
+		CheatUnlimitedUpgrade = new ConfigElement<bool>("CheatUnlimitedUpgrade", "无限锻造、炼丹次数：可用次数和锻造点、炼丹点用完自动补满，可以一直锻造、炼丹。true=开，false=关", defaultValue: true);
+		CheatFreeUpgradeMoney = new ConfigElement<bool>("CheatFreeUpgradeMoney", "锻造、炼丹不消耗银两，银两不够也能升级。true=开，false=关", defaultValue: true);
 		CheatDuelInvincible = new ConfigElement<bool>("CheatDuelInvincible", "决斗中无敌：我方不受伤害。true=开，false=关", defaultValue: false);
 		CheatDuelNoDamage = new ConfigElement<bool>("CheatDuelNoDamage", "决斗中造成伤害为 0：敌方不受伤害。true=开，false=关", defaultValue: false);
 		CheatBattleInvincible = new ConfigElement<bool>("CheatBattleInvincible", "团战中我方（主角和同伴）不会受伤：挨打、中毒都不扣血，敌人照常受伤。true=开，false=关", defaultValue: false);
@@ -345,6 +362,8 @@ public static class ConfigManager
 		// 老的配置名 EnableBackgroundRun 在玩家配置里存着 true，换个名字让所有人都从「关」开始
 		EnableBackgroundRun = new ConfigElement<bool>("KeepRunningInBackground", "后台继续运行：切到别的窗口时游戏不暂停，背景音乐也不停。true=开，false=关（默认，游戏原本的做法：切走就停）", defaultValue: false);
 		EnableRightClickHideUI = new ConfigElement<bool>("EnableRightClickHideUI", "隐藏界面看 CG：剧情里按热键（HideUIKey，默认鼠标右键）隐藏对话框等界面和本 Mod 的窗口，只看背景、CG 和立绘，方便截图；再按一次恢复。已不用：不想要就把 HideUIKey 设成 None", defaultValue: true);
+		PresetChooserShown = new ConfigElement<bool>("PresetChooserShown", "第一次打开咖啡伴侣窗口时的选预设弹窗已经出过（自动记录，不用改）", defaultValue: false);
+		PresetCustom = new ConfigElement<string>("PresetCustom", "设置页「预设」里「自定义」记下的开关（从自定义换到别的预设时自动记录，点「自定义」换回来）：配置名=值，分号隔开", "");
 		LockedStats = new ConfigElement<string>("LockedStats", "数值页锁住的数值（在数值页点锁，自动记录）：数值名，逗号隔开。清空就全部解锁", "");
 		EventRules = new ConfigElement<string>("EventRules", "随机事件的「总是」「不出」（在随机事件选择框里点，自动记录）：事件编号=1 总是触发、=2 不出，分号隔开。清空就全部取消", "");
 		OptionResultMode = new ConfigElement<int>("OptionResultMode", "对话选项后面的后果说明（选了会怎样、解锁条件）：0=总是显示（默认），1=鼠标停在选项上（或手柄选中）才显示，2=不显示", 0);

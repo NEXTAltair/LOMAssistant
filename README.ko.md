@@ -162,6 +162,10 @@
 
 <img src="media/settings.webp" width="640" alt="설정 탭: 스위치·숫자·게임 배속·단축키를 그룹별로">
 
+**프리셋**: 설정 탭 맨 위에서 「원작 그대로」「보조」「모두 켜기」로 한 번에 바꿀 수 있습니다. 바뀌는 것은 스토리 안내, 육성·전투 보조, 치트류 스위치뿐이고 저장·가속·화면·단축키는 그대로입니다. 하나라도 바꾸면 「사용자 지정」이 되며 나중에 되돌릴 수 있습니다. 새로 설치한 플레이어는 처음 창을 열 때 한 번 고릅니다. 고르지 않으면 「보조」 그대로입니다.
+
+<img src="media/presets.webp" width="640" alt="프리셋 선택: 세 카드에 어떤 플레이어에게 맞는지와 바뀌는 내용">
+
 ## 크레딧
 
 [중국어 README](README.md#致谢)를 참고하세요. 이 프로젝트는 爱死 님의 「活侠传助手」를 바탕으로 하며, MortalAnytimeSave, 赵活系统, LOM_SaveSlotExpander의 기능과 코드를 참고·이식했습니다. 전기 슬롯 페이지 넘김은 [iampigcheng](https://github.com/iampigcheng) 님의 [issue #21](https://github.com/kevinnie2003/LOMAssistant/issues/21) 설계를 따랐습니다. 풀 리퀘스트를 보내 주신 [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes), [NEXTAltair](https://github.com/NEXTAltair) 님께 감사드립니다.

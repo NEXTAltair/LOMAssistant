@@ -277,6 +277,10 @@ public partial class StoryReviewPanel
 		{
 			GUILayout.Label(Red("【注意】" + warning), _rich);
 		}
+		if (string.IsNullOrEmpty(query))
+		{
+			DrawPresets();
+		}
 		DrawPinballScore(rowWidth);
 		foreach (var (title, rows) in _settingSections)
 		{
