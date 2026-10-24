@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 namespace LOMAssistant;
 
 /// <summary>
-/// 界面文字的韩语、日语。本 Mod 的文字都是用简体写的，显示前按这张表换：
+/// 界面文字的韩语、日语、英语（英语的译文在 UiTextEnglish）。本 Mod 的文字都是用简体写的，显示前按这张表换：
 /// 先整句查；查不到再查带 {0} 的句式（拼进去的数字、按键、名字原样保留）；
 /// 带颜色等标签的、用「 · 」「　」或换行拼起来的，拆开一段段查。查不到的照原样显示中文。
 /// 表里的译文欢迎懂韩语、日语的玩家指正。
@@ -14,6 +14,7 @@ public static class UiText
 {
 	public const string Korean = "Korean";
 	public const string Japanese = "Japanese";
+	public const string English = "English";
 
 	/// <summary>换成指定语言（Korean / Japanese）；查不到的部分原样。</summary>
 	public static string Translate(string text, string language)
@@ -22,7 +23,7 @@ public static class UiText
 		{
 			return text;
 		}
-		Lang lang = language == Korean ? KoreanLang : language == Japanese ? JapaneseLang : null;
+		Lang lang = language == Korean ? KoreanLang : language == Japanese ? JapaneseLang : language == English ? EnglishLang : null;
 		if (lang == null)
 		{
 			return text;
@@ -96,12 +97,12 @@ public static class UiText
 				if (m.Success)
 				{
 					// 拼进去的部分本身在表里（如「养成」自动存档）也换掉
-					found = string.Format(format, m.Groups.Cast<Group>().Skip(1).Select(g => (object)(lang.Exact.TryGetValue(g.Value, out string part) ? part : Words(g.Value, lang))).ToArray());
+					found = string.Format(format, m.Groups.Cast<Group>().Skip(1).Select(g => (object)(lang.Exact.TryGetValue(g.Value, out string part) || lang.Game.TryGetValue(g.Value, out part) ? part : Words(g.Value, lang))).ToArray());
 					break;
 				}
 			}
 		}
-		if (found == null)
+		if (found == null && !lang.Game.TryGetValue(core, out found))
 		{
 			return null;
 		}
@@ -160,17 +161,17 @@ public static class UiText
 	// 选项结果（LuaParser）拼出来的动作说明里的词：「设置X=1」「X好感 +3」「天赋X lv1」「丢弃X」「X向心力 +1」「后续: …」「对决」「混战」，
 	// 和条件里的当前值「→ 当前1」（按「 → 」切开后单独剩下「当前1」，表里的「→ 当前」对不上）。
 	// 只在这种格式里换（「设置页」不换）。韩语为 null 的照旧显示中文
-	private static readonly (string Pattern, string Korean, string Japanese)[] ActionWords =
+	private static readonly (string Pattern, string Korean, string Japanese, string English)[] ActionWords =
 	{
-		("设置(?=[^、；]*?(?:=| )-?\\d)", "설정 ", "セット "),
-		("丢弃", null, "破棄 "),
-		("好感 (?=[+-]?\\d)", " 호감 ", " 好感度 "),
-		("天赋(?=[^、；]+ lv\\d)", "천부 ", "天賦 "),
-		("向心力 (?=[+-]?\\d)", " 단합 ", " 団結 "),
-		("后续: ", null, "分岐先で: "),
-		("对决", "결투", "決闘"),
-		("混战", null, "乱戦"),
-		("当前(?=-?\\d)", "현재 ", "現在 "),
+		("设置(?=[^、；]*?(?:=| )-?\\d)", "설정 ", "セット ", "Set "),
+		("丢弃", null, "破棄 ", "Discard "),
+		("好感 (?=[+-]?\\d)", " 호감 ", " 好感度 ", " affection "),
+		("天赋(?=[^、；]+ lv\\d)", "천부 ", "天賦 ", "Talent "),
+		("向心力 (?=[+-]?\\d)", " 단합 ", " 団結 ", " cohesion "),
+		("后续: ", null, "分岐先で: ", "then: "),
+		("对决", "결투", "決闘", "Duel"),
+		("混战", null, "乱戦", "Melee"),
+		("当前(?=-?\\d)", "현재 ", "現在 ", "now "),
 	};
 
 	private class Lang
@@ -179,31 +180,39 @@ public static class UiText
 		public readonly List<(Regex, string)> Patterns = new List<(Regex, string)>();
 		public readonly List<(Regex, MatchEvaluator)> Words = new List<(Regex, MatchEvaluator)>();
 		public readonly Dictionary<string, string> Cache = new Dictionary<string, string>();
+		// 英语：英文补丁（velvetcakes）的翻译文件，查来自游戏的文字；本 Mod 自己的表优先
+		public readonly Dictionary<string, string> Game;
 
 		public Lang(int column)
 		{
+			Game = column == 3 ? XUnityTranslations.Load() : new Dictionary<string, string>();
 			if (column == 2)
 			{
 				Words.Add(ConditionNames(UiConditionNames.Japanese));
 				Words.Add(FlagNames(UiFlagNames.Japanese));
 			}
 			Words.Add(ChineseNumeralDates);
-			foreach (var (pattern, korean, japanese) in ActionWords)
+			foreach (var (pattern, korean, japanese, english) in ActionWords)
 			{
-				string text = column == 1 ? korean : japanese;
+				string text = column == 1 ? korean : column == 2 ? japanese : english;
 				if (text != null)
 				{
 					Words.Add((new Regex(pattern), _ => text));
 				}
 			}
-			Words.AddRange(column == 1 ? KoreanDates : JapaneseDates);
-			foreach (string[] row in Terms.OrderByDescending(r => r[0].Length))
+			Words.AddRange(column == 1 ? KoreanDates : column == 2 ? JapaneseDates : EnglishDates);
+			foreach (string[] row in (column == 3 ? UiTextEnglish.Terms.Keys.Select(k => new[] { k }) : Terms).OrderByDescending(r => r[0].Length))
 			{
-				string text = row[column];
+				string text = Column(row, column, UiTextEnglish.Terms);
+				if (text == null)
+				{
+					continue;
+				}
 				Words.Add((new Regex(Regex.Escape(row[0])), _ => text));
 			}
 			// 任务名：窗口里常截短成「前 N 个字…」显示，截短后的也认得，换成同样截短的译文
-			foreach (string[] row in UiQuestNames.Table)
+			// 任务名没有英语（英文补丁翻的是游戏自己的任务名）
+			foreach (string[] row in column == 3 ? new string[0][] : UiQuestNames.Table)
 			{
 				string zh = row[0], text = row[column];
 				Exact[zh] = text;
@@ -215,9 +224,13 @@ public static class UiText
 					}
 				}
 			}
-			foreach (string[] row in Table.OrderByDescending(r => r[0].Length))
+			foreach (string[] row in (column == 3 ? UiTextEnglish.Table.Keys.Select(k => new[] { k }) : Table).OrderByDescending(r => r[0].Length))
 			{
-				string zh = row[0], text = row[column];
+				string zh = row[0], text = Column(row, column, UiTextEnglish.Table);
+				if (text == null)
+				{
+					continue;
+				}
 				if (zh.Contains("{0}"))
 				{
 					string regex = "^" + Regex.Replace(Regex.Escape(zh), @"\\\{(\d)}", "(.+?)") + "$";
@@ -231,9 +244,16 @@ public static class UiText
 		}
 	}
 
-	private static Lang _korean, _japanese;
+	// 第 3 列是英语：表里只有中文、韩语、日语三列，英语从 UiTextEnglish 按中文查（没有的为 null）
+	private static string Column(string[] row, int column, Dictionary<string, string> english)
+	{
+		return column < 3 ? row[column] : english.TryGetValue(row[0], out string text) ? text : null;
+	}
+
+	private static Lang _korean, _japanese, _english;
 	private static Lang KoreanLang => _korean ??= new Lang(1);
 	private static Lang JapaneseLang => _japanese ??= new Lang(2);
+	private static Lang EnglishLang => _english ??= new Lang(3);
 
 	// 窗口里截短任务名用的长度（Short(title, n)）
 	private static readonly int[] ShortLengths = { 9, 10, 14, 16, 18 };
@@ -253,6 +273,18 @@ public static class UiText
 	private static readonly (Regex, MatchEvaluator)[] JapaneseDates =
 	{
 		(new Regex(@"第(\d+)年"), m => m.Groups[1].Value + "年目"),
+	};
+
+	// 「第1年4月上旬」：英语写成「Year 1 early Apr」
+	private static readonly string[] EnglishStages = { "early", "mid", "late" };
+	private static readonly string[] Months = { "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec" };
+	private static string Month(string n) => int.TryParse(n, out int m) && m >= 1 && m <= 12 ? Months[m - 1] : n;
+	private static readonly (Regex, MatchEvaluator)[] EnglishDates =
+	{
+		(new Regex(@"第(\d+)年"), m => "Year " + m.Groups[1].Value + " "),
+		(new Regex(@"(\d+)月([上中下])(旬)?"), m => EnglishStages[System.Array.IndexOf(Stages, m.Groups[2].Value)] + " " + Month(m.Groups[1].Value)),
+		(new Regex(@"(\d+)月"), m => Month(m.Groups[1].Value)),
+		(new Regex(@"([上中下])旬"), m => EnglishStages[System.Array.IndexOf(Stages, m.Groups[1].Value)]),
 	};
 
 	// 和游戏里的名字拼在一起时，单独换掉的界面词（中文、韩语、日语）
@@ -503,7 +535,7 @@ public static class UiText
 		new[] { "最近在上", "최근 것이 위", "新しい順" },
 		new[] { "传奇栏位页数", "전기 슬롯 페이지 수", "伝奇スロットのページ数" },
 		new[] { "自动存档多留旧档", "자동 저장 이전 기록 수", "オートセーブの旧データ数" },
-		new[] { "新版存档、读档界面", "새 저장·불러오기 화면", "珈琲のおとものセーブ画面" },
+		new[] { "新版存档、读档界面", "새 저장·불러오기 화면", "新しいセーブ・ロード画面" },
 		new[] { "本窗口", "이 창", "このウィンドウ" },
 		new[] { "手柄开关本窗口", "패드로 이 창 열기/닫기", "パッドでこのウィンドウを開閉" },
 		new[] { "数值页", "수치 탭", "数値タブ" },

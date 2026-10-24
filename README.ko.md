@@ -138,7 +138,7 @@
 
 - **게임패드**: 창 전체를 게임패드로 조작할 수 있습니다(L3로 열기/닫기, 왼쪽 스틱으로 포인터, A로 클릭, LB / RB로 탭 전환). 주사위, 턴 넘기기, 랜덤 이벤트 선택도 지원.
 - **화면**: 다크 모드, 본명조 또는 微软雅黑 글꼴, 창·작은 창·안내 상자 불투명도 각각 조절, 대사 글자 확대.
-- **언어**: 간체·번체·한국어는 게임 언어를 따르고, [일본어 패치](https://dlaqe2334.github.io/LOM-JPMOD/)가 있으면 일본어로 표시합니다. 설정에서도 고를 수 있습니다.
+- **언어**: 간체·번체·한국어는 게임 언어를 따르고, [일본어 패치](https://dlaqe2334.github.io/LOM-JPMOD/)가 있으면 일본어, 영어 패치가 있으면 영어로 표시합니다. 설정에서도 고를 수 있습니다.
 - **진단 내보내기**: ESC → 「환경 설정」 → 「진단 내보내기」로 로그와 설정을 바탕 화면에 묶습니다(저장 데이터 제외). 설치 프로그램에도 있습니다.
 - **충돌 감지**: 충돌하는 옛 Mod가 있으면 설정 탭 맨 위에 표시. 다른 Mod와 같은 키를 쓰면 이 Mod 쪽이 양보합니다.
 - **전기 내보내기**: 「상태 → 전기」에서 이번 회차의 전기를 언제든 txt로 내보낼 수 있습니다.
@@ -171,4 +171,4 @@
 
 ## 크레딧
 
-[중국어 README](README.md#致谢)를 참고하세요. 이 프로젝트는 爱死 님의 「活侠传助手」를 바탕으로 하며, MortalAnytimeSave, 赵活系统, LOM_SaveSlotExpander의 기능과 코드를 참고·이식했습니다. 전기 슬롯 페이지 넘김은 [iampigcheng](https://github.com/iampigcheng) 님의 [issue #21](https://github.com/kevinnie2003/LOMAssistant/issues/21) 설계를 따랐습니다. 풀 리퀘스트를 보내 주신 [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes), [NEXTAltair](https://github.com/NEXTAltair) 님께 감사드립니다.
+[중국어 README](README.md#致谢)를 참고하세요. 이 프로젝트는 爱死 님의 「活侠传助手」를 바탕으로 하며, 赵活系统의 기능 아이디어와 LOM_SaveSlotExpander의 코드를 참고·이식했습니다. 풀 리퀘스트를 보내 주신 [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes), [NEXTAltair](https://github.com/NEXTAltair) 님, issue를 올려 주신 [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y), [iampigcheng](https://github.com/iampigcheng) 님께 감사드립니다.

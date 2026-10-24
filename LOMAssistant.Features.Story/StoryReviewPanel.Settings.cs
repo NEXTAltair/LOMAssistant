@@ -311,7 +311,7 @@ public partial class StoryReviewPanel
 	}
 
 	// 各语言用自己的写法，不跟着界面语言翻译
-	private static readonly string[] Languages = { "跟随游戏", "简体中文", "繁體中文", "한국어", "日本語" };
+	private static readonly string[] Languages = { "跟随游戏", "简体中文", "繁體中文", "한국어", "日本語", "English" };
 
 	/// <summary>界面语言：搜索框右边一排按钮。</summary>
 	private void DrawLanguage(Rect r)

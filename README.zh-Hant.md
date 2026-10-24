@@ -136,7 +136,7 @@
 
 - **手把**：咖啡伴侶視窗全程能用手把（L3 開關，左搖桿移動、A 點擊、LB / RB 切頁），骰子選線、空過、隨機事件自選也支援。
 - **介面**：深色模式；視窗字體可選思源宋體或微軟雅黑；咖啡伴侶視窗、小窗、提示框的不透明度分別可調；對白文字可放大。
-- **多語言**：介面跟著遊戲語言顯示簡體、繁體、韓語，裝了[日語補丁](https://dlaqe2334.github.io/LOM-JPMOD/)時顯示日語，也可在設定頁自己選。
+- **多語言**：介面跟著遊戲語言顯示簡體、繁體、韓語，裝了[日語補丁](https://dlaqe2334.github.io/LOM-JPMOD/)時顯示日語，裝了英文補丁時顯示英語，也可在設定頁自己選。
 - **匯出診斷**：遊戲 ESC →「環境設定」→「匯出診斷」，把記錄、設定打包到桌面（不含存檔）；安裝器裡也有。
 - **衝突檢測**：裝了會衝突的舊 Mod 時在設定頁最上面提示；和別的 Mod 快捷鍵撞了，自動把本 Mod 的讓出去。
 - **匯出傳奇**：「狀態 → 傳奇」裡可以隨時把這一局的傳奇匯出成 txt。
@@ -195,9 +195,7 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 本專案不是從零開發的，功能思路和部分程式碼來自以下作者：
 
 - **[活俠傳助手](https://mod.3dmgame.com/mod/256420)**：愛死（3DM：wowowo4567）。本專案的基礎，源碼由其發佈的插件反編譯而來後再修改。它又整合自 [骰子大師](https://mod.3dmgame.com/mod/210536)（Gmhaxx）、[多功能 Mod](https://mod.3dmgame.com/mod/210629)（Jim97）、[任意位置存檔](https://mod.3dmgame.com/mod/210679)（NothingNullNull）。
-- **隨時存檔**：移植自 mahosalieri85-a11y 的 MortalAnytimeSave（[issue #2](https://github.com/kevinnie2003/LOMAssistant/issues/2)）。
 - **部分功能思路**：參考 [趙活系統](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 許可）。
-- **存檔備註顯示**：移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 許可）及其[漢化版](https://github.com/shiluodeqiou/LOM_SaveSlotExpander-zh)（shiluodeqiou）。
-- **傳奇欄位翻頁**：思路來自 [iampigcheng](https://github.com/iampigcheng) 的 [issue #21](https://github.com/kevinnie2003/LOMAssistant/issues/21)（LegendSlotExtender）。
-- 感謝 [lxsb222-spec](https://github.com/lxsb222-spec)（愛死）、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair) 提交的 PR。
+- **存檔備註顯示**：移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 許可）。
+- 感謝 [lxsb222-spec](https://github.com/lxsb222-spec)（愛死）、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair) 提交的 PR，以及 [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y)、[iampigcheng](https://github.com/iampigcheng) 提交的 issue。
 - 下載包附帶的 [BepInEx](https://github.com/BepInEx/BepInEx)、[UnityDoorstop](https://github.com/NeighTools/UnityDoorstop)、[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) 按各自的許可證分發。

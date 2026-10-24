@@ -73,7 +73,7 @@ public partial class StoryReviewPanel
 		if (GUI.Button(new Rect(bx, r.y, S(40), S(36)), "－", _button)) _routeZoom = Mathf.Max(0.6f, _routeZoom - 0.1f);
 		GUI.Label(new Rect(bx + S(44), r.y, S(60), S(36)), Mathf.RoundToInt(_routeZoom * 100) + "%", _center);
 		if (GUI.Button(new Rect(bx + S(108), r.y, S(40), S(36)), "＋", _button)) _routeZoom = Mathf.Min(1.6f, _routeZoom + 0.1f);
-		if (GUI.Button(new Rect(bx + S(160), r.y, S(130), S(36)), "当前主线", _button) && _route.Points.TryGetValue(StoryAtlas.CurrentMain, out Vector2 now))
+		if (GUI.Button(new Rect(bx + S(160), r.y, TextWidth("当前主线", _button, S(130)), S(36)), "当前主线", _button) && _route.Points.TryGetValue(StoryAtlas.CurrentMain, out Vector2 now))
 		{
 			_routePicked = StoryAtlas.Find(StoryAtlas.CurrentMain);
 			_routeSide = null;
@@ -244,7 +244,7 @@ public partial class StoryReviewPanel
 		foreach (SideStory side in groups)
 		{
 			float sx = side.Dated ? XOf(layout, side.Missions.Where(m => m.From != null).Min(m => m.From.Value)) - Z(10) : Z(20);
-			float w = pillStyle.CalcSize(new GUIContent("✓ " + side.Title + (side.Joins.Count > 0 ? " → 主线" : ""))).x + Z(26);
+			float w = pillStyle.CalcSize(new GUIContent(TextConverter.ForDisplay("✓ " + side.Title + (side.Joins.Count > 0 ? " → 主线" : "")))).x + Z(26);
 			int row = rows.FindIndex(end => end <= sx);
 			if (row < 0)
 			{

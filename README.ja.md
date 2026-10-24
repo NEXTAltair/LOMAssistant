@@ -138,7 +138,7 @@ ZIP には BepInEx が同梱されています。
 
 - **ゲームパッド**：ウィンドウ全体をパッドで操作できます（L3 で開閉、左スティックでポインター、A でクリック、LB / RB でタブ切り替え）。ダイス、見送り、ランダムイベント選択も対応。
 - **画面**：ダークモード、思源宋体か微軟雅黒、ウィンドウ・小ウィンドウ・表示ボックスの不透明度をそれぞれ調整、会話文字の拡大。
-- **言語**：簡体字・繁体字・韓国語はゲームの言語に合わせ、[日本語化MOD](https://dlaqe2334.github.io/LOM-JPMOD/)を入れていれば日本語で表示。設定でも選べます。
+- **言語**：簡体字・繁体字・韓国語はゲームの言語に合わせ、[日本語化MOD](https://dlaqe2334.github.io/LOM-JPMOD/)を入れていれば日本語、英語パッチを入れていれば英語で表示。設定でも選べます。
 - **診断を書き出す**：ESC →「環境設定」→「診断を書き出す」で、ログと設定をデスクトップにまとめます（セーブは含みません）。インストーラーにもあります。
 - **競合検出**：競合する古いMODがあると設定タブの一番上に表示。ほかのMODと同じキーなら、このMODの方を譲ります。
 - **伝奇を書き出す**：「状態 → 伝奇」から、今回のプレイの伝奇をいつでも txt に書き出せます。
@@ -171,4 +171,4 @@ ZIP には BepInEx が同梱されています。
 
 ## クレジット
 
-[中国語版 README](README.md#致谢) を参照してください。本プロジェクトは爱死氏の「活侠传助手」をもとにしており、MortalAnytimeSave、赵活系统、LOM_SaveSlotExpander の機能やコードを参考・移植しています。伝奇スロットのページ送りは [iampigcheng](https://github.com/iampigcheng) さんの [issue #21](https://github.com/kevinnie2003/LOMAssistant/issues/21) の設計に沿っています。[lxsb222-spec](https://github.com/lxsb222-spec)、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair) のプルリクエストに感謝します。
+[中国語版 README](README.md#致谢) を参照してください。本プロジェクトは爱死氏の「活侠传助手」をもとにしており、赵活系统の機能のアイデアと LOM_SaveSlotExpander のコードを参考・移植しています。プルリクエストをくださった [lxsb222-spec](https://github.com/lxsb222-spec)、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair) さん、issue をくださった [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y)、[iampigcheng](https://github.com/iampigcheng) さんに感謝します。

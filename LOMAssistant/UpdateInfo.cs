@@ -52,7 +52,7 @@ public static class UpdateInfo
 			string language = TextConverter.DisplayLanguage;
 			if (_entries == null || _entriesLanguage != language)
 			{
-				string file = language == UiText.Korean ? "ko" : language == UiText.Japanese ? "ja" : null;
+				string file = language == UiText.Korean ? "ko" : language == UiText.Japanese ? "ja" : language == UiText.English ? "en" : null;
 				List<Entry> translated = file != null ? Parse(ReadEmbedded("LOMAssistant.CHANGELOG." + file + ".md")) : new List<Entry>();
 				_entries = Fetched.Concat(Chinese).Select(e => translated.Find(x => x.Version == e.Version) ?? e).ToList();
 				_entries.Sort((a, b) => b.Version.CompareTo(a.Version));

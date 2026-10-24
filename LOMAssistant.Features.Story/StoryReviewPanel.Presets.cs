@@ -173,7 +173,7 @@ public partial class StoryReviewPanel
 			{
 				// 没记过自定义：只在当前不是哪一档时亮着，点了没用
 				GUIStyle only = i == current ? _primary : _button;
-				GUILayout.Button("自定义", only, GUILayout.MinWidth(S(120)), Ctl());
+				GUILayout.Button("自定义", only, GUILayout.Width(TextWidth("自定义", only, S(120))), Ctl());
 				Hover(GUILayoutUtility.GetLastRect(), "改了预设管的任意一个开关，就是自定义");
 				continue;
 			}
@@ -181,7 +181,7 @@ public partial class StoryReviewPanel
 			bool confirming = _presetConfirm == i;
 			string text = confirming ? string.Format("确定？改 {0} 项", changes) : preset.Name;
 			GUIStyle style = i == current || confirming ? _primary : _button;
-			if (GUILayout.Button(text, style, GUILayout.MinWidth(S(120)), Ctl()) && i != current && changes > 0)
+			if (GUILayout.Button(text, style, GUILayout.Width(TextWidth(text, style, S(120))), Ctl()) && i != current && changes > 0)
 			{
 				if (confirming)
 				{
@@ -229,7 +229,8 @@ public partial class StoryReviewPanel
 		GUI.Label(new Rect(box.x + pad, box.y + S(20), width - pad * 2, S(36)), "选一个预设", _heading);
 		GUI.Label(new Rect(box.x + pad, box.y + S(60), width - pad * 2, S(30)), "之后随时可以在设置页最上面换，也可以逐项调整。存档、提速、界面、热键等设置不受影响。", _muted);
 		// 韩语按空格换行；中文、日语自己断行，标点不放到行首
-		bool korean = TextConverter.DisplayLanguage == UiText.Korean;
+		// 韩语、英语按空格换行，不用自己断行
+		bool korean = TextConverter.DisplayLanguage is UiText.Korean or UiText.English;
 		GUIStyle note = new GUIStyle(_label) { wordWrap = korean };
 		float y = box.y + S(104), cardHeight = S(270);
 		for (int i = 0; i < Presets.Length; i++)

@@ -84,9 +84,11 @@ public static class TextConverter
 				case 2: return "ChineseTraditional";
 				case 3: return UiText.Korean;
 				case 4: return UiText.Japanese;
+				case 5: return UiText.English;
 			}
 			string game = GameLanguage;
-			return game == "ChineseSimplified" && JapanesePatchInstalled ? UiText.Japanese : game;
+			// 英文补丁、日语补丁覆盖的都是简体
+			return game == "ChineseSimplified" && JapanesePatchInstalled ? UiText.Japanese : game == "ChineseSimplified" && EnglishPatchInstalled ? UiText.English : game;
 		}
 	}
 
@@ -103,6 +105,37 @@ public static class TextConverter
 			{
 				return null;
 			}
+		}
+	}
+
+	private static bool _englishPatch;
+	private static int? _englishCheckedAt;
+
+	/// <summary>
+	/// 装了英文补丁：joshfreitas1984 的 LLM 英文补丁（FanslationStudio.LegendOfMortal…），或 velvetcakes 的英文补丁（XUnity.AutoTranslator 加 BepInEx\Translation\en\Text 里的翻译文件）。
+	/// 和日语补丁一样，没找到时每隔几秒再看一次。
+	/// </summary>
+	public static bool EnglishPatchInstalled
+	{
+		get
+		{
+			if (_englishPatch || _englishCheckedAt.HasValue && Environment.TickCount - _englishCheckedAt.Value < 3000)
+			{
+				return _englishPatch;
+			}
+			_englishCheckedAt = Environment.TickCount;
+			foreach (System.Reflection.Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
+			{
+				string name = assembly.GetName().Name;
+				// 只装了 XUnity（可能翻成别的语言、或者只是机翻）不算：要有英文补丁自带的翻译文件
+				if (name.StartsWith("FanslationStudio.LegendOfMortal", StringComparison.OrdinalIgnoreCase)
+					|| name.StartsWith("XUnity.AutoTranslator", StringComparison.OrdinalIgnoreCase) && XUnityTranslations.PatchFilesPresent)
+				{
+					FileLogger.Log("检测到英文补丁（" + name + "），界面跟随游戏时显示英语");
+					return _englishPatch = true;
+				}
+			}
+			return false;
 		}
 	}
 
@@ -145,7 +178,7 @@ public static class TextConverter
 		{
 			return ToTraditional(text);
 		}
-		return language is UiText.Korean or UiText.Japanese ? UiText.Translate(text, language) : text;
+		return language is UiText.Korean or UiText.Japanese or UiText.English ? UiText.Translate(text, language) : text;
 	}
 
 	private static string Cached(Dictionary<string, string> cache, string text, string locale, uint flags)

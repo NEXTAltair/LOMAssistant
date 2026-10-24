@@ -61,11 +61,11 @@ public static class ConflictDetector
 					{
 						continue;
 					}
-					// 日语补丁（LOM_JP_…）：和本 Mod 一起装测试过，只是同一处游戏代码各改各的（翻译、字体），不算冲突
+					// 翻译补丁（日语、英文，见 IsTranslationPatch）：不算冲突
 					Assembly assembly = OwnerAssembly(info, owner);
-					if (assembly != null && assembly.GetName().Name.StartsWith("LOM_JP_", StringComparison.OrdinalIgnoreCase))
+					if (assembly != null && IsTranslationPatch(assembly.GetName().Name))
 					{
-						FileLogger.Log($"[冲突检测] 日语补丁（{assembly.GetName().Name}）也改了 {method.DeclaringType?.Name}.{method.Name}，已兼容，不提示");
+						FileLogger.Log($"[冲突检测] 翻译补丁（{assembly.GetName().Name}）也改了 {method.DeclaringType?.Name}.{method.Name}，已兼容，不提示");
 						continue;
 					}
 					if (assembly != null && !owners.ContainsKey(owner))
@@ -196,4 +196,9 @@ public static class ConflictDetector
 		}
 		return result;
 	}
+	// 翻译补丁：日语补丁（LOM_JP_…）、英文补丁（LLM 版 FanslationStudio.LegendOfMortal…，XUnity.AutoTranslator），
+	// 和本 Mod 一起装玩家测试过，只是同一处游戏代码各改各的（翻译、字体），不算冲突
+	private static bool IsTranslationPatch(string name) => name.StartsWith("LOM_JP_", StringComparison.OrdinalIgnoreCase)
+		|| name.StartsWith("FanslationStudio.LegendOfMortal", StringComparison.OrdinalIgnoreCase)
+		|| name.StartsWith("XUnity.AutoTranslator", StringComparison.OrdinalIgnoreCase);
 }

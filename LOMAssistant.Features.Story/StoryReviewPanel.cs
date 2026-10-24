@@ -293,6 +293,12 @@ public partial class StoryReviewPanel : MonoBehaviour
 		InputGuard.Report("StoryReview", _windowRect);
 	}
 
+	/// <summary>按钮的宽度：按显示出来的文字（换成界面语言后）量，放得下就用原来的宽度，英语这种放不下的才加宽。</summary>
+	private static float TextWidth(string text, GUIStyle style, float min)
+	{
+		return Mathf.Max(min, style.CalcSize(new GUIContent(TextConverter.ForDisplay(text))).x + 16f);
+	}
+
 	private void Notice(string text, bool red = false)
 	{
 		_message = text;
