@@ -84,6 +84,9 @@ public static class StoryUsage
 				int.TryParse(value, out int amount);
 				switch (method)
 				{
+					// 改好感：结缘路线用（StoryRomance），反查不收
+					case "Character":
+						continue;
 					case "SetFlag":
 						use.Kind = "改";
 						use.Detail = "设成 " + amount;

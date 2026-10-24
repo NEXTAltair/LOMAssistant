@@ -52,6 +52,8 @@ All keys can be changed or unbound under 「热键」 (Hotkeys) on the settings 
 
   <img src="media/story-route.webp" width="640" alt="Route map: the main story as stops on a calendar, side quests below">
 
+- **Romance routes**: pick a love interest on the route map to light up only her scenes and see each step, whether it is done and where to get it.
+
 - **Story map**: each quest as a flow chart, with the option or condition on every path.
 
   <img src="media/story-flow.webp" width="640" alt="Story map: options, conditions and destinations between story segments">

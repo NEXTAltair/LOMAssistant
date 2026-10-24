@@ -37,6 +37,10 @@ public partial class StoryReviewPanel
 	private string _routeSearch = "", _routeLastQuery = "";
 	private StoryMission _routePicked;
 	private SideStory _routeSide;
+	// 结缘路线：选了一位，地图上和她有关的任务亮着，其余变淡，右边列出她的结缘进度
+	private StoryRomance.Heroine _routeHeroine;
+	private HashSet<StoryMission> _romanceMissions, _romanceSteps;
+	private float _routeDetailInner; // 详情栏里能用的宽度（去掉边距和滚动条）
 
 	private float Z(float v) => S(v) * _routeZoom;
 
@@ -81,8 +85,9 @@ public partial class StoryReviewPanel
 			StoryAtlas.Start();
 			return;
 		}
+		DrawRomanceBar(new Rect(r.x, r.y + S(44), r.width, S(34)));
 		float detailWidth = Mathf.Min(S(460), r.width * 0.32f);
-		var canvas = new Rect(r.x, r.y + S(46), r.width - detailWidth - S(12), r.height - S(46));
+		var canvas = new Rect(r.x, r.y + S(86), r.width - detailWidth - S(12), r.height - S(86));
 		var detail = new Rect(canvas.xMax + S(12), canvas.y, detailWidth, canvas.height);
 		Fill(canvas, PaperLight);
 		Frame(canvas, Edge, 1);
@@ -91,7 +96,8 @@ public partial class StoryReviewPanel
 		Frame(detail, Edge, 1);
 		DragScroll("routeDetail", detail, ref _routeDetailScroll);
 		GUILayout.BeginArea(new Rect(detail.x + S(12), detail.y + S(10), detail.width - S(24), detail.height - S(20)));
-		_routeDetailScroll = GUILayout.BeginScrollView(_routeDetailScroll);
+		_routeDetailInner = detail.width - S(24) - S(22);
+		_routeDetailScroll = GUILayout.BeginScrollView(_routeDetailScroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
 		if (query.Length >= 2 && _routeSide == null && _routePicked == null)
 		{
 			DrawSearchResults(query);
@@ -103,6 +109,10 @@ public partial class StoryReviewPanel
 		else if (_routePicked != null)
 		{
 			DrawMissionDetail(_routePicked);
+		}
+		else if (_routeHeroine != null)
+		{
+			DrawRomanceDetail(_routeHeroine);
 		}
 		GUILayout.EndScrollView();
 		GUILayout.EndArea();
@@ -360,7 +370,7 @@ public partial class StoryReviewPanel
 			{
 				continue;
 			}
-			bool dim = query.Length > 0 && !Matches(query, m.Title, m.Key, m.Place, m.Summary);
+			bool dim = query.Length > 0 && !Matches(query, m.Title, m.Key, m.Place, m.Summary) || _romanceMissions != null && !_romanceMissions.Contains(m);
 			if (repaint)
 			{
 				float rr = Z(9), alpha = dim ? 0.25f : 1f;
@@ -386,7 +396,8 @@ public partial class StoryReviewPanel
 					GUI.Label(new Rect(p.x - Z(34), p.y - Z(22), Z(24), Z(18)), "<color=#A3302A><b>终</b></color>", tiny);
 				}
 				var label = new Rect(p.x - layout.LabelWidth / 2 - Z(20), p.y + Z(13), layout.LabelWidth + Z(40), Z(24));
-				string title = (m.Visited ? "<color=#2F6B3A>✓</color> " : "") + Short(m.Title, 9);
+				// 结缘路线：设她结缘旗标的站，名字后面用朱砂色标出是哪一步（【认识】【告白·攻略】…）
+				string title = (m.Visited ? "<color=#2F6B3A>✓</color> " : "") + Short(m.Title, 9) + RomanceMark(m);
 				GUI.Label(label, dim ? "<color=#B5AA98>" + RichText.Strip(title) + "</color>" : title, new GUIStyle(name) { wordWrap = false });
 			}
 			if (GUI.Button(hit, GUIContent.none, GUIStyle.none))
@@ -403,7 +414,8 @@ public partial class StoryReviewPanel
 			{
 				continue;
 			}
-			bool dim = query.Length > 0 && !Matches(query, side.Title) && !side.Missions.Any(m => Matches(query, m.Title, m.Key, m.Place, m.Summary));
+			bool dim = query.Length > 0 && !Matches(query, side.Title) && !side.Missions.Any(m => Matches(query, m.Title, m.Key, m.Place, m.Summary))
+				|| _romanceMissions != null && !side.Missions.Any(_romanceMissions.Contains);
 			if (repaint)
 			{
 				float alpha = dim ? 0.3f : 1f;
@@ -447,6 +459,7 @@ public partial class StoryReviewPanel
 
 	private void DrawMissionDetail(StoryMission m)
 	{
+		DrawRomanceOnMission(m);
 		GUILayout.Label((m.Main ? "主线" : m.SeriesTitle) + "　" + m.Key, _muted);
 		GUILayout.Label(m.Title, _heading);
 		if (m.Summary.Length > 0)
@@ -506,8 +519,170 @@ public partial class StoryReviewPanel
 		}
 	}
 
+	/// <summary>地图上方一行：九位可以结缘的人，点一位看她的结缘路线，再点一次取消。</summary>
+	private void DrawRomanceBar(Rect r)
+	{
+		GUIStyle line = Middle(_label);
+		float x = r.x;
+		GUI.Label(new Rect(x, r.y, S(90), r.height), "结缘路线", line);
+		x += S(96);
+		foreach (StoryRomance.Heroine h in StoryRomance.All)
+		{
+			string name = StoryRomance.Name(h);
+			bool on = _routeHeroine == h;
+			float w = _button.CalcSize(new GUIContent(name)).x + S(20);
+			if (GUI.Button(new Rect(x, r.y, w, r.height), name, on ? _primary : _button))
+			{
+				_routeHeroine = on ? null : h;
+				_routePicked = null;
+				_routeSide = null;
+				_routeDetailScroll = Vector2.zero;
+			}
+			x += w + S(6);
+		}
+		_romanceMissions = _romanceSteps = null;
+		if (_routeHeroine != null && StoryRomance.StopsOf(_routeHeroine) is List<StoryRomance.Stop> stops)
+		{
+			_romanceMissions = new HashSet<StoryMission>(stops.Select(s => s.Mission));
+			_romanceSteps = new HashSet<StoryMission>(stops.Where(s => s.Steps.Count > 0).Select(s => s.Mission));
+		}
+	}
+
+	/// <summary>右边：她的好感、是不是心上人，结缘的每一步这一局做到没有、在哪拿到，以及加减她好感的剧情。</summary>
+	private void DrawRomanceDetail(StoryRomance.Heroine h)
+	{
+		List<StoryRomance.Stop> stops = StoryRomance.StopsOf(h);
+		if (stops == null)
+		{
+			GUILayout.Label("剧本还没整理好", _muted);
+			return;
+		}
+		GUILayout.Label("结缘路线", _muted);
+		GUILayout.Label(StoryRomance.Name(h), _heading);
+		GUILayout.Label(string.Format("好感 {0}", StoryRomance.Affection(h)) + (StoryRomance.IsLover(h) ? "　·　<color=#A3302A><b>心上人</b></color>" : ""), WrapLabel());
+		GUILayout.Space(S(10));
+		GUILayout.Label("结缘进度（这一局）", _heading);
+		foreach (string flag in h.Steps)
+		{
+			GUILayout.BeginVertical(_card, GUILayout.Width(_routeDetailInner));
+			GUILayout.Label((StoryRomance.StepDone(flag) ? "<color=#2F6B3A><b>✓</b></color> " : "<color=#A3302A>✗</color> ") + StoryRomance.StepName(flag), WrapLabel());
+			var where = stops.Where(s => s.Steps.Contains(flag)).ToList();
+			if (where.Count == 0)
+			{
+				GUILayout.Label("剧本里没找到设这一步的地方", WrapSmall());
+			}
+			bool done = StoryRomance.StepDone(flag);
+			foreach (StoryRomance.Stop s in where.Take(4))
+			{
+				RomanceStopButton(s, _routeDetailInner - S(24));
+				string conditions = done ? "" : StoryAtlas.ConditionText(s.Mission);
+				if (conditions.Length > 0)
+				{
+					GUILayout.Label("触发条件（这一局的值）：" + OnPaper(conditions), WrapSmall(), GUILayout.Width(_routeDetailInner - S(24)));
+				}
+			}
+			GUILayout.EndVertical();
+		}
+		GUILayout.Space(S(10));
+		GUILayout.Label("加减好感的剧情", _heading);
+		foreach (StoryRomance.Stop s in stops.Where(s => s.Affection != 0))
+		{
+			RomanceStopButton(s, _routeDetailInner);
+		}
+		int elsewhere = StoryRomance.ElsewhereOf(h);
+		if (elsewhere > 0)
+		{
+			GUILayout.Label(string.Format("另有 {0} 处在养成随机事件等不属于任务的剧情里", elsewhere), WrapSmall());
+		}
+	}
+
+	/// <summary>站名后面的结缘步骤：「【认识·告白】」；没选人或这站不设她的旗标时为空。</summary>
+	private string RomanceMark(StoryMission m)
+	{
+		if (_routeHeroine == null || _romanceSteps == null || !_romanceSteps.Contains(m))
+		{
+			return "";
+		}
+		StoryRomance.Stop stop = StoryRomance.StopsOf(_routeHeroine)?.FirstOrDefault(s => s.Mission == m);
+		return stop == null ? "" : " <color=#A3302A>" + StepMarks(stop) + "</color>";
+	}
+
+	// 步骤名拼在一串里，界面翻译整句对不上：先各自换成界面语言
+	private static string StepMarks(StoryRomance.Stop s) => "【" + string.Join("·", s.Steps.Select(f => TextConverter.ForDisplay(StoryRomance.StepKind(f))).ToArray()) + "】";
+
+	// 「　好感 +3　【认识】」
+	private static string RomanceParts(StoryRomance.Stop s)
+	{
+		string text = s.Affection != 0 ? "　" + string.Format("好感 {0}", (s.Affection > 0 ? "+" : "") + s.Affection) : "";
+		return text + (s.Steps.Count > 0 ? "　<color=#A3302A>" + StepMarks(s) + "</color>" : "");
+	}
+
+	/// <summary>选了人时，站点详情最上面：返回她的结缘路线，以及这一站和她有什么关系。</summary>
+	private void DrawRomanceOnMission(StoryMission m)
+	{
+		if (_routeHeroine == null)
+		{
+			return;
+		}
+		string name = StoryRomance.Name(_routeHeroine);
+		if (GUILayout.Button(string.Format("‹ 返回{0}的结缘路线", name), _button))
+		{
+			_routePicked = null;
+			_routeSide = null;
+			_routeDetailScroll = Vector2.zero;
+			return;
+		}
+		StoryRomance.Stop stop = StoryRomance.StopsOf(_routeHeroine)?.FirstOrDefault(s => s.Mission == m);
+		GUILayout.Label(stop == null ? string.Format("这一站不改{0}的好感，也不设她的结缘旗标", name) : string.Format("和{0}有关：", name) + RomanceParts(stop).TrimStart('　'), WrapSmall(), GUILayout.Width(_routeDetailInner));
+		GUILayout.Space(S(6));
+	}
+
+	private GUIStyle _wrapLabel, _wrapSmall, _wrapButton;
+	private float _wrapScale;
+
+	// 详情栏里的字和按钮：宽度固定、长了换行，不把详情栏撑宽
+	private void EnsureWrapStyles()
+	{
+		if (_wrapLabel == null || _wrapScale != _scale)
+		{
+			_wrapScale = _scale;
+			_wrapLabel = new GUIStyle(_label) { wordWrap = true, richText = true };
+			_wrapSmall = new GUIStyle(_small) { wordWrap = true, richText = true };
+			_wrapButton = new GUIStyle(_button) { wordWrap = true, richText = true, alignment = TextAnchor.MiddleLeft };
+		}
+	}
+
+	private GUIStyle WrapLabel() { EnsureWrapStyles(); return _wrapLabel; }
+	private GUIStyle WrapSmall() { EnsureWrapStyles(); return _wrapSmall; }
+
+	// 一个任务：名字一行，时间和好感加减一行；点了在地图上选中它
+	private void RomanceStopButton(StoryRomance.Stop s, float width)
+	{
+		EnsureWrapStyles();
+		StoryMission m = s.Mission;
+		string detail = m.When + RomanceParts(s);
+		string text = (m.Visited ? "✓ " : "") + m.Title + "\n<size=" + _small.fontSize + ">" + detail + "</size>";
+		if (GUILayout.Button(text, _wrapButton, GUILayout.Width(width)))
+		{
+			_routePicked = m;
+			_routeSide = null;
+			_routeDetailScroll = Vector2.zero;
+			if (_route != null && _route.Points.TryGetValue(m.Key, out Vector2 p))
+			{
+				_routeScroll = new Vector2(Mathf.Max(0, p.x - S(400)), Mathf.Max(0, p.y - S(250)));
+			}
+		}
+	}
+
 	private void DrawSideDetail(SideStory side)
 	{
+		if (_routeHeroine != null && GUILayout.Button(string.Format("‹ 返回{0}的结缘路线", StoryRomance.Name(_routeHeroine)), _button))
+		{
+			_routeSide = null;
+			_routePicked = null;
+			_routeDetailScroll = Vector2.zero;
+			return;
+		}
 		GUILayout.Label("支线", _muted);
 		GUILayout.Label(side.Title, _heading);
 		foreach (StoryMission m in side.Joins)

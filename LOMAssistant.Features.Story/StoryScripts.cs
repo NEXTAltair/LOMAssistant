@@ -92,7 +92,7 @@ public static class StoryScripts
 	private static readonly Regex StoryText = new Regex(@"GetStoryText\(""([^""]+)""\)");
 	private static readonly Regex AddStory = new Regex(@"AddStory\(""([^""]+)""\)");
 	private static readonly Regex Modify = new Regex(@"statmodifymanager\.(?!GetDisplayTime|AddStory|Mission|IsTrigger|ResetTalkFlag)\w+\(.*?\)");
-	private static readonly Regex Tracked = new Regex(@"^statmodifymanager\.(SetFlag|AddFlag|AddBook|RemoveBook|AddMisc|RemoveMisc|AddSpecial|RemoveSpecial)\(""(\w+)""(?:, *(-?\d+))?");
+	private static readonly Regex Tracked = new Regex(@"^statmodifymanager\.(SetFlag|AddFlag|AddBook|RemoveBook|AddMisc|RemoveMisc|AddSpecial|RemoveSpecial|Character)\(""(\w+)""(?:, *(-?\d+))?");
 
 	/// <summary>读过的全部剧本（生成时间线时一口气读进来的）。</summary>
 	public static IEnumerable<StoryScript> All => Outlines.Values.Where(s => s != null);
