@@ -999,6 +999,11 @@ internal class InstallerForm : Form
 				return;
 			}
 			string source = ChooseSource();
+			if (source == Downgrade)
+			{
+				Finish(false, F("没能从 GitHub 下载最新版（{0}），压缩包自带的 {1} 比已经装的 {2} 还旧，没有安装，已装的版本保持不变。\n\n请稍后再试，或到 B站视频简介里的夸克网盘链接、GitHub 的 Releases 页面下载最新版的压缩包。", _downloadError ?? L("连不上 GitHub"), Short(BundledVersion()), Short(DllVersion(Path.Combine(_game, ModDll)))));
+				return;
+			}
 			if (source == null)
 			{
 				Finish(false, L("没有可安装的文件：压缩包里没有安装文件，也没能从 GitHub 下载。请把整个压缩包解压后再运行安装器。"));
@@ -1071,11 +1076,21 @@ internal class InstallerForm : Form
 		}
 		if (hasBundled)
 		{
+			// 下载不了最新版时不往回装：已经装的比压缩包自带的新（玩家用旧压缩包里的安装器更新），装下去就降级了
+			Version installed = DllVersion(Path.Combine(_game, ModDll));
+			if (installed != null && installed > bundled && Short(installed) != Short(bundled))
+			{
+				Log(F("已装的 {0} 比压缩包自带的 {1} 新，不降级。", Short(installed), Short(bundled)));
+				return Downgrade;
+			}
 			Log(F("安装压缩包自带的版本 {0}。", Short(bundled)));
 			return _payload;
 		}
 		return null;
 	}
+
+	// ChooseSource 的结果：下载不了、压缩包自带的又比已装的旧，不装
+	private const string Downgrade = "<downgrade>";
 
 	private string Download()
 	{
