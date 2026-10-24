@@ -790,7 +790,8 @@ public partial class StoryReviewPanel
 			Id = "stat:" + (int)type,
 			Name = Localized(s.GetLocaleKey(), OwnNames.TryGetValue(type, out string own) ? own : TextConverter.ToSimplified(type.ToString())),
 			Get = () => s.FinalValue,
-			Set = v => s.AddValue(v - s.FinalValue, totalAdd: false),
+			// 可以调到加成以下（底数为负），见 NegativeBasePatch
+			Set = v => LOMAssistant.Features.Extras.NegativeBasePatch.SetFinal(s, v),
 			Step = money ? 500 : small ? 1 : 5,
 			Extra = () =>
 			{

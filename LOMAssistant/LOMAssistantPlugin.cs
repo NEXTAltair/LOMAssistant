@@ -190,6 +190,7 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			TryPatchAll(typeof(DisplayTextPatch));
 			TryPatchAll(typeof(GamepadControlsChangedGate));
 			TryPatchAll(typeof(MoodLockPatch));
+			TryPatchAll(typeof(NegativeBasePatch));
 			ConfigManager.BreakStatLimit.OnValueChanged += _ => StatLimitPatch.Apply();
 			StatLimitPatch.Apply();
 			FastStartup.Install(this);

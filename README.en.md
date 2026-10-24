@@ -122,6 +122,7 @@ Also:
 Stats, martial arts, sects, relationships (everyone), talents, training and crafting points, facilities, books, items and flags on one page; add, subtract or set any value, and search by name, ID or description.
 
 - **Books and items**: set the count directly; quests advance as if bought in a shop.
+- **Stats** can be set below the bonus from manuals and the like, even below zero, and stay there through later story changes and loading.
 - Your **love interest** is shown by name; mood, the four personality stats, yin-yang and silver each have a **lock** that keeps story and options from changing them; locks stay on across restarts and saves.
 - **Titles**: pick any title or write your own.
 - **Flags**: over a thousand, grouped by sect favour, characters, story and more.
