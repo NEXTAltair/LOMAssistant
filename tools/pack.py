@@ -22,6 +22,7 @@ MANUALS = [
     ('README.zh-Hant.md', '使用說明.txt'),
     ('README.ja.md', '説明書（日本語）.txt'),
     ('README.ko.md', '설명서 (한국어).txt'),
+    ('README.en.md', 'Readme (English).txt'),
 ]
 
 # 旧文件名的安装器、说明不要留在包里

@@ -17,9 +17,15 @@ def width(text):
     return sum(2 if unicodedata.east_asian_width(c) in 'WF' else 1 for c in text)
 
 
+# 链接、徽章的写法：中文、日语、韩语用全角括号和冒号，英语用半角（main 里按 README 的语言改）
+LINK, COLON = '{0}（{1}）', '：'
+
+
 def inline(text):
-    text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', lambda m: m.group(1) if m.group(1) == m.group(2) else f'{m.group(1)}（{m.group(2)}）', text)
+    text = re.sub(r'\[([^\]]+)\]\(([^)]+)\)', lambda m: m.group(1) if m.group(1) == m.group(2) else LINK.format(m.group(1), m.group(2)), text)
     text = re.sub(r'\*\*(.+?)\*\*', r'\1', text)
+    # 书名等斜体（*Legend of Mortal*）去掉星号
+    text = re.sub(r'(?<![*\w])\*([^*\n]+)\*(?![*\w])', r'\1', text)
     text = re.sub(r'`([^`]+)`', r'\1', text)
     return text
 
@@ -62,7 +68,7 @@ def convert(lines):
         badges = re.findall(r'\[!\[([^\]]*)\]\([^)]*\)\]\(([^)]+)\)', stripped)
         if badges and stripped.startswith('[!['):
             # 下载次数这类只是展示用的徽章，说明文件里不写
-            out += [f'- {name}：{link}' for name, link in badges if name not in SKIP_BADGES]
+            out += [f'- {name}{COLON}{link}' for name, link in badges if name not in SKIP_BADGES]
             continue
         # 顶上切换 README 语言的一行，说明文件里不写
         if stripped.count('(README') >= 3:
@@ -117,6 +123,7 @@ if __name__ == '__main__':
         Q, A, NOTE = 'Q: ', 'A: ', '주의: '
     else:
         Q, A, NOTE = 'Q: ', 'A: ', 'Note: '
+        LINK, COLON = '{0} ({1})', ': '
     text = convert(open(src, encoding='utf-8').read().splitlines())
     with open(dst, 'w', encoding='utf-8-sig', newline='\r\n') as f:  # 带 BOM、CRLF：老记事本也不乱码
         f.write(text)
