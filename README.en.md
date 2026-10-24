@@ -28,7 +28,7 @@ The zip already contains BepInEx.
 
 | Key | Action |
 |---|---|
-| Tab | The 咖啡伴侣 window (now, route map, story map, branch saves, save-anywhere, endings, stats, settings) |
+| Tab | The 咖啡伴侣 window (now, route map, story map, branch saves, save-anywhere, collection, stats, settings) |
 | F8 | Settings; on the save screen, edit the note of the selected save |
 | F9 | Stats page |
 | F5 / F7 / F6 | Save-anywhere: new save / load the latest / list all |
@@ -60,9 +60,9 @@ All keys can be changed or unbound under 「热键」 (Hotkeys) on the settings 
 
   <img src="media/story-nodes.webp" width="640" alt="Branch saves: recorded story segments by date, replay or delete">
 
-- **Endings**: endings, deaths and achievements with their gallery numbers, what you have reached and how to reach the rest.
+- **Collection**: records from all playthroughs. Story counts how much of each quest's dialogue you have read; endings, deaths, achievements and ending CGs show their gallery numbers and whether you have them. For anything missing it says where and how to get it.
 
-  <img src="media/story-endings.webp" width="640" alt="Endings: endings, deaths and achievements, filter by reached or not">
+  <img src="media/story-endings.webp" width="640" alt="Collection: story, endings, deaths, achievements and ending CGs, filter by done or not">
 
 ### Story helpers
 

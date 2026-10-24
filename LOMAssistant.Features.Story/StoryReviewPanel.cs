@@ -11,12 +11,12 @@ namespace LOMAssistant.Features.Story;
 /// 剧情回顾面板（默认 Tab）：
 /// 路线图——主线按剧本里写明的「下一个主线任务」连成线，岔开的路自动分到不同的车道，按游戏日历排开；支线挂在下面。
 /// 剧情图——一个任务里的剧情段画成流程图：每段一个方块，选项、掷骰、条件连到下一段。
-/// 节点存档、随时存档、结局速查是列表。
+/// 节点存档、随时存档、收集进度是列表。
 /// </summary>
 public partial class StoryReviewPanel : MonoBehaviour
 {
 	private const int WindowId = 584135;
-	private static readonly string[] Tabs = { "此刻", "路线图", "剧情图", "节点存档", "随时存档", "结局速查", "数值", "设置" };
+	private static readonly string[] Tabs = { "此刻", "路线图", "剧情图", "节点存档", "随时存档", "收集进度", "数值", "设置" };
 
 	private bool _visible;
 	private int _tab;
@@ -829,7 +829,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 		GUILayout.EndArea();
 	}
 
-	// ---------------- 结局速查 ----------------
+	// ---------------- 收集进度（结局、死亡、成就、CG、剧情） ----------------
 
 	/// <summary>一个结局的「怎么走到」，每处一行，最多四处。</summary>
 	private static string EndingWays(StoryEnding ending)
@@ -859,14 +859,18 @@ public partial class StoryReviewPanel : MonoBehaviour
 
 	private Vector2 _endingsScroll;
 	private string _endingsSearch = "";
-	private int _endingsSection, _endingsFilter;
-	private static readonly string[] EndingSections = { "结局（汗青书）", "死亡（生死簿）", "成就（风云史）" };
+	private int _endingsSection = StorySection, _endingsFilter;
+	// 收集进度：结局、死亡、成就、CG 来自游戏的图鉴，剧情按对白读过多少算，都是全部周目的记录，换存档也不变
+	private static readonly string[] EndingSections = { "结局（汗青书）", "死亡（生死簿）", "成就（风云史）", "结局 CG", "剧情" };
+	private const int AchievementSection = 2, CgSection = 3, StorySection = 4;
+	// 按钮的排列顺序：剧情放最前面
+	private static readonly int[] SectionOrder = { StorySection, 0, 1, AchievementSection, CgSection };
 	private static readonly string[] EndingFilters = { "全部", "已达成", "未达成" };
 
-	/// <summary>和游戏图鉴一样的编号前缀：汗青书「结局 N　」（按游戏语言），生死簿「N. 」；成就和图鉴里没有的不加。</summary>
+	/// <summary>和游戏图鉴一样的编号前缀：汗青书「结局 N　」（按游戏语言），生死簿「N. 」；成就、CG 和图鉴里没有的不加。</summary>
 	private static string EndingNumber(StoryEnding ending)
 	{
-		if (ending.Number <= 0 || ending.Item == null || StoryAtlas.Achievements.Contains(ending))
+		if (ending.Number <= 0 || ending.Item == null || StoryAtlas.Achievements.Contains(ending) || StoryAtlas.Cgs.Contains(ending))
 		{
 			return "";
 		}
@@ -882,16 +886,25 @@ public partial class StoryReviewPanel : MonoBehaviour
 
 	private static IEnumerable<StoryEnding> EndingSection(int section)
 	{
-		if (section == 2)
+		if (section == AchievementSection)
 		{
 			return StoryAtlas.Achievements;
 		}
-		IEnumerable<StoryEnding> list = StoryAtlas.Endings.Where(e => e.Death == (section == 1));
+		IEnumerable<StoryEnding> list = section == CgSection ? StoryAtlas.Cgs : StoryAtlas.Endings.Where(e => e.Death == (section == 1));
 		// 图鉴里没有的（编号 0）排在最后
 		return _endingsByTime
 			? list.OrderBy(e => e.Ways.Select(w => w.Mission?.From ?? int.MaxValue).DefaultIfEmpty(int.MaxValue).Min()).ThenBy(e => e.Id, StringComparer.Ordinal)
 			: list.OrderBy(e => e.Number > 0 ? e.Number : int.MaxValue).ThenBy(e => e.Id, StringComparer.Ordinal);
 	}
+
+	/// <summary>剧情：有对白的任务，读完（全部周目读过的对白占 100%）算达成；按触发时间排。</summary>
+	private static IEnumerable<StoryMission> StoryMissions()
+	{
+		return StoryAtlas.Missions.Where(m => m.Read != null)
+			.OrderBy(m => m.Main ? 0 : 1).ThenBy(m => m.From ?? int.MaxValue).ThenBy(m => m.Key, StringComparer.Ordinal);
+	}
+
+	private static bool StoryDone(StoryMission m) => m.Read == 100;
 
 	private void DrawEndings(Rect r)
 	{
@@ -912,8 +925,8 @@ public partial class StoryReviewPanel : MonoBehaviour
 			}
 			fx += S(102);
 		}
-		// 再往右：排序方式（成就没有编号，不显示）
-		if (_endingsSection != 2)
+		// 再往右：排序方式（成就、剧情没有编号，不显示）
+		if (_endingsSection != AchievementSection && _endingsSection != StorySection)
 		{
 			fx += S(14);
 			string[] sorts = { "按编号", "按时间" };
@@ -928,12 +941,13 @@ public partial class StoryReviewPanel : MonoBehaviour
 				fx += S(102);
 			}
 		}
-		// 下面一排是三类，点哪类看哪类；搜索时三类的结果都列出来
+		// 下面一排是各类，点哪类看哪类；搜索时各类的结果都列出来
 		float gx = r.x, gy = r.y + S(44);
-		for (int i = 0; i < EndingSections.Length; i++)
+		foreach (int i in SectionOrder)
 		{
-			var all = EndingSection(i).ToList();
-			string title = $"{EndingSections[i]}  {all.Count(e => e.Achieved)}/{all.Count}";
+			string title = i == StorySection
+				? $"{EndingSections[i]}  {StoryMissions().Count(StoryDone)}/{StoryMissions().Count()}"
+				: $"{EndingSections[i]}  {EndingSection(i).Count(e => e.Achieved)}/{EndingSection(i).Count()}";
 			float width = _tabOn.CalcSize(new GUIContent(title)).x * 0.85f + S(24);
 			bool on = i == _endingsSection && query.Length == 0;
 			if (GUI.Button(new Rect(gx, gy, width, S(32)), title, on ? _primary : _button) && (_endingsSection != i || query.Length > 0))
@@ -944,15 +958,21 @@ public partial class StoryReviewPanel : MonoBehaviour
 			}
 			gx += width + S(6);
 		}
+		GUI.Label(new Rect(gx + S(10), gy, Mathf.Max(0f, r.xMax - gx - S(10)), S(32)), "全部周目的记录，换存档也不变", Middle(_muted));
 		var endingsArea = new Rect(r.x, r.y + S(86), r.width, r.height - S(86));
 		DragScroll("endings", endingsArea, ref _endingsScroll);
 		GUILayout.BeginArea(endingsArea);
 		_endingsScroll = GUILayout.BeginScrollView(_endingsScroll);
 		int shownTotal = 0;
-		for (int section = 0; section < EndingSections.Length; section++)
+		foreach (int section in SectionOrder)
 		{
 			if (query.Length == 0 && section != _endingsSection)
 			{
+				continue;
+			}
+			if (section == StorySection)
+			{
+				shownTotal += DrawStorySection(query);
 				continue;
 			}
 			var shown = EndingSection(section).Where(e => _endingsFilter == 0 || e.Achieved == (_endingsFilter == 1)).Where(e =>
@@ -977,7 +997,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 				GUILayout.Label(ending.Achieved ? "<color=#2F6B3A><b>✓ 已达成</b></color>" : "<color=#A3302A>未达成</color>", _small, GUILayout.Width(S(80)));
 				GUILayout.Label("<b>" + EndingNumber(ending) + ending.Title + "</b>", _label);
 				GUILayout.EndHorizontal();
-				if (section == 2)
+				if (section == AchievementSection)
 				{
 					// 成就的说明就是达成条件；奖励在新开存档时生效
 					if (ending.Desc.Length > 0)
@@ -1007,5 +1027,38 @@ public partial class StoryReviewPanel : MonoBehaviour
 		}
 		GUILayout.EndScrollView();
 		GUILayout.EndArea();
+	}
+
+	/// <summary>剧情：每个任务读过多少对白、什么时候在哪触发，可以去剧情图看；返回列出了几个。</summary>
+	private int DrawStorySection(string query)
+	{
+		var shown = StoryMissions().Where(m => _endingsFilter == 0 || StoryDone(m) == (_endingsFilter == 1))
+			.Where(m => Matches(query, m.Title, m.SeriesTitle, m.Place, m.When, m.Key)).ToList();
+		if (shown.Count == 0)
+		{
+			return 0;
+		}
+		if (query.Length > 0)
+		{
+			GUILayout.Space(S(8));
+			GUILayout.Label(EndingSections[StorySection], _heading);
+		}
+		foreach (StoryMission m in shown)
+		{
+			GUILayout.BeginVertical(_card);
+			GUILayout.BeginHorizontal();
+			GUILayout.Label(StoryDone(m) ? "<color=#2F6B3A><b>✓ 读完</b></color>" : "<color=#A3302A>" + string.Format("读过 {0}%", m.Read) + "</color>", _small, GUILayout.Width(S(80)));
+			GUILayout.Label("<b>" + m.Title + "</b>", _label);
+			GUILayout.FlexibleSpace();
+			if (GUILayout.Button("看剧情图", _button, GUILayout.Width(S(130))))
+			{
+				OpenFlow(m);
+			}
+			GUILayout.EndHorizontal();
+			string where = (m.Main ? "主线" : m.SeriesTitle) + (m.When.Length > 0 ? "　·　" + m.When : "") + (m.Place.Length > 0 ? "　·　" + m.Place : "");
+			GUILayout.Label("<color=#73644F>" + where + "</color>", _rich);
+			GUILayout.EndVertical();
+		}
+		return shown.Count;
 	}
 }

@@ -99,6 +99,8 @@ public static class StoryAtlas
 	public static readonly List<StoryEnding> Endings = new List<StoryEnding>();
 	/// <summary>成就（风云史）：游戏里的全部条目，剧本里直接解锁的附上位置；其余由游戏按条件解锁，看说明。</summary>
 	public static readonly List<StoryEnding> Achievements = new List<StoryEnding>();
+	/// <summary>结局 CG（讲经堂的 CG 图鉴），附上剧本里打开它的地方。</summary>
+	public static readonly List<StoryEnding> Cgs = new List<StoryEnding>();
 	/// <summary>剧本 → 它属于哪个任务（从任务开始剧本一路接下去的那些）。</summary>
 	public static readonly Dictionary<string, StoryMission> Owner = new Dictionary<string, StoryMission>(StringComparer.OrdinalIgnoreCase);
 	/// <summary>全部台词（剧本、文字），搜索用；读完剧本以后在后台慢慢整理。</summary>
@@ -199,6 +201,7 @@ public static class StoryAtlas
 		Missions.Clear();
 		Endings.Clear();
 		Achievements.Clear();
+		Cgs.Clear();
 		// 全部剧本：读一遍，记下大概，文字马上放掉
 		TextAsset[] assets = Resources.LoadAll<TextAsset>("story/chinesetraditional");
 		// 这一步没法拆到多帧里，记下用时（后台提前读时会在这里顿一下）
@@ -432,12 +435,35 @@ public static class StoryAtlas
 				Achievements.Add(achievement);
 			}
 		}
+		var cgById = new Dictionary<string, StoryEnding>(StringComparer.Ordinal);
+		if (library?.EndCg?.List != null)
+		{
+			for (int i = 0; i < library.EndCg.List.Count; i++)
+			{
+				LibraryItemData item = library.EndCg.List[i];
+				if (item == null)
+				{
+					continue;
+				}
+				var cg = new StoryEnding { Id = item.name, Item = item, Number = i + 1, Title = LibraryText(item.GetTitleKey(), "CG " + (i + 1)), Desc = "" };
+				cgById[item.name] = cg;
+				Cgs.Add(cg);
+			}
+		}
 		foreach (string name in names)
 		{
 			StoryScript script = StoryScripts.Get(name);
 			if (script == null)
 			{
 				continue;
+			}
+			foreach (var (path, id) in script.Cgs)
+			{
+				if (cgById.TryGetValue(id, out StoryEnding cg))
+				{
+					owner.TryGetValue(name, out StoryMission m);
+					cg.Ways.Add(new StoryEndingWay { Script = script.Name, Path = path, Mission = m });
+				}
 			}
 			foreach (var (path, death, id) in script.Endings)
 			{
