@@ -47,7 +47,8 @@ public static class CombatAssistPatch
 		LeanLocalizedText[] componentsInChildren = gameObject.GetComponentsInChildren<LeanLocalizedText>(includeInactive: true);
 		foreach (LeanLocalizedText obj in componentsInChildren)
 		{
-			obj.TranslationName = "直接获胜";
+			// 没有这个翻译键，游戏会显示 FallbackText：直接写成界面语言的文字（以前写死简体，繁中界面也是简体）
+			obj.TranslationName = TextConverter.ForDisplay("直接获胜");
 			obj.FallbackText = obj.TranslationName;
 		}
 		Text[] componentsInChildren2 = gameObject.GetComponentsInChildren<Text>(includeInactive: true);
