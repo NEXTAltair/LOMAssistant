@@ -2,6 +2,17 @@
 
 Changes in each version, newest first. Versions before 2.7.0 are only in Chinese; see CHANGELOG.md.
 
+## 2.9.0 (2026-10-24)
+
+- **Presets**: at the top of the settings page, switch in one click to 「原汁原味」 (as the game intended), 「辅助」 (assist) or 「全开」 (everything on). They only change story hints, life-sim and combat aids and cheats; changing any of those makes it 「自定义」 (custom), which you can switch back to. New players pick one the first time they open the window; the default is 「辅助」.
+- **Collection** (formerly Endings): records from all playthroughs, with two new groups, story (how much of each quest's dialogue you have read) and ending CGs.
+- **Romance routes**: pick a love interest on the route map to light up only her scenes and see each step, whether it is done, where to get it and what that scene needs right now.
+- **Stats can be set below the bonus from manuals and the like, even below zero**, and stay there through later story changes and loading.
+- **Unlimited training, forging and alchemy no longer use up attempts or points**, instead of topping points up when the screen opens.
+- **A sort switch at the top right of the load page** (by slot / newest first); the setting for it is gone from the settings page.
+- **Fixed rerolling dice with 「逆天」 showing no number.**
+- Settings tidy-up: the pinball score multiplier is gone; 「决斗回合间不干等」 is now part of 「流程提速」; branch saves moved to the save group; new installs default to the dark window theme and 0.8 window opacity.
+
 ## 2.8.3 (2026-10-23)
 
 - **More stat locks**: mood, 性情, 处世, 修养, 道德, yin-yang and silver each have a lock on the stats page, and several can be locked at once. A locked stat can't be changed by story, options or training; changing it by hand on the stats page still works. Locks stay on across restarts and saves.
