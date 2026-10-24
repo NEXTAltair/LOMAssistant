@@ -47,9 +47,10 @@ public static class LegendSlotPager
 		}
 	}
 
+	// 点「活侠传」按钮走的是 OpenLegendPanel；OnLegendPanelOpen 只在面板事件里调用，有时不会触发
 	[HarmonyPostfix]
-	[HarmonyPatch(typeof(LibraryPanel), nameof(LibraryPanel.OnLegendPanelOpen))]
-	public static void OnLegendPanelOpen_Postfix(LibraryPanel __instance)
+	[HarmonyPatch(typeof(LibraryPanel), nameof(LibraryPanel.OpenLegendPanel))]
+	public static void OpenLegendPanel_Postfix(LibraryPanel __instance)
 	{
 		try
 		{
@@ -67,13 +68,15 @@ public static class LegendSlotPager
 				return;
 			}
 			_page = 0;
-			Attach(panel.transform, slots, () =>
+			// 挂在书架那一排格子（grid）上、放在它正下方：面板打开时有动画，按格子当时的位置算会算偏
+			Attach(grid, slots, () =>
 			{
 				if (detail != null)
 				{
 					detail.SetActive(false);
 				}
-			});
+			}, belowHost: true);
+			FileLogger.Log($"[传奇翻页] 图鉴传奇：{slots.Length} 格，{Pages} 页");
 		}
 		catch (Exception e)
 		{
@@ -117,7 +120,7 @@ public static class LegendSlotPager
 		return 0;
 	}
 
-	private static void Attach(Transform host, MonoBehaviour[] slots, Action clearDetail)
+	private static void Attach(Transform host, MonoBehaviour[] slots, Action clearDetail, bool belowHost = false)
 	{
 		foreach (MonoBehaviour dead in new List<MonoBehaviour>(BaseSlot.Keys))
 		{
@@ -156,7 +159,19 @@ public static class LegendSlotPager
 		{
 			label = Create(host, slots, clearDetail);
 		}
-		Place((RectTransform)host.Find(PagerName), slots);
+		var pager = (RectTransform)host.Find(PagerName);
+		if (belowHost)
+		{
+			pager.anchorMin = pager.anchorMax = new Vector2(0.5f, 0f);
+			pager.pivot = new Vector2(0.5f, 1f);
+			// 书架下面压着一块木台（画在格子后面），翻页放到木台下面才不被挡住
+			pager.anchoredPosition = new Vector2(0f, -118f);
+			pager.SetAsLastSibling();
+		}
+		else
+		{
+			Place(pager, slots);
+		}
 		Apply(slots, clearDetail, label);
 	}
 
