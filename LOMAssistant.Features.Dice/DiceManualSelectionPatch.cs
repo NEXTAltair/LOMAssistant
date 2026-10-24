@@ -108,16 +108,7 @@ public static class DiceManualSelectionPatch
 			FileLogger.Log("[DicePatch] Roll_Prefix: IsClicked=true, skipped Roll, set _resultSelection=" + IsClickedIndex + ", cleared _useFatePoint");
 			return false;
 		}
-		bool value = traverse.Field("_pressRestartButton").GetValue<bool>();
-		FileLogger.Log("[DicePatch] Roll_Prefix: RollHasStarted=" + RollHasStarted + ", _pressRestartButton=" + value);
-		if (RollHasStarted && value)
-		{
-			__instance.UpdateSelection();
-			__result = EmptyEnumerator();
-			LOMAssistantPlugin.LogInfo("骰子手动选择：逆天后重新 Roll，跳过转盘动画，等待玩家选择线路。");
-			FileLogger.Log("[DicePatch] Roll_Prefix: revolution re-roll skipped, UpdateSelection() called");
-			return false;
-		}
+		// 重骰（逆天改命）和第一次一样照原版转：重新抽点数、转盘显示数字；转的时候或转完点线路照样能直接选
 		RollHasStarted = true;
 		FileLogger.Log("[DicePatch] Roll_Prefix: normal Roll started, RollHasStarted=true");
 		return true;
