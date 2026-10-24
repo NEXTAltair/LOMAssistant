@@ -451,7 +451,27 @@ internal class InstallerForm : Form
 		}
 	}
 
+	// 英语界面的字体（Segoe UI）没有汉字：夹在英文里的中文（「原汁原味」这类）RichTextBox 会自己换一种字体，
+	// 连带后面的英文也变成那种字体。中文、全角符号单独拿出来，用微软雅黑写
+	private static readonly Regex CjkRun = new Regex(@"([⺀-鿿豈-﫿＀-￯　-〿]+)");
+
 	private void Append(string text, Font font, Color color)
+	{
+		if (InstallerText.Current == InstallerText.Lang.English && CjkRun.IsMatch(text))
+		{
+			foreach (string part in CjkRun.Split(text))
+			{
+				if (part.Length > 0)
+				{
+					AppendRun(part, CjkRun.IsMatch(part) ? new Font("Microsoft YaHei UI", font.Size, font.Style) : font, color);
+				}
+			}
+			return;
+		}
+		AppendRun(text, font, color);
+	}
+
+	private void AppendRun(string text, Font font, Color color)
 	{
 		_notes.SelectionStart = _notes.TextLength;
 		_notes.SelectionLength = 0;
