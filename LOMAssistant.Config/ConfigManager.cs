@@ -379,7 +379,7 @@ public static class ConfigManager
 		BranchPanelX = new ConfigElement<float>("BranchPanelX", "剧情分支小窗的位置（占屏幕宽度的比例，-1=默认左侧）。拖动小窗会自动保存", -1f);
 		BranchPanelY = new ConfigElement<float>("BranchPanelY", "剧情分支小窗的位置（占屏幕高度的比例，-1=默认）。拖动小窗会自动保存", -1f);
 		BranchPanelAutoHide = new ConfigElement<float>("BranchPanelAutoHide", "剧情分支小窗多少秒没有新判断就自动收起（0=不自动收起）", 15f);
-		PanelOpacity = new ConfigElement<float>("PanelOpacity", "咖啡伴侣窗口的背景不透明度（0.3～1，1=不透明）。调低能透过窗口看到游戏画面，文字和按钮不变", 1f);
+		PanelOpacity = new ConfigElement<float>("PanelOpacity", "咖啡伴侣窗口的背景不透明度（0.3～1，1=不透明）。调低能透过窗口看到游戏画面，文字和按钮不变。默认 0.8", 0.8f);
 		PopupOpacity = new ConfigElement<float>("PopupOpacity", "提示框的底色不透明度（0.3～1，1=不透明）：地图建筑提示、剧情分支小窗、决斗敌方预选、快进、读档进度这些浮在游戏画面上的提示。调低能透过提示框看到游戏画面，文字不变", 0.8f);
 		DialogOpacity = new ConfigElement<float>("DialogOpacity", "小窗的底色不透明度（0.3～1，1=不透明）：随机事件选择、存档备注。调低能透过小窗看到游戏画面，文字和按钮不变", 1f);
 		EnableFastStartup = new ConfigElement<bool>("EnableFastStartup", "开游戏更快：标题画面按钮浮现的开场动画加快 6 倍。true=开（默认），false=关，改后重启生效", defaultValue: true);

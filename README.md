@@ -196,7 +196,7 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 
 - **[活侠传助手](https://mod.3dmgame.com/mod/256420)**：爱死（3DM：wowowo4567）。本项目的基础，源码由其发布的插件反编译而来后再修改。它又整合自 [骰子大师](https://mod.3dmgame.com/mod/210536)（Gmhaxx）、[多功能 Mod](https://mod.3dmgame.com/mod/210629)（Jim97）、[任意位置存档](https://mod.3dmgame.com/mod/210679)（NothingNullNull）。
 - **随时存档**：移植自 mahosalieri85-a11y 的 MortalAnytimeSave（[issue #2](https://github.com/kevinnie2003/LOMAssistant/issues/2)）。
-- **剧情分支小窗、选项提示、输入隔离、随机事件自选、一键设置、流程提速、决斗回合间等待缩短、剧情回顾**：参考 [赵活系统](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 许可）的功能思路。
+- **部分功能思路**：参考 [赵活系统](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 许可）。
 - **存档备注显示**：移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 许可）及其[汉化版](https://github.com/shiluodeqiou/LOM_SaveSlotExpander-zh)（shiluodeqiou）。
 - **传奇栏位翻页**：思路来自 [iampigcheng](https://github.com/iampigcheng) 的 [issue #21](https://github.com/kevinnie2003/LOMAssistant/issues/21)（LegendSlotExtender）。
 - 感谢 [lxsb222-spec](https://github.com/lxsb222-spec)（爱死）、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair) 提交的 PR。
