@@ -18,7 +18,7 @@ The zip already contains BepInEx.
 
 **Installer (recommended)**: unzip and run `咖啡伴侣安装器 Installer.exe`, then click **Install / Update**. It finds the game folder, downloads the latest version (or installs the bundled one if GitHub is unreachable) and moves old mods known to conflict to `BepInEx\DisabledMods` (not deleted). Run it again to update. The installer follows your Windows display language.
 
-<img src="media/installer.webp" width="640" alt="Installer: game folder, installed and new version, release notes, install / update, export diagnostics, uninstall">
+<img src="media/installer.en.webp" width="640" alt="Installer: game folder, installed and new version, release notes, install / update, export diagnostics, uninstall">
 
 **Manual**: in Steam, right-click *Legend of Mortal* → Manage → Browse local files, and extract everything in the zip into the game folder, overwriting files. Remove older mods of the same kind (骰子大师, 多功能 Mod, 赵活系统) from `BepInEx\plugins` first.
 
