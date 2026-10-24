@@ -69,6 +69,7 @@ public class SaveBrowser : MonoBehaviour
 	private Font _calligraphy, _serif;
 	private Button _buttonTemplate;
 	private int _tab; // 读档页：0 手动，1 自动
+	private Button _sortButton; // 读档页手动存档的排序：按栏位 / 最近在上
 	private readonly List<Button> _tabs = new List<Button>();
 	private readonly List<(Entry Entry, Button Button)> _rows = new List<(Entry, Button)>();
 	private int _selected;
@@ -224,6 +225,17 @@ public class SaveBrowser : MonoBehaviour
 		if (_isLoad)
 		{
 			BuildTabs(margin, top);
+			// 手动存档页列表右上角：排序切换（配置 SaveListOrder），字样和「删除」一样，不加边框
+			_sortButton = TextButton(_root, "排序：按栏位");
+			Place((RectTransform)_sortButton.transform, margin + listWidth - 240f, top + 16f, 240f, 40f);
+			_sortButton.GetComponentInChildren<Text>().fontSize = 24;
+			_sortButton.GetComponentInChildren<Text>().alignment = TextAnchor.MiddleRight;
+			_sortButton.onClick.AddListener(() =>
+			{
+				ConfigManager.SaveListOrder.Value = ConfigManager.SaveListOrder.Value == 1 ? 0 : 1;
+				_selected = -1;
+				Refresh();
+			});
 		}
 		BuildList(margin, listTop, listWidth, size.y - listTop - bottom);
 		BuildDetail(detailX, top, size.x - detailX - margin, size.y - top - bottom);
@@ -473,6 +485,7 @@ public class SaveBrowser : MonoBehaviour
 					_rows.Add((e, Row(e)));
 				}
 			}
+
 			else
 			{
 				foreach (Entry e in entries)
@@ -483,6 +496,11 @@ public class SaveBrowser : MonoBehaviour
 			if (_rows.Count == 0)
 			{
 				GroupHeader(_isLoad && _tab == 1 ? "还没有自动存档" : "还没有存档");
+			}
+			if (_sortButton != null)
+			{
+				_sortButton.gameObject.SetActive(_isLoad && _tab == 0);
+				_sortButton.GetComponentInChildren<Text>().text = ConfigManager.SaveListOrder.Value == 1 ? "排序：最近在上" : "排序：按栏位";
 			}
 			for (int i = 0; i < _tabs.Count; i++)
 			{

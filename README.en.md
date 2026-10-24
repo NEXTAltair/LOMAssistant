@@ -91,7 +91,7 @@ All keys can be changed or unbound under 「热键」 (Hotkeys) on the settings 
 
   <img src="media/anytime-save.webp" width="640" alt="Save-anywhere page: all saves, load, note, delete">
 
-- **New save/load screen** (can switch back to the original): a list with your love interest's portrait, date and note, and a detail pane with their full portrait and the first lines after loading; manual and auto saves on separate pages. It opens on the save you made last; in settings, saves can be listed newest first.
+- **New save/load screen** (can switch back to the original): a list with your love interest's portrait, date and note, and a detail pane with their full portrait and the first lines after loading; manual and auto saves on separate pages. It opens on the save you made last; a switch at the top right of the load page lists them by slot or newest first.
 
   <img src="media/save-browser.webp" width="640" alt="New load screen: save list with portraits and notes, and a detail pane with the portrait and the dialogue after loading">
 
