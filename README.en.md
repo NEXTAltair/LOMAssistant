@@ -105,7 +105,7 @@ Switches in the training and combat groups of the settings page (F8):
 - Game speed 1x / 2x / 3x / 5x
 - Action points: normal / not consumed / N per period
   > ⚠️ The last two can make some story events not trigger or trigger early, and may block key main quests. Use with care and keep saves.
-- Break the 100 stat cap, unlimited training, unlimited forging and alchemy at no cost
+- Break the 100 stat cap; training, forging and alchemy use up no attempts or points, and forging and alchemy cost no silver
 - Duel invincibility and no damage to enemies; no damage to your side and no ultimate cooldown in team battles
 - Duel enemy forecast (off by default): shows the enemy's chosen move; the window can be moved and resized
 - Pinball total score; the fourth senior brother sells every item (off by default)

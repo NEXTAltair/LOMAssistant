@@ -1,5 +1,4 @@
-using System.Collections.Generic;
-using System.Reflection;
+using System.Collections;
 using HarmonyLib;
 using LOMAssistant.Config;
 using Mortal.Core;
@@ -7,67 +6,36 @@ using Mortal.Core;
 namespace LOMAssistant.Features.Extras;
 
 /// <summary>
-/// 修炼 / 锻造 / 炼丹 相关修改（参考风灵月影）：
-/// 无限：本次可用次数（_currentCount）保持为 99，武学点/锻造点/炼丹点补满到上限。
-/// （以前的「快速：投 1 点直接升级」游戏自己已经支持了，删掉了。）开关在「设置」页，即时生效。
+/// 修炼 / 锻造 / 炼丹 相关修改：
+/// 无限：投点时不消耗本次可用次数和武学点（锻造点、炼丹点），投完换回投之前的值；不会一打开就补满。
+/// 点数是 0 时照样投不了，要加点数在数值页改。（以前的「快速：投 1 点直接升级」游戏自己已经支持了，删掉了。）
+/// 开关在「设置」页，即时生效。
 /// </summary>
 public static class TrainingCheatPatch
 {
-	private const int UnlimitedCount = 99;
+	private static readonly AccessTools.FieldRef<GameStat, int> ValueField = AccessTools.FieldRefAccess<GameStat, int>("_value");
 
-	// ---- 修炼（MartialPanel / Book） ----
+	// ---- 修炼（MartialPanel）：投点在 StartHandleUpgarde 协程开头扣武学点和次数 ----
 
-	[HarmonyPatch]
-	public static class MartialCountPatch
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(MartialPanel), "StartHandleUpgarde")]
+	public static void Martial_Postfix(MartialPanel __instance, ref IEnumerator __result)
 	{
-		public static IEnumerable<MethodBase> TargetMethods()
+		if (ConfigManager.CheatUnlimitedTraining.Value)
 		{
-			foreach (string name in new[] { "UpdateMartialPointInfo", "LearnButtonClick", "LearnNextButtonClick", "HandleLearnItem", "HandleLearnNextItem" })
-			{
-				MethodInfo m = AccessTools.Method(typeof(MartialPanel), name);
-				if (m != null)
-				{
-					yield return m;
-				}
-			}
-		}
-
-		public static void Prefix(MartialPanel __instance)
-		{
-			if (ConfigManager.CheatUnlimitedTraining.Value)
-			{
-				var tr = Traverse.Create(__instance);
-				Refill(tr.Field("_currentCount"));
-				TopUp(tr.Field("_martialPoint").GetValue<GameStat>());
-			}
+			__result = NoCost(__result, __instance, "_martialPoint");
 		}
 	}
 
-	// ---- 锻造 / 炼丹（UpgradePanel / UpgradeItemData） ----
+	// ---- 锻造 / 炼丹（UpgradePanel）：同样在 StartHandleUpgarde 开头扣点数和次数（银两由下面的开关管） ----
 
-	[HarmonyPatch]
-	public static class UpgradeCountPatch
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(UpgradePanel), "StartHandleUpgarde")]
+	public static void Upgrade_Postfix(UpgradePanel __instance, ref IEnumerator __result)
 	{
-		public static IEnumerable<MethodBase> TargetMethods()
+		if (ConfigManager.CheatUnlimitedUpgrade.Value)
 		{
-			foreach (string name in new[] { "UpdateStatus", "UpdateButton", "UpgradeButtonClick", "NextLevelButtonClick", "HandleUpgradeItem", "HandleUpgradeNextItem" })
-			{
-				MethodInfo m = AccessTools.Method(typeof(UpgradePanel), name);
-				if (m != null)
-				{
-					yield return m;
-				}
-			}
-		}
-
-		public static void Prefix(UpgradePanel __instance)
-		{
-			if (ConfigManager.CheatUnlimitedUpgrade.Value)
-			{
-				var tr = Traverse.Create(__instance);
-				Refill(tr.Field("_currentCount"));
-				TopUp(tr.Field("_pointData").GetValue<GameStat>());
-			}
+			__result = NoCost(__result, __instance, "_pointData");
 		}
 	}
 
@@ -82,20 +50,34 @@ public static class TrainingCheatPatch
 		}
 	}
 
-	private static void Refill(Traverse field)
+	/// <summary>原协程第一步扣点数和次数：记下扣之前的值，第一步走完换回去，后面的动画照常。</summary>
+	private static IEnumerator NoCost(IEnumerator inner, object panel, string pointField)
 	{
-		if (field.GetValue<int>() < UnlimitedCount)
+		var tr = Traverse.Create(panel);
+		GameStat point = tr.Field(pointField).GetValue<GameStat>();
+		int value = point != null ? ValueField(point) : 0;
+		int count = tr.Field("_currentCount").GetValue<int>();
+		bool first = true;
+		while (inner.MoveNext())
 		{
-			field.SetValue(UnlimitedCount);
+			if (first)
+			{
+				first = false;
+				if (point != null)
+				{
+					ValueField(point) = value;
+				}
+				tr.Field("_currentCount").SetValue(count);
+			}
+			yield return inner.Current;
 		}
-	}
-
-	// 武学点 / 锻造点 / 炼丹点：补满到该数值的上限。
-	private static void TopUp(GameStat stat)
-	{
-		if (stat != null && stat.Value < stat.Max)
+		if (first)
 		{
-			stat.SetValue(stat.Max);
+			if (point != null)
+			{
+				ValueField(point) = value;
+			}
+			tr.Field("_currentCount").SetValue(count);
 		}
 	}
 }
