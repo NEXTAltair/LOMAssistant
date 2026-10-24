@@ -17,7 +17,8 @@ namespace LOMAssistant.Features.Combat;
 /// </summary>
 internal static class DuelPacePatch
 {
-	private static bool On => ConfigManager.EnableFastDuelRounds.Value;
+	// 属于「流程提速」
+	private static bool On => ConfigManager.EnableFlowSpeedup.Value;
 
 	[HarmonyPrefix]
 	[HarmonyPatch(typeof(CombatStateEffectUnitScriptable), "Init")]

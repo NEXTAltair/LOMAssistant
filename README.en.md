@@ -108,7 +108,7 @@ Switches in the training and combat groups of the settings page (F8):
 - Break the 100 stat cap, unlimited training, unlimited forging and alchemy at no cost
 - Duel invincibility and no damage to enemies; no damage to your side and no ultimate cooldown in team battles
 - Duel enemy forecast (off by default): shows the enemy's chosen move; the window can be moved and resized
-- Pinball total score and multiplier; the fourth senior brother sells every item (off by default)
+- Pinball total score; the fourth senior brother sells every item (off by default)
 
 Also:
 
