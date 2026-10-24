@@ -996,6 +996,10 @@ public partial class StoryReviewPanel : MonoBehaviour
 				GUILayout.Space(S(8));
 				GUILayout.Label(EndingSections[section], _heading);
 			}
+			if (section == CgSection)
+			{
+				DrawCreditsButton();
+			}
 			foreach (StoryEnding ending in shown)
 			{
 				GUILayout.BeginVertical(_card);
