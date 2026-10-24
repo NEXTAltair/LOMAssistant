@@ -1027,6 +1027,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 				{
 					GUILayout.Label(Cached(ending, () => EndingWays(ending)), _rich);
 				}
+				DrawWayJumps(ending);
 				GUILayout.EndVertical();
 			}
 		}
@@ -1037,6 +1038,28 @@ public partial class StoryReviewPanel : MonoBehaviour
 		}
 		GUILayout.EndScrollView();
 		GUILayout.EndArea();
+	}
+
+	/// <summary>走到这一条的任务：每个一颗按钮，点了去剧情图（不用记任务编号再去搜）。</summary>
+	private void DrawWayJumps(StoryEnding ending)
+	{
+		var missions = ending.Ways.Select(w => w.Mission).Where(m => m != null).Distinct().Take(4).ToList();
+		if (missions.Count == 0)
+		{
+			return;
+		}
+		GUILayout.BeginHorizontal();
+		foreach (StoryMission m in missions)
+		{
+			string text = (m.Main ? "主线" : "支线") + "「" + Short(m.Title, 12) + "」";
+			if (GUILayout.Button(text, _button, GUILayout.Width(TextWidth(text, _button, S(120)))))
+			{
+				OpenFlow(m);
+			}
+			Hover(GUILayoutUtility.GetLastRect(), "看剧情图：" + m.Title + (m.When.Length > 0 ? "（" + m.When + "）" : ""));
+		}
+		GUILayout.FlexibleSpace();
+		GUILayout.EndHorizontal();
 	}
 
 	/// <summary>剧情：每个任务读过多少对白、什么时候在哪触发，可以去剧情图看；返回列出了几个。</summary>
