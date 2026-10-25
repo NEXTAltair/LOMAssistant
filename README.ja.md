@@ -171,4 +171,4 @@ ZIP には BepInEx が同梱されています。
 
 ## クレジット
 
-[中国語版 README](README.md#致谢) を参照してください。本プロジェクトは爱死氏の「活侠传助手」をもとにしており、赵活系统の機能のアイデアと LOM_SaveSlotExpander のコードを参考・移植しています。プルリクエストをくださった [lxsb222-spec](https://github.com/lxsb222-spec)、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair) さん、issue をくださった [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y)、[iampigcheng](https://github.com/iampigcheng) さんに感謝します。
+[中国語版 README](README.md#致谢) を参照してください。本プロジェクトは爱死氏の「活侠传助手」をもとにしており、赵活系统の機能のアイデアと LOM_SaveSlotExpander のコードを参考・移植しています。プルリクエストをくださった [lxsb222-spec](https://github.com/lxsb222-spec)、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair)、[pluvivanto](https://github.com/pluvivanto) さん、issue をくださった [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y)、[iampigcheng](https://github.com/iampigcheng) さんに感謝します。
