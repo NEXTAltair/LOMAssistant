@@ -256,19 +256,16 @@ public static class AiChat
 
 	private const int MaxDigestChars = 40000;
 
-	/// <summary>这一问查到的资料拼成一段文字（太长时留最近的），给最后一轮不带工具直接作答用。</summary>
+	/// <summary>
+	/// 这一问查到的资料拼成一段文字，给最后一轮不带工具直接作答用。按查的先后全放进去，太长时每条按比例截短：
+	/// 只留最近查的会把一开始就查到的关键条件丢掉（最早查的往往最对题）。
+	/// </summary>
 	private static string Digest(List<ChatMessage> turn)
 	{
-		var parts = new List<string>();
-		int total = 0;
-		for (int i = turn.Count - 1; i >= 0 && total < MaxDigestChars; i--)
-		{
-			if (turn[i].Role == ChatMessage.Tool && turn[i].Text.Length > 0)
-			{
-				parts.Insert(0, turn[i].Text);
-				total += turn[i].Text.Length;
-			}
-		}
+		var results = turn.Where(m => m.Role == ChatMessage.Tool && m.Text.Length > 0).Select(m => m.Text).ToList();
+		int total = results.Sum(r => r.Length);
+		int each = total <= MaxDigestChars || results.Count == 0 ? int.MaxValue : System.Math.Max(600, MaxDigestChars / results.Count);
+		var parts = results.Select(r => r.Length > each ? r.Substring(0, each) + "…" : r).ToList();
 		if (parts.Count == 0)
 		{
 			return "（直接回答上面的问题，不用再查资料。）";
