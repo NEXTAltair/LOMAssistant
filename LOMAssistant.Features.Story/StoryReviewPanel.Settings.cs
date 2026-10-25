@@ -31,7 +31,7 @@ public partial class StoryReviewPanel
 		public bool Restart => Element.Description.Contains("重启生效");
 	}
 
-	private const int SettingsTab = 7;
+	private const int SettingsTab = 8;
 
 	/// <summary>F8：打开面板并切到「设置」页；已经在这一页就关掉。</summary>
 	public static void ToggleSettings()

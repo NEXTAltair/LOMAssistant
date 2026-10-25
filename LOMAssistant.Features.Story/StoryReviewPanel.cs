@@ -16,7 +16,7 @@ namespace LOMAssistant.Features.Story;
 public partial class StoryReviewPanel : MonoBehaviour
 {
 	private const int WindowId = 584135;
-	private static readonly string[] Tabs = { "此刻", "路线图", "剧情图", "节点存档", "随时存档", "收集进度", "数值", "设置" };
+	private static readonly string[] Tabs = { "此刻", "路线图", "剧情图", "节点存档", "随时存档", "收集进度", "数值", "AI", "设置" };
 
 	private bool _visible;
 	private int _tab;
@@ -400,6 +400,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 			case AnytimeTab: DrawAnytime(body); break;
 			case 5: DrawEndings(body); break;
 			case StatsTab: DrawStats(body); break;
+			case AiTab: DrawAi(body); break;
 			default: DrawSettings(body); break;
 		}
 		if (_confirming != null && !input)
