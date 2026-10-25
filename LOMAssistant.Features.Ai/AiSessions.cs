@@ -33,7 +33,7 @@ public static class AiSessions
 	private static List<AiSession> _all;
 	private static readonly Dictionary<string, string> Selected = new Dictionary<string, string>();
 
-	private static string Folder => Path.Combine(Paths.ConfigPath, "LOMAssistant_AI");
+	internal static string Folder => Path.Combine(Paths.ConfigPath, "LOMAssistant_AI");
 
 	// 游戏裁剪过的 Mono 没有 Reflection.Emit，Json.NET 要改用反射（随时存档也是这么做的，但它可能没启用）
 	static AiSessions()

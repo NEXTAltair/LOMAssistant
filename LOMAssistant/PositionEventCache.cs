@@ -75,6 +75,28 @@ public class PositionEventCache
 		return GetPositionEvents(position).OrderByDescending(GetPositionEventRate).ToList();
 	}
 
+	/// <summary>所有场所事件池里的事件（场所编号、事件）；事件表拿不到时是空的。</summary>
+	public List<(string Pool, PositionEventData Data)> AllEvents()
+	{
+		var list = new List<(string, PositionEventData)>();
+		PositionResultConfig config = Config();
+		if (config?.List == null)
+		{
+			return list;
+		}
+		foreach (PositionResultData pool in config.List)
+		{
+			foreach (PositionEventData e in GetPositionEvents(pool.name))
+			{
+				list.Add((pool.name, e));
+			}
+		}
+		return list;
+	}
+
+	/// <summary>场所编号的显示名（如「飞天殿_修炼」）。</summary>
+	public static string PlaceName(string poolKey) => GetPositionDisplayName(poolKey);
+
 	private static PositionResultConfig _config;
 
 	/// <summary>场所事件表：剧情场景里从 CheckPointManager 拿并记住；养成地图上没有它，就用记住的或在已载入的资源里找。</summary>

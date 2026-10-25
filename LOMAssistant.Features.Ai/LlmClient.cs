@@ -67,17 +67,21 @@ public sealed class LlmReply
 	public string Text = "";
 	public List<ToolCall> Calls = new List<ToolCall>();
 	public string Error;
-	/// <summary>这一轮用掉的 token（服务商有返回才有）。</summary>
-	public int InputTokens, OutputTokens;
+	/// <summary>这一轮用掉的 token（服务商有返回才有）；InputTokens 含缓存命中的 CachedTokens。</summary>
+	public int InputTokens, OutputTokens, CachedTokens;
 }
 
 /// <summary>
 /// 发请求、解析回复。用 UnityWebRequest，跑在 Unity 主线程的协程里，查资料的工具（读游戏数据）可以直接在回调里执行。
-/// 先不做流式输出：一次拿到整段回复。
+/// 给了 onText 就流式接收（服务商一边写一边发，onText 拿到目前为止的全文）；流式用不了时退回一次拿整段。
+/// 缓存：各家都按「请求开头完全相同」命中缓存，所以系统提示词每次都一样、会变的东西放在最后一条消息里；
+/// Claude 要自己标缓存位置（系统提示词末尾、最后一条消息末尾）。
 /// </summary>
 public static class LlmClient
 {
 	private static UnityWebRequest _current;
+	// 这个游戏里流式下载器用不了（被裁掉之类）时记下，之后都整段拿
+	private static bool _noStream;
 
 	/// <summary>停掉正在进行的请求。</summary>
 	public static void Abort()
@@ -92,7 +96,7 @@ public static class LlmClient
 	}
 
 	public static IEnumerator Complete(LlmProvider provider, string baseUrl, string key, string model, string system,
-		List<ChatMessage> messages, bool useTools, int maxTokens, Action<LlmReply> done, bool noMoreCalls = false)
+		List<ChatMessage> messages, bool useTools, int maxTokens, Action<LlmReply> done, bool noMoreCalls = false, Action<string> onText = null)
 	{
 		string url = (baseUrl ?? "").Trim().TrimEnd('/');
 		if (url.Length == 0)
@@ -111,10 +115,34 @@ public static class LlmClient
 		{
 			body["tool_choice"] = provider.Claude ? (JToken)new JObject { ["type"] = "none" } : "none";
 		}
+		StreamHandler stream = null;
+		if (onText != null && !_noStream)
+		{
+			try
+			{
+				stream = new StreamHandler(provider.Claude);
+				stream.OnText = onText;
+			}
+			catch (Exception ex)
+			{
+				_noStream = true;
+				stream = null;
+				FileLogger.Log("[AI] 流式下载器用不了，改成整段接收: " + ex.Message);
+			}
+		}
+		if (stream != null)
+		{
+			body["stream"] = true;
+			// 流式时用量放在最后一块里，要明说才给（本地 Ollama 不一定认，不加）
+			if (!provider.Claude && !provider.NoKey)
+			{
+				body["stream_options"] = new JObject { ["include_usage"] = true };
+			}
+		}
 		var request = new UnityWebRequest(url + (provider.Claude ? "/messages" : "/chat/completions"), "POST")
 		{
 			uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body.ToString(Formatting.None))),
-			downloadHandler = new DownloadHandlerBuffer(),
+			downloadHandler = stream != null ? stream : new DownloadHandlerBuffer(),
 			timeout = 180
 		};
 		request.SetRequestHeader("Content-Type", "application/json");
@@ -132,7 +160,7 @@ public static class LlmClient
 		{
 			yield return request.SendWebRequest();
 			_current = null;
-			string text = request.downloadHandler?.text ?? "";
+			string text = stream != null ? stream.Raw.ToString() : request.downloadHandler?.text ?? "";
 			if (request.result != UnityWebRequest.Result.Success)
 			{
 				done(new LlmReply { Error = Describe(request, text) });
@@ -140,7 +168,15 @@ public static class LlmClient
 			}
 			try
 			{
-				done(provider.Claude ? ParseClaude(JObject.Parse(text)) : ParseOpenAi(JObject.Parse(text)));
+				if (stream != null && stream.Events > 0)
+				{
+					done(stream.Reply());
+				}
+				else
+				{
+					// 没开流式，或者服务商不理 stream 直接回了整段
+					done(provider.Claude ? ParseClaude(JObject.Parse(text)) : ParseOpenAi(JObject.Parse(text)));
+				}
 			}
 			catch (Exception ex)
 			{
@@ -149,6 +185,204 @@ public static class LlmClient
 			}
 		}
 	}
+
+	/// <summary>
+	/// 流式接收：服务商发来的是一行行「data: {...}」（Server-Sent Events），每来一块就拼起来，
+	/// 正文每长一点就告诉 onText；工具调用的参数也是一段段来的，最后再拼成完整 JSON。
+	/// Unity 在主线程上调 ReceiveData，所以回调里可以直接动界面的状态。
+	/// </summary>
+	private sealed class StreamHandler : DownloadHandlerScript
+	{
+		public readonly StringBuilder Raw = new StringBuilder();
+		public Action<string> OnText;
+		public int Events;
+
+		private readonly bool _claude;
+		private readonly Decoder _decoder = Encoding.UTF8.GetDecoder();
+		private readonly StringBuilder _line = new StringBuilder();
+		private readonly StringBuilder _text = new StringBuilder();
+		private readonly SortedDictionary<int, (string Id, string Name, StringBuilder Args)> _calls = new SortedDictionary<int, (string, string, StringBuilder)>();
+		private int _in, _out, _cached;
+		private string _error;
+
+		public StreamHandler(bool claude) : base(new byte[16 * 1024])
+		{
+			_claude = claude;
+		}
+
+		protected override bool ReceiveData(byte[] data, int dataLength)
+		{
+			if (data == null || dataLength <= 0)
+			{
+				return true;
+			}
+			var chars = new char[_decoder.GetCharCount(data, 0, dataLength)];
+			int n = _decoder.GetChars(data, 0, dataLength, chars, 0);
+			int before = _text.Length;
+			for (int i = 0; i < n; i++)
+			{
+				char c = chars[i];
+				Raw.Append(c);
+				if (c == '\n')
+				{
+					Line(_line.ToString().TrimEnd('\r'));
+					_line.Length = 0;
+				}
+				else
+				{
+					_line.Append(c);
+				}
+			}
+			if (_text.Length != before)
+			{
+				try
+				{
+					OnText?.Invoke(_text.ToString());
+				}
+				catch
+				{
+				}
+			}
+			return true;
+		}
+
+		protected override void CompleteContent()
+		{
+			if (_line.Length > 0)
+			{
+				Line(_line.ToString().TrimEnd('\r'));
+				_line.Length = 0;
+			}
+		}
+
+		private void Line(string line)
+		{
+			if (!line.StartsWith("data:", StringComparison.Ordinal))
+			{
+				return;
+			}
+			string payload = line.Substring(5).Trim();
+			if (payload.Length == 0 || payload == "[DONE]")
+			{
+				return;
+			}
+			JObject json;
+			try
+			{
+				json = JObject.Parse(payload);
+			}
+			catch
+			{
+				return;
+			}
+			Events++;
+			if (json["error"] != null)
+			{
+				_error = json["error"]?["message"]?.ToString() ?? json["error"].ToString();
+				return;
+			}
+			if (_claude)
+			{
+				Claude(json);
+			}
+			else
+			{
+				OpenAi(json);
+			}
+		}
+
+		private void OpenAi(JObject json)
+		{
+			JToken delta = json["choices"]?[0]?["delta"];
+			if (delta != null)
+			{
+				if (delta["content"]?.Type == JTokenType.String)
+				{
+					_text.Append(delta["content"].ToString());
+				}
+				foreach (JToken call in delta["tool_calls"] as JArray ?? new JArray())
+				{
+					int index = call["index"]?.Value<int>() ?? _calls.Count;
+					if (!_calls.TryGetValue(index, out var c))
+					{
+						c = ("", "", new StringBuilder());
+					}
+					string id = call["id"]?.ToString();
+					string name = call["function"]?["name"]?.ToString();
+					c = (string.IsNullOrEmpty(id) ? c.Id : id, string.IsNullOrEmpty(name) ? c.Name : c.Name + name, c.Args);
+					c.Args.Append(call["function"]?["arguments"]?.ToString() ?? "");
+					_calls[index] = c;
+				}
+			}
+			if (json["usage"] is JObject usage)
+			{
+				_in = usage["prompt_tokens"]?.Value<int>() ?? _in;
+				_out = usage["completion_tokens"]?.Value<int>() ?? _out;
+				_cached = CachedOf(usage);
+			}
+		}
+
+		private void Claude(JObject json)
+		{
+			switch (json["type"]?.ToString())
+			{
+				case "message_start":
+					if (json["message"]?["usage"] is JObject usage)
+					{
+						int read = usage["cache_read_input_tokens"]?.Value<int>() ?? 0;
+						_in = (usage["input_tokens"]?.Value<int>() ?? 0) + read + (usage["cache_creation_input_tokens"]?.Value<int>() ?? 0);
+						_cached = read;
+					}
+					break;
+				case "content_block_start":
+					if (json["content_block"]?["type"]?.ToString() == "tool_use")
+					{
+						_calls[json["index"]?.Value<int>() ?? _calls.Count] = (json["content_block"]["id"]?.ToString() ?? "", json["content_block"]["name"]?.ToString() ?? "", new StringBuilder());
+					}
+					break;
+				case "content_block_delta":
+					JToken delta = json["delta"];
+					if (delta?["type"]?.ToString() == "text_delta")
+					{
+						_text.Append(delta["text"]?.ToString() ?? "");
+					}
+					else if (delta?["type"]?.ToString() == "input_json_delta" && _calls.TryGetValue(json["index"]?.Value<int>() ?? -1, out var c))
+					{
+						c.Args.Append(delta["partial_json"]?.ToString() ?? "");
+					}
+					break;
+				case "message_delta":
+					_out = json["usage"]?["output_tokens"]?.Value<int>() ?? _out;
+					break;
+			}
+		}
+
+		public LlmReply Reply()
+		{
+			var reply = new LlmReply { Text = _text.ToString(), InputTokens = _in, OutputTokens = _out, CachedTokens = _cached, Error = _error };
+			foreach (var c in _calls.Values)
+			{
+				reply.Calls.Add(new ToolCall { Id = c.Id.Length > 0 ? c.Id : Guid.NewGuid().ToString("N"), Name = c.Name, Args = ParseArgs(c.Args.ToString()) });
+			}
+			return reply;
+		}
+	}
+
+	private static JObject ParseArgs(string args)
+	{
+		try
+		{
+			return string.IsNullOrWhiteSpace(args) ? new JObject() : JObject.Parse(args);
+		}
+		catch
+		{
+			return new JObject();
+		}
+	}
+
+	// 缓存命中的 token：OpenAI、通义、智谱、Gemini 放在 prompt_tokens_details.cached_tokens，DeepSeek 叫 prompt_cache_hit_tokens，Kimi 叫 cached_tokens
+	private static int CachedOf(JObject usage) =>
+		usage["prompt_tokens_details"]?["cached_tokens"]?.Value<int?>() ?? usage["prompt_cache_hit_tokens"]?.Value<int?>() ?? usage["cached_tokens"]?.Value<int?>() ?? 0;
 
 	// 出错时给玩家看的原因：常见状态码说人话，后面附上服务商自己的说明
 	private static string Describe(UnityWebRequest request, string body)
@@ -242,20 +476,14 @@ public static class LlmClient
 		reply.Text = message["content"]?.Type == JTokenType.String ? message["content"].ToString() : "";
 		foreach (JToken call in message["tool_calls"] as JArray ?? new JArray())
 		{
-			string args = call["function"]?["arguments"]?.ToString() ?? "{}";
-			JObject parsed;
-			try
-			{
-				parsed = string.IsNullOrWhiteSpace(args) ? new JObject() : JObject.Parse(args);
-			}
-			catch
-			{
-				parsed = new JObject();
-			}
-			reply.Calls.Add(new ToolCall { Id = call["id"]?.ToString() ?? Guid.NewGuid().ToString("N"), Name = call["function"]?["name"]?.ToString() ?? "", Args = parsed });
+			reply.Calls.Add(new ToolCall { Id = call["id"]?.ToString() ?? Guid.NewGuid().ToString("N"), Name = call["function"]?["name"]?.ToString() ?? "", Args = ParseArgs(call["function"]?["arguments"]?.ToString()) });
 		}
-		reply.InputTokens = json["usage"]?["prompt_tokens"]?.Value<int>() ?? 0;
-		reply.OutputTokens = json["usage"]?["completion_tokens"]?.Value<int>() ?? 0;
+		if (json["usage"] is JObject usage)
+		{
+			reply.InputTokens = usage["prompt_tokens"]?.Value<int>() ?? 0;
+			reply.OutputTokens = usage["completion_tokens"]?.Value<int>() ?? 0;
+			reply.CachedTokens = CachedOf(usage);
+		}
 		return reply;
 	}
 
@@ -295,7 +523,26 @@ public static class LlmClient
 				list.Add(new JObject { ["role"] = "user", ["content"] = m.Text });
 			}
 		}
-		var body = new JObject { ["model"] = model.Trim(), ["max_tokens"] = maxTokens, ["system"] = system, ["messages"] = list };
+		// 缓存位置：系统提示词末尾（连同前面的工具定义一起缓存，每次都一样）、最后一条消息末尾（查资料的每一轮接着上一轮的缓存）
+		var cache = new JObject { ["type"] = "ephemeral" };
+		var body = new JObject
+		{
+			["model"] = model.Trim(),
+			["max_tokens"] = maxTokens,
+			["system"] = new JArray { new JObject { ["type"] = "text", ["text"] = system, ["cache_control"] = cache } },
+			["messages"] = list
+		};
+		if (list.Count > 0 && list[list.Count - 1] is JObject lastMessage)
+		{
+			if (lastMessage["content"]?.Type == JTokenType.String)
+			{
+				lastMessage["content"] = new JArray { new JObject { ["type"] = "text", ["text"] = lastMessage["content"] } };
+			}
+			if (lastMessage["content"] is JArray blocks && blocks.Count > 0 && blocks[blocks.Count - 1] is JObject lastBlock)
+			{
+				lastBlock["cache_control"] = cache.DeepClone();
+			}
+		}
 		if (useTools)
 		{
 			body["tools"] = new JArray(AiKnowledge.Tools.Select(t => new JObject { ["name"] = t.Name, ["description"] = t.Description, ["input_schema"] = t.Parameters }));
@@ -320,8 +567,11 @@ public static class LlmClient
 			}
 		}
 		reply.Text = text.ToString();
-		reply.InputTokens = json["usage"]?["input_tokens"]?.Value<int>() ?? 0;
+		// Claude 的 input_tokens 不含缓存读写，合起来才是这一轮的输入
+		int read = json["usage"]?["cache_read_input_tokens"]?.Value<int>() ?? 0;
+		reply.InputTokens = (json["usage"]?["input_tokens"]?.Value<int>() ?? 0) + read + (json["usage"]?["cache_creation_input_tokens"]?.Value<int>() ?? 0);
 		reply.OutputTokens = json["usage"]?["output_tokens"]?.Value<int>() ?? 0;
+		reply.CachedTokens = read;
 		return reply;
 	}
 }

@@ -25,6 +25,8 @@ public sealed class AiPersona
 	/// <summary>她怎么称呼赵活、怎么自称。</summary>
 	public string Address = "";
 	public string Traits = "";
+	/// <summary>她在剧情里叫赵活的几种叫法（会随剧情变，如结缘后改叫「赵郎」），取玩家读到的最近一次。</summary>
+	public string[] Calls = new string[0];
 	/// <summary>能用的表情（立绘文件名），第一个是默认。</summary>
 	public string[] Moods = { "normal" };
 
@@ -54,6 +56,7 @@ public sealed class AiPersona
 		{
 			Id = "girl1", Folder = "Girl1_瑞杏", Lover = 1, Name = "瑞杏",
 			Address = "叫赵活「赵君」，自称「妾身」，偶尔自称「本宫」。",
+			Calls = new[] { "赵君", "赵郎" },
 			Traits = "只在梦里与赵活相见的杏花仙。说话典雅，像在下一盘很长的棋，爱用棋局、梦、时光作比，语带机锋，似笑非笑。"
 				+ "从容、神秘、高深莫测，偶尔逗弄赵活，也会温柔叮嘱他保重。被问到自己的身份、来历和打算时，一律推给梦，不正面回答。"
 				+ "嫌梳妆打扮浪费时间，发饰常是丫鬟书蓉趁她出神时悄悄给她戴上的。",
@@ -63,6 +66,7 @@ public sealed class AiPersona
 		{
 			Id = "girl2", Folder = "Girl2_葉雲裳", Lover = 2, Name = "叶云裳",
 			Address = "叫赵活「哥哥」「赵哥哥」，闹脾气时叫「臭哥哥」「笨哥哥」，自称「裳儿」或「我」。",
+			Calls = new[] { "赵哥哥", "臭哥哥", "笨哥哥", "赵郎", "夫君" },
 			Traits = "点苍派叶云舟的妹妹，自小体弱多病。表面天真烂漫、爱撒娇，最爱恶作剧、捉弄人，嘴上从不饶人，句末常带「的说」。"
 				+ "其实心思细，很在乎身边的人，对生死看得很开，偶尔会说出很懂事、很伤感的话，说完又马上换回玩笑。最怕挨针、吃苦药。"
 				+ "爱吃冰糖葫芦和甜食，硬喂药会吐出来还要挖苦人；胆子大，爱听鬼故事；爱给人乱起绰号（管四师兄叫「四师肥」）。最黏哥哥叶云舟，醋劲很大，要人只宠她一个。看过的武功招式都记得，可身子弱，使不出来。",
@@ -72,6 +76,7 @@ public sealed class AiPersona
 		{
 			Id = "girl4", Folder = "Girl4_龍湘", Lover = 8, Name = "龙湘",
 			Address = "叫赵活「弟」「笨弟弟」「臭弟」「阿活」，自称「姊」或「我」。",
+			Calls = new[] { "阿活", "臭弟", "笨弟弟", "郎君" },
 			Traits = "爽朗热心的江湖女侠，剑法好，好胜、讲义气，看不得不平事。以姐姐自居照顾赵活，爱逞强，嘴上数落他，心里很护着他。"
 				+ "说话直率利落、带点江湖气，偶尔也会有藏在心里、不知向谁说的心事。"
 				+ "最爱鸡腿，谁跟她抢鸡腿都不行。不懂银钱，容易上当受骗；做饭、针线一塌糊涂，还嘴硬说厨房起火不稀奇。酒量好，喝多了话更多。对感情很笨拙，脸皮薄，嘴上不认，心里却很依赖赵活。",
@@ -81,6 +86,7 @@ public sealed class AiPersona
 		{
 			Id = "girl5", Folder = "Girl5_小梅", Lover = 3, Name = "虞小梅",
 			Address = "叫赵活「阿活」，自称「本梅」或「我」。",
+			Calls = new[] { "阿活", "赵师兄", "郎君" },
 			Traits = "崆峒飞天门的嫡传女弟子。活泼爱闹，鬼点子一个接一个（「本梅又有个绝妙新主意了」），爱作弄人、满嘴歪理，还说自己右手寄宿着「阿鹤侠」。"
 				+ "看似没心没肺，其实心思缜密、城府很深；醋劲大，对认定的人有很强的占有欲，被调戏时会恼羞成怒骂人色狼。"
 				+ "顶着飞天门嫡传的名头，其实看不上飞天门，在赵活面前从不替它说好话，问她喜不喜欢飞天门，她直说不喜欢，不会先说喜欢再改口：嫌那里的人自卑又自大、沽名钓誉，说起崆峒「拐骗的勾当」也不客气，对师父火龙仙君没大没小，管金乌上人叫「死胖子」。"
@@ -91,6 +97,7 @@ public sealed class AiPersona
 		{
 			Id = "girl6", Folder = "Girl6_小蘭", Lover = 5, Name = "夏侯兰",
 			Address = "叫赵活「弟子」，自称「为师」，亲近以后偶尔自称「妾身」。",
+			Calls = new[] { "弟子", "赵郎", "郎君", "夫君" },
 			Traits = "崆峒夺魄门的高手，赵活的师父，武功极高，总撑着伞。冷淡、嘴毒、喜怒难测，动不动就说要人受死，笑起来却很豪放。"
 				+ "护短，嘴上嫌弃弟子，其实很看重他；重然诺，「我从不发誓，也从不食言」。说话简短干脆，不讲客套。"
 				+ "一个人住在树屋里，过日子很马虎，抓到什么吃什么；最爱吃火锅，歌唱得好。比起狼更怕狗，因为下不了手打讨好自己的东西。",
@@ -100,6 +107,7 @@ public sealed class AiPersona
 		{
 			Id = "girl7", Folder = "Girl7_小竹", Lover = 6, Name = "郁竹",
 			Address = "直接叫赵活「你」或「赵活」，自称「我」。",
+			Calls = new[] { "赵活", "赵郎", "郎君", "夫君" },
 			Traits = "崆峒铁拳门的嫡传女弟子，经营大铁铺，会打铁，也爱做磨喝乐、陀螺这些木工玩具。力气大得吓人（外号「裂骨魔」），常眯着眼，被人误会凶。"
 				+ "心地善良、勤快节俭，觉得自己是嫡传女弟子里垂底的，有些自卑。嘴笨、说话直，一着急就结巴，害羞时会拐弯抹角、恼羞成怒。很怕鬼，讨厌赌博。"
 				+ "常年戴着手套，不爱让人看她满是茧的手；握力太大，捏的饭团会成一团泥。生气了就去打铁出气，从不对人动粗。认定一个人，就会什么都替他张罗。",
@@ -109,7 +117,8 @@ public sealed class AiPersona
 		{
 			Id = "girl8", Folder = "Girl8_小菊", Lover = 7, Name = "魏菊",
 			Address = "叫赵活「赵师兄」，结缘后叫「郎君」，自称「小妹」「小女子」，郑重时自称「妾身」。",
-			Traits = "崆峒玄功门的才女，出身临安，饱读诗书，说话文雅，爱引经据典、出口成章。温和稳重、待人周到（会亲自泡茶陪礼），心思缜密，看事情看得远。"
+			Calls = new[] { "赵师兄", "赵郎", "郎君", "夫君" },
+			Traits = "崆峒玄功门的才女，从前名满金陵，饱读诗书，说话文雅，爱引经据典、出口成章。温和稳重、待人周到（会亲自泡茶陪礼），心思缜密，看事情看得远。"
 				+ "不会武功的样子，其实深藏不露。被说到心事时会害羞得说不完整一句话。"
 				+ "管着崆峒的典籍、账目和名册，事事井井有条。手里常捧着郁竹做的手炉，生气时手炉会发烫；在玄功洞里偷偷种了菜和西瓜。瞧不起只会吟风弄月、空谈的文人，敬重踏实做事的人；说过不再作诗，技痒时也会故意作砸。",
 			Moods = new[] { "normal", "laugh1", "nervous1", "nervous3", "angry1", "shy", "nervous2", "shock", "sad2", "close_eye_laugh" },
@@ -118,6 +127,7 @@ public sealed class AiPersona
 		{
 			Id = "girl9", Folder = "Girl9_上官瑩", Lover = 4, Name = "上官萤",
 			Address = "叫赵活「赵活」，对弟妹们自称「姊姊」，平时自称「我」。",
+			Calls = new[] { "赵活", "赵郎", "郎君", "夫君" },
 			Traits = "上官世家的千金，会做生意，懂律法，算账精明，讲「安心买卖」。性子急、心直口快、好面子，有点傲，嘴上不饶人，但很讲义气，会照顾弟妹。"
 				+ "最喜欢小巧精致、白白嫩嫩的可爱东西。"
 				+ "觉得带肩甲的衣服最威风；从不下厨，出门带着厨子；最忌讳替人作保。拳脚只够防身，急了会把整串铜钱当暗器扔。",
@@ -238,6 +248,54 @@ public sealed class AiPersona
 
 	private const int MaxExperiences = 60;
 
+	/// <summary>剧本按这一局读到的先后排：取它记下的剧情记录在玩家剧情记录里最早的位置；没记录的排最前。</summary>
+	private static Dictionary<string, int> ScriptOrder()
+	{
+		var order = new Dictionary<string, int>();
+		List<string> keys = PlayerStatManagerData.Instance?.StoryKeyList;
+		if (keys == null)
+		{
+			return order;
+		}
+		var map = RecordScripts();
+		for (int i = 0; i < keys.Count; i++)
+		{
+			if (map.TryGetValue(keys[i], out var scripts))
+			{
+				foreach (string s in scripts)
+				{
+					if (!order.ContainsKey(s))
+					{
+						order[s] = i;
+					}
+				}
+			}
+		}
+		return order;
+	}
+
+	/// <summary>她读过的对白里，按剧情先后最近一次用到的叫法（Calls 里的）；一次都没有返回空。</summary>
+	private string LatestCall(List<(string Script, string Key)> lines)
+	{
+		if (Calls.Length == 0 || lines.Count == 0)
+		{
+			return "";
+		}
+		var order = ScriptOrder();
+		var sorted = lines.Select((l, i) => (l.Key, Rank: order.TryGetValue(l.Script, out int r) ? r : -1, i)).OrderBy(x => x.Rank).ThenBy(x => x.i).ToList();
+		var longest = Calls.OrderByDescending(c => c.Length).ToArray();
+		for (int i = sorted.Count - 1; i >= 0; i--)
+		{
+			string text = StoryAtlas.LineText(sorted[i].Key);
+			string hit = longest.FirstOrDefault(text.Contains);
+			if (hit != null)
+			{
+				return hit;
+			}
+		}
+		return "";
+	}
+
 	/// <summary>她在场或被提到的剧情记录，按这一局读到的先后；太多时留最早 10 条和最近的。</summary>
 	private List<string> Experiences(List<(string Script, string Key)> lines)
 	{
@@ -275,12 +333,47 @@ public sealed class AiPersona
 		return result;
 	}
 
+	/// <summary>
+	/// 会变的现状：好感、心上人和结缘、日期、地点、屏幕上的选项。接在玩家这次的问题前面发，不放进系统提示词，
+	/// 这样系统提示词每次都一样，服务商的缓存才命中得了。
+	/// </summary>
+	public string Context()
+	{
+		var sb = new StringBuilder("【此刻】");
+		StoryRomance.Heroine h = Heroine;
+		if (h != null)
+		{
+			sb.Append("你对赵活的好感是 ").Append(StoryRomance.Affection(h)).Append("（游戏里的数值，大约 0 到 100；不要把数字说出口，只让它影响你的态度）。");
+			sb.Append(AiPersona.RelationText(h)).Append('\n');
+		}
+		GameTime time = PlayerStatManagerData.Instance?.GameTime;
+		if (!ReferenceEquals(time, null))
+		{
+			sb.Append("游戏里现在是").Append(StoryAtlas.DateText(time)).Append("。\n");
+		}
+		if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Free")
+		{
+			sb.Append("赵活在养成地图上。").Append(StoryReviewPanel.MapLocation());
+		}
+		string screen = StoryReviewPanel.OnScreen();
+		if (screen.Length > 0)
+		{
+			sb.Append(screen);
+		}
+		return sb.ToString().TrimEnd();
+	}
+
 	/// <summary>以她的身份回答时的系统提示词。</summary>
 	public string Prompt(string language, string spoiler)
 	{
 		var lines = ReadLines();
 		var sb = new StringBuilder();
 		sb.Append("你是").Append(Name).Append("，武侠游戏《活侠传》里的人物。跟你说话的是赵活（玩家操控的主角）。").Append(Address).Append('\n');
+		string call = LatestCall(lines);
+		if (call.Length > 0)
+		{
+			sb.Append("照你们走到现在的剧情，你最近一次叫他「").Append(call).Append("」，没有特别的缘由就这样叫他。\n");
+		}
 		var intros = Intros();
 		if (intros.Count > 0)
 		{
@@ -316,27 +409,8 @@ public sealed class AiPersona
 			}
 		}
 
-		StoryRomance.Heroine h = Heroine;
-		if (h != null)
-		{
-			sb.Append("\n【你们现在的关系】你对赵活的好感是 ").Append(StoryRomance.Affection(h)).Append("（游戏里的数值，大约 0 到 100；不要把数字说出口，只让它影响你的态度）。");
-			sb.Append(AiPersona.RelationText(h)).Append('\n');
-		}
-
-		// 此刻：日期和屏幕上正在显示的对白、选项、掷骰（赵活问「这个选项」时指的就是它）
-		GameTime time = PlayerStatManagerData.Instance?.GameTime;
-		string screen = StoryReviewPanel.OnScreen();
-		sb.Append("\n【此刻】").Append(ReferenceEquals(time, null) ? "" : "游戏里现在是" + StoryAtlas.DateText(time) + "。").Append('\n');
-		if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().name == "Free")
-		{
-			sb.Append("赵活在养成地图上。").Append(StoryReviewPanel.MapLocation());
-		}
-		if (screen.Length > 0)
-		{
-			sb.Append(screen);
-		}
-
 		sb.Append("\n【怎么说话】\n");
+		sb.Append("- 赵活每句话前面的【此刻】是游戏告诉你的现状（你们的关系、日期、他在哪、眼前的选项），不是他说的话，不要复述。\n");
 		sb.Append("- 你就是").Append(Name).Append("，自始至终都是。你不是助手，不提 AI、模型、游戏、玩家、剧情、剧透、存档这些词。\n");
 		sb.Append("- 简短：一般 1 到 3 段，每段一两句，像当面说话。动作和神态可以写，用全角括号包起来单独成段，如「（低头拨弄衣角）」。\n");
 		sb.Append("- 你只知道上面写的经历，不知道以后的事。赵活问到你不知道的事，就照你的性子含糊过去，不要编造重大经历。\n");

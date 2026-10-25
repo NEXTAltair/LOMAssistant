@@ -7,7 +7,7 @@ namespace LOMAssistant.Features.Ai;
 
 /// <summary>
 /// AI 攻略对话：玩家问一句，AI 自己决定查哪些资料（AiKnowledge 的工具），查完再回答。
-/// 一个问题最多查 MaxRounds 轮，最后一轮不许再调用工具，逼它作答。
+/// 一个问题最多查 MaxRounds 轮（深度模式 30 轮），最后一轮不带工具、拿着查到的资料作答。
 /// 答完以后只留问答本身，查资料的来回丢掉，下一个问题不用再为它们付 token。
 /// </summary>
 public static class AiChat
@@ -43,8 +43,8 @@ public static class AiChat
 
 	private static AiSession Current => Session;
 
-	// 查资料的轮数上限（每轮可以同时查好几处）：只防死循环，正常问题远用不到
-	private const int MaxRounds = 20;
+	// 查资料的轮数上限（每轮可以同时查好几处）：只防死循环，正常问题远用不到；深度模式放宽
+	private static int MaxRounds => Deep ? 30 : 20;
 	private const int KeepTurns = 10;
 	private const int MaxToolChars = 12000;
 
@@ -56,6 +56,10 @@ public static class AiChat
 
 	public static bool Busy { get; private set; }
 	public static int TokensUsed { get; private set; }
+	/// <summary>其中命中服务商缓存的输入 token（按缓存价计费，便宜得多）。</summary>
+	public static int CachedUsed { get; private set; }
+	/// <summary>正在写的回答（流式收到的部分），写完清空。</summary>
+	public static string Partial { get; private set; } = "";
 	private static bool _stop;
 
 	public static LlmProvider Provider => LlmProvider.At(ConfigManager.AiProvider.Value);
@@ -103,16 +107,15 @@ public static class AiChat
 		{
 			return;
 		}
-		LOMAssistantPlugin.Instance.StartCoroutine(Run(question));
+		// 中途换了人设，这一问还是记在原来那位的对话里
+		LOMAssistantPlugin.Instance.StartCoroutine(Run(question, Current, AiPersona.Find(PersonaId), null, true));
 	}
 
-	private static IEnumerator Run(string question)
+	/// <summary>问一句：答完（或出错、停止）后 done 拿到回答和查了几处资料；save 为假时不存盘（测试题用）。</summary>
+	internal static IEnumerator Run(string question, AiSession session, AiPersona persona, System.Action<string, int> done, bool save)
 	{
 		Busy = true;
 		_stop = false;
-		// 中途换了人设，这一问还是记在原来那位的对话里
-		AiSession session = Current;
-		AiPersona persona = AiPersona.Find(PersonaId);
 		List<Entry> Shown = session.Shown;
 		List<ChatMessage> History = session.History;
 		Shown.Add(new Entry { Kind = Kind.User, Text = question });
@@ -123,19 +126,27 @@ public static class AiChat
 		var proposals = new List<Entry>();
 		LlmProvider provider = Provider;
 		string answer = null;
+		// 系统提示词这一问只算一次，每轮都一样（缓存靠它）；会变的现状接在这次问题前面
+		string system = (persona != null ? persona.Prompt(ReplyLanguage, Spoiler) : SystemPrompt()) + DeepRule;
+		string context = persona != null ? persona.Context() : "";
+		var asking = new ChatMessage { Role = ChatMessage.User, Text = context.Length > 0 ? context + "\n\n" + asked : asked };
+		// 同一个问题里一模一样的查询不再重查、不再把结果再发一遍
+		var looked = new HashSet<string>();
+		AiDebug.Turn(persona?.Name ?? "攻略助手", system, asking.Text);
 		bool rewrite = false;
 		for (int round = 0; round < MaxRounds + (rewrite ? 1 : 0) && !_stop; round++)
 		{
 			LlmReply reply = null;
-			// 最后一轮不许再查：明说一句，工具照给但设成不能调用
+			// 最后一轮（查满了，或者上一条回答被工具调用格式截断）：不带工具，把这一问查到的资料整理成一段文字交给它直接写。
+			// 带着工具调用的历史再禁止调用，DeepSeek 常会把调用格式写进正文，回答只剩半截
 			bool last = round >= MaxRounds - 1 || rewrite;
-			var send = History.Concat(turn).ToList();
-			if (last && !rewrite)
-			{
-				send.Add(new ChatMessage { Role = ChatMessage.User, Text = "（查资料的次数到上限了。根据上面已经查到的内容直接回答，不要再调用工具。）" });
-			}
+			var send = last
+				? History.Concat(new[] { asking, new ChatMessage { Role = ChatMessage.User, Text = Digest(turn) } }).ToList()
+				: History.Concat(new[] { asking }).Concat(turn.Skip(1)).ToList();
+			Partial = "";
 			yield return LlmClient.Complete(provider, ConfigManager.AiBaseUrl.Value, ConfigManager.AiApiKey.Value, Model,
-				(persona != null ? persona.Prompt(ReplyLanguage, Spoiler) : SystemPrompt()) + DeepRule, send, true, Deep ? 4000 : 2000, r => reply = r, last);
+				system, send, !last, last ? (Deep ? 8000 : 6000) : Deep ? 4000 : 2000, r => reply = r, false, text => Partial = Showable(text));
+			Partial = "";
 			if (_stop)
 			{
 				break;
@@ -147,16 +158,16 @@ public static class AiChat
 				break;
 			}
 			TokensUsed += reply.InputTokens + reply.OutputTokens;
+			CachedUsed += reply.CachedTokens;
+			AiDebug.Reply(reply);
 			if (reply.Calls.Count == 0)
 			{
 				string cut = StripToolMarkup(reply.Text);
 				// 模型把调用工具的格式写进了正文，从那里往后都被剪掉，回答只剩半截：让它不调工具、从头写一遍
 				if (cut.Length < (reply.Text ?? "").Length && !rewrite)
 				{
-					FileLogger.Log("[AI] 回答里夹着工具调用格式，后半截被剪掉，让它重写一遍");
+					FileLogger.Log("[AI] 回答里夹着工具调用格式，后半截被剪掉，让它根据查到的资料重写一遍");
 					rewrite = true;
-					turn.Add(new ChatMessage { Role = ChatMessage.Assistant, Text = cut.Trim().Length > 0 ? cut : "（没写完）" });
-					turn.Add(new ChatMessage { Role = ChatMessage.User, Text = "（你上一条回答写到一半就断了，工具已经不能再用。根据上面已经查到的资料，把完整的回答从头写一遍，不要调用工具。）" });
 					continue;
 				}
 				answer = StripIds(cut, persona != null).Trim();
@@ -170,11 +181,20 @@ public static class AiChat
 			foreach (ToolCall call in reply.Calls)
 			{
 				Shown.Add(new Entry { Kind = Kind.Activity, Text = AiKnowledge.Activity(call.Name, call.Args) });
-				string result = call.Name == "propose_change" ? Propose(call.Args, proposals) : AiKnowledge.Run(call.Name, call.Args);
+				string result;
+				if (call.Name != "propose_change" && !looked.Add(call.Name + call.Args.ToString(Newtonsoft.Json.Formatting.None)))
+				{
+					result = "（这个查询前面已经查过，结果就在上面，直接用）";
+				}
+				else
+				{
+					result = call.Name == "propose_change" ? Propose(call.Args, proposals) : AiKnowledge.Run(call.Name, call.Args);
+				}
 				if (result.Length > MaxToolChars)
 				{
 					result = result.Substring(0, MaxToolChars) + "\n……（太长，后面省略）";
 				}
+				AiDebug.Tool(call.Name, call.Args.ToString(Newtonsoft.Json.Formatting.None), result);
 				turn.Add(new ChatMessage { Role = ChatMessage.Tool, CallId = call.Id, Text = result });
 			}
 		}
@@ -198,8 +218,12 @@ public static class AiChat
 				History.RemoveRange(0, 2);
 			}
 		}
-		AiSessions.Save(session);
+		if (save)
+		{
+			AiSessions.Save(session);
+		}
 		Busy = false;
+		done?.Invoke(answer ?? Shown.LastOrDefault(e => e.Kind == Kind.Error)?.Text ?? "", Shown.Count(e => e.Kind == Kind.Activity));
 	}
 
 	// AI 的修改提议：找到的项做成一张卡片（等回答说完再显示），找不到的告诉 AI
@@ -229,6 +253,41 @@ public static class AiChat
 		@"<[｜|]?\s*DSML[\s\S]*$|<\s*/?\s*(?:function_calls|invoke|parameter|tool_call|tool_use)\b[\s\S]*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
 	private static string StripToolMarkup(string text) => ToolMarkup.Replace(text ?? "", "");
+
+	private const int MaxDigestChars = 40000;
+
+	/// <summary>这一问查到的资料拼成一段文字（太长时留最近的），给最后一轮不带工具直接作答用。</summary>
+	private static string Digest(List<ChatMessage> turn)
+	{
+		var parts = new List<string>();
+		int total = 0;
+		for (int i = turn.Count - 1; i >= 0 && total < MaxDigestChars; i--)
+		{
+			if (turn[i].Role == ChatMessage.Tool && turn[i].Text.Length > 0)
+			{
+				parts.Insert(0, turn[i].Text);
+				total += turn[i].Text.Length;
+			}
+		}
+		if (parts.Count == 0)
+		{
+			return "（直接回答上面的问题，不用再查资料。）";
+		}
+		return "（下面是你为这个问题查到的资料。不能再查了，根据这些资料把完整的回答写出来；资料里没有的就说没查到，不要编。）\n\n"
+			+ string.Join("\n\n———\n\n", parts.ToArray());
+	}
+
+	// 流式显示的半截回答：去掉工具调用格式和末尾的表情标记（可能只写了一半）
+	private static string Showable(string text)
+	{
+		string t = StripToolMarkup(text);
+		int tag = t.LastIndexOf('[');
+		if (tag >= 0 && t.IndexOf(']', tag) < 0)
+		{
+			t = t.Substring(0, tag);
+		}
+		return MoodTag.Replace(t, "").Trim();
+	}
 
 	// 剧本编号（ch4_9_3_8、S2700_01_03）；女主角口中连任务编号、旗标编号（S2700_01、G11006）也不要
 	private const string ScriptId = @"ch\d+(?:_[A-Za-z0-9]+)+|[A-Z]\d{4}(?:_[A-Za-z0-9]+){2,}";
@@ -305,8 +364,8 @@ public static class AiChat
 
 	internal static string Spoiler => ConfigManager.AiSpoiler.Value switch
 	{
-		1 => "只说玩家当前进度和已经经历过的剧情；问到后面的剧情时，只说「后面会有相关剧情」和要做的准备（数值、好感、选项），不讲具体发生了什么、谁会死、结局是什么。",
-		2 => "只给提示，不直接说结果：告诉玩家该往哪个方向努力（提高什么数值、关注哪个人、在哪类选项上谨慎），让玩家自己去发现剧情。",
+		1 => "只说玩家当前进度和已经经历过的剧情；问到后面的剧情时，只说「后面会有相关剧情」和要做的准备（数值、好感、选项），不讲具体发生了什么、谁会死、结局是什么，人物的真实身份和身世秘密也不说。",
+		2 => "只给提示，不直接说结果：告诉玩家该往哪个方向努力（提高什么数值、关注哪个人、在哪类选项上谨慎），让玩家自己去发现剧情。人物的真实身份、身世秘密、幕后黑手、谁会死、结局内容一律不说，哪怕工具查到了；被问到就说这是要自己在剧情里发现的，只给怎么去发现的方向。",
 		_ => "玩家想知道什么就说什么，可以剧透。",
 	};
 
@@ -315,6 +374,8 @@ public static class AiChat
 		return "你是武侠游戏《活侠传》的攻略助手，在游戏 Mod「咖啡伴侣」里回答玩家的问题。玩家操控的主角是赵活。\n\n"
 			+ "怎么查资料\n"
 			+ "- 剧情、条件、数值、结局一律以工具查到的游戏数据为准，不要凭印象编。查不到就说查不到，不要猜。\n"
+			+ "- 问某个人物是谁、什么来历、哪一门、父母师父是谁，先用 person 看人物志，一次就够，不要一处处去搜对白。\n"
+			+ "- 在某个场所修炼、工作、闲逛时随机抽到的事件（求仙问道、跑步邀请这类）用 events 找；决斗要撑几回合、第几回合谁来帮、输了会不会死，看 script 或 search 结果里的「战斗中的条件」。\n"
 			+ "- 不知道编号时先 search，再用 quest 看任务、script 看剧本的分岔和对白、endings 看结局、heroine 看结缘路线。\n"
 			+ "- 问「这个任务最多能加多少」「哪条路最好」「怎么走好感最高」时用 routes：它把每条完整的路和这条路上的合计算好了。分岔互斥，不要自己把几个剧本的变化加在一起。\n"
 			+ "- 问「某个旗标在哪设」「要满足什么才触发」「某人好感在哪被判定」时用 usage。\n"

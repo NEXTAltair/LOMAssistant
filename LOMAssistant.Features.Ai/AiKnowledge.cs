@@ -29,6 +29,10 @@ public static class AiKnowledge
 			Schema(("name", "string", "剧本编号，如 S2700_02_01"), ("page", "integer", "对白第几页，从 1 开始，默认 1"))),
 		("endings", "按关键词查结局（汗青书）、死亡（生死簿）、成就、结局 CG：名称、说明，以及在哪个剧本、走哪条分岔能达成。也能按图鉴编号查，如「生死簿3」「结局4」。关键词留空则列出全部名称。",
 			Schema(("query", "string", "关键词；传空字符串列出全部名称"))),
+		("events", "查场所事件和随机事件：在某个场所修炼、工作、闲逛时随机抽到的事件（如求仙问道、跑步邀请、赤脚大仙），列出在哪个场所、事件名、抽中的权重和加减权重的条件、可能的结果、对应剧本（再用 script 看分岔）。任务以外的事件用它找，比搜对白快。",
+			Schema(("query", "string", "事件名、场所名或事件里的一句对白，如 求仙问道、飞天殿、赤脚大仙"))),
+		("person", "看一个人物的游戏人物志：称号、出身、门派、亲属、性格（游戏「人物」页的介绍）。问某人是谁、什么来历、哪一门、父母师父是谁时先用它，一次就够。",
+			Schema(("name", "string", "人名或称呼，如 唐默铃、小梅、二师兄、火龙仙君"))),
 		("heroine", "看一位可结缘女主角的结缘路线：要经过哪些任务、每一站的好感门槛和要设的结缘旗标、玩家现在做到哪一步。",
 			Schema(("name", "string", "女主角的名字或称呼，如 小师妹、唐默铃、小竹、郁竹"))),
 		("usage", "反查：一面旗标（名字或编号）、某人的好感，在哪些剧情里被改、被判定（剧本、所属任务、走哪条分岔、改成多少或要多少）。问「某个旗标在哪设」「某人好感在哪被判定」「要满足什么才能触发」时用。",
@@ -95,6 +99,8 @@ public static class AiKnowledge
 				case "script": return Script(Arg("name"), int.TryParse(Arg("page"), out int p) ? p : 1);
 				case "endings": return EndingList(Arg("query"));
 				case "heroine": return Heroine(Arg("name"));
+				case "person": return Person(Arg("name"));
+				case "events": return Events(Arg("query"));
 				case "player_state": return StoryReviewPanel.AiPlayerState();
 				case "usage": return AiAnalysis.Usage(Arg("name"));
 				case "routes": return AiAnalysis.Routes(Arg("key"), Arg("focus"));
@@ -119,6 +125,8 @@ public static class AiKnowledge
 			case "script": return "查看剧本 " + Arg("name");
 			case "endings": return "查结局「" + Arg("query") + "」";
 			case "heroine": return "查看「" + Arg("name") + "」的结缘路线";
+			case "person": return "查看「" + Arg("name") + "」的人物志";
+			case "events": return "查场所事件「" + Arg("query") + "」";
 			case "player_state": return "查看当前进度";
 			case "usage": return "反查「" + Arg("name") + "」";
 			case "routes": return "算任务 " + Arg("key") + " 每条路线";
@@ -149,6 +157,164 @@ public static class AiKnowledge
 		{
 			return id;
 		}
+	}
+
+	private static List<string> _people;
+
+	/// <summary>剧本里说过话的人物编号（girl5_3 这类变体并到 girl5）。</summary>
+	private static List<string> People()
+	{
+		if (_people == null || _people.Count == 0)
+		{
+			_people = StoryScripts.All.SelectMany(s => s.Talk.Select(t => t.Speaker)).Where(id => id.Length > 0)
+				.Select(id => Regex.Replace(id, @"_\d+$", "")).Distinct().ToList();
+		}
+		return _people;
+	}
+
+	private static string Loc(string key)
+	{
+		try
+		{
+			string text = LocalizationManager.Instance.LocaleResolver.GetString(key);
+			return string.IsNullOrWhiteSpace(text) || text == key ? "" : Clean(text);
+		}
+		catch
+		{
+			return "";
+		}
+	}
+
+	// 人物志：剧透选全知时给全部段落；另外两档只给第 0、1 段（外貌和公开身份），身世和真相不给
+	private static string Person(string name)
+	{
+		string q = TextConverter.ToSimplified(name ?? "").Trim();
+		if (q.Length == 0)
+		{
+			return "请给人名。";
+		}
+		var heroine = FindHeroine(q);
+		var ids = People().Where(id => Speaker(id) == q).ToList();
+		if (ids.Count == 0 && heroine != null)
+		{
+			ids = People().Where(id => Speaker(id) == StoryRomance.Name(heroine)).ToList();
+		}
+		if (ids.Count == 0)
+		{
+			ids = People().Where(id => Speaker(id).Contains(q) || (Loc("CharacterTitle/" + id)).Contains(q)).Take(3).ToList();
+		}
+		ids = ids.Where(id => Loc("CharacterIntro0/" + id).Length > 0 || Loc("CharacterIntro1/" + id).Length > 0).ToList();
+		if (ids.Count == 0)
+		{
+			return "没有「" + name + "」的人物志。可以用 search 搜这个名字。";
+		}
+		bool all = LOMAssistant.Config.ConfigManager.AiSpoiler.Value == 0;
+		var sb = new StringBuilder();
+		foreach (string id in ids.Take(2))
+		{
+			string title = Loc("CharacterTitle/" + id);
+			sb.Append("【").Append(Speaker(id)).Append(title.Length > 0 && title != "{title}" ? "（" + title + "）" : "").Append("】\n");
+			for (int i = 0; i <= (all ? 4 : 1); i++)
+			{
+				string intro = Loc("CharacterIntro" + i + "/" + id);
+				if (intro.Length > 0)
+				{
+					sb.Append(intro).Append('\n');
+				}
+			}
+			if (!all)
+			{
+				sb.Append("（身世和真相的段落按剧透设置不给。）\n");
+			}
+		}
+		return sb.ToString().Trim();
+	}
+
+	/// <summary>决斗关卡的说明和回合条件（谁在第几回合加入、第几回合结束、输了会不会死）。</summary>
+	internal static string CombatText(string level, string indent)
+	{
+		if (!ConditionBook.Combats.TryGetValue(level ?? "", out List<string> lines) || lines.Count == 0)
+		{
+			return "";
+		}
+		var sb = new StringBuilder();
+		sb.Append(indent).Append("关卡说明：").Append(lines[0]).Append('\n');
+		if (lines.Count > 1)
+		{
+			sb.Append(indent).Append("战斗中的条件（「计数」是这场战斗自己记的数，如嘴攻唤醒的次数；没写判赢判输的「战斗结束」按当时的结果走剧情）：\n");
+			foreach (string line in lines.Skip(1))
+			{
+				sb.Append(indent).Append("- ").Append(line).Append('\n');
+			}
+		}
+		return sb.ToString();
+	}
+
+	private const int MaxEvents = 8;
+
+	// 场所事件：按事件名、场所名、事件剧本里的对白找
+	private static string Events(string query)
+	{
+		string q = TextConverter.ToSimplified(query ?? "").Trim();
+		if (q.Length == 0)
+		{
+			return "请给关键词。";
+		}
+		var all = LOMAssistant.PositionEventCache.Instance.AllEvents();
+		if (all.Count == 0)
+		{
+			return "场所事件表还没载入（游戏读档后进过一次剧情才拿得到）。可以先用 search 搜对白。";
+		}
+		ReadStorySystem read = ReadStorySystem.Instance;
+		var hits = new List<(string Pool, Mortal.Story.PositionEventData Data, string Script, int Score)>();
+		foreach (var (pool, data) in all)
+		{
+			string name = Clean(DataHelper.GetEventName(data));
+			string place = LOMAssistant.PositionEventCache.PlaceName(pool);
+			string script = LOMAssistant.PositionEventCache.Instance.ResultScript(data) ?? "";
+			int score = name.Contains(q) ? 3 : place.Contains(q) ? 2 : 0;
+			if (score == 0 && script.Length > 0)
+			{
+				StoryScript s = StoryScripts.Get(script);
+				if (s != null && s.Talk.Any(t => StoryAtlas.LineText(t.Key).Contains(q)))
+				{
+					score = 1;
+				}
+			}
+			if (score > 0)
+			{
+				hits.Add((pool, data, script, score));
+			}
+		}
+		if (hits.Count == 0)
+		{
+			return "没有找到「" + query + "」相关的场所事件。";
+		}
+		var sb = new StringBuilder();
+		foreach (var h in hits.OrderByDescending(x => x.Score).Take(MaxEvents))
+		{
+			sb.Append("【").Append(LOMAssistant.PositionEventCache.PlaceName(h.Pool)).Append(" · ").Append(Clean(DataHelper.GetEventName(h.Data))).Append("】");
+			if (h.Script.Length > 0)
+			{
+				sb.Append("剧本 ").Append(h.Script).Append(LOMAssistant.MapEventHints.Unread(h.Script) ? "（玩家没看过）" : "");
+			}
+			sb.Append('\n');
+			string desc;
+			try
+			{
+				desc = Clean(LOMAssistant.PositionEventCache.Instance.GetPositionEventDesc(h.Data));
+			}
+			catch
+			{
+				desc = "";
+			}
+			sb.Append(desc.Length > 900 ? desc.Substring(0, 900) + "…" : desc).Append('\n');
+		}
+		if (hits.Count > MaxEvents)
+		{
+			sb.Append("……还有 ").Append(hits.Count - MaxEvents).Append(" 个，换个更具体的关键词。\n");
+		}
+		return sb.ToString().Trim();
 	}
 
 	private static string MissionLine(StoryMission m) => m.Key + "「" + Clean(m.Title) + "」" + (m.Main ? "（主线）" : "（支线）") + (m.When.Length > 0 ? " " + Clean(m.When) : "");
@@ -188,6 +354,32 @@ public static class AiKnowledge
 			{
 				sb.Append("- ").Append(Clean(e.Title)).Append(e.Death ? "（死亡）" : "").Append('\n');
 			}
+		}
+		var duels = ConditionBook.Combats.Where(c => c.Value.Count > 0 && c.Value[0].Contains(q)).Take(3).ToList();
+		if (duels.Count > 0)
+		{
+			sb.Append("【决斗关卡】\n");
+			foreach (var d in duels)
+			{
+				sb.Append("- 关卡 ").Append(d.Key).Append('\n').Append(CombatText(d.Key, "  "));
+			}
+		}
+		try
+		{
+			var events = LOMAssistant.PositionEventCache.Instance.AllEvents()
+				.Select(e => (Place: LOMAssistant.PositionEventCache.PlaceName(e.Pool), Name: Clean(DataHelper.GetEventName(e.Data))))
+				.Where(e => e.Name.Contains(q) || e.Place.Contains(q)).Distinct().Take(8).ToList();
+			if (events.Count > 0)
+			{
+				sb.Append("【场所事件】（用 events 看权重、条件和结果）\n");
+				foreach (var e in events)
+				{
+					sb.Append("- ").Append(e.Place).Append(" · ").Append(e.Name).Append('\n');
+				}
+			}
+		}
+		catch
+		{
 		}
 		var flags = AiAnalysis.FlagsNamed(q, 8);
 		if (flags.Count > 0)
@@ -308,6 +500,7 @@ public static class AiKnowledge
 			foreach (var (path, level) in s.Fights)
 			{
 				sb.Append("【决斗】关卡 ").Append(level).Append("：").Append(PathText(path)).Append('\n');
+				sb.Append(CombatText(level, "  "));
 			}
 		}
 		// 对白按分岔分组：同一条路上的连在一起

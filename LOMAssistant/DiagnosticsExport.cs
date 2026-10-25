@@ -36,6 +36,8 @@ public static class DiagnosticsExport
 					AddFile(zip, log, "Mod日志/" + Path.GetFileName(log));
 				}
 			}
+			// AI 调试记录：玩家在 AI 设置里打开过才有（里面是发给 AI 的内容，没有 API Key）
+			AddFile(zip, Path.Combine(logs, "ai_debug.txt"), "Mod日志/ai_debug.txt");
 			AddFile(zip, Path.Combine(Paths.BepInExRootPath, "LogOutput.log"), "BepInEx/LogOutput.log");
 			AddConfig(zip, Path.Combine(Paths.ConfigPath, "LOMAssistant.cfg"), "BepInEx/LOMAssistant.cfg");
 			AddFile(zip, Path.Combine(Application.persistentDataPath, "Player.log"), "游戏日志/Player.log");

@@ -125,6 +125,42 @@ public partial class StoryReviewPanel
 		GUILayout.Label("女主角的攻略提示", _label);
 		int hints = Pick(new[] { "问到攻略时给", "只聊天，不给" }, ConfigManager.AiHints.Value ? 0 : 1, 2, r.width - S(30));
 		ConfigManager.AiHints.Value = hints == 0;
+		GUILayout.Space(S(8));
+		GUILayout.Label("调试记录", _label);
+		int debug = Pick(new[] { "不记", "记下发给 AI 的内容" }, ConfigManager.AiDebugLog.Value ? 1 : 0, 2, r.width - S(30));
+		ConfigManager.AiDebugLog.Value = debug == 1;
+		if (ConfigManager.AiDebugLog.Value)
+		{
+			GUILayout.Label("写在 Mod 文件夹的 logs/ai_debug.txt，不含 API Key。", _muted);
+		}
+		// 测试题：开发用，发布包里没有题目文件，玩家看不到；手动放了 config\LOMAssistant_AI\eval.json 才显示。很费 token，点两下才跑
+		int evalCount = Time.frameCount % 60 == 0 || _aiEvalCount < 0 ? (_aiEvalCount = AiEval.Count) : _aiEvalCount;
+		if (evalCount > 0)
+		{
+			GUILayout.Space(S(8));
+			GUILayout.BeginHorizontal();
+			GUI.enabled = AiChat.Configured && !AiChat.Busy && !AiEval.Running;
+			bool asked = Time.realtimeSinceStartup - _aiEvalAsked < 3f;
+			if (GUILayout.Button(asked ? "确定要跑吗？" : string.Format("跑测试题（{0} 题）", evalCount), asked ? _primary : _button, GUILayout.Width(S(220)), Ctl()))
+			{
+				if (asked)
+				{
+					_aiEvalAsked = -100f;
+					AiEval.Start();
+				}
+				else
+				{
+					_aiEvalAsked = Time.realtimeSinceStartup;
+				}
+			}
+			GUI.enabled = true;
+			if (AiEval.HasReport && !AiEval.Running && GUILayout.Button("打开结果", _button, GUILayout.Width(S(140)), Ctl()))
+			{
+				Application.OpenURL("file:///" + AiEval.ReportPath.Replace('\\', '/'));
+			}
+			GUILayout.Label(asked ? "每题都要查资料，一次会用掉几十万 token" : AiEval.Status, Middle(_muted), Ctl());
+			GUILayout.EndHorizontal();
+		}
 		GUILayout.Space(S(12));
 
 		GUILayout.BeginHorizontal();
@@ -342,6 +378,11 @@ public partial class StoryReviewPanel
 	private bool _aiFocusInput;
 	// 玩家点了输入框、还没点别处：这期间输入框一直拿着键盘焦点
 	private bool _aiTyping;
+	// 流式回答显示到多长了（变长就滚到底）
+	private int _aiPartialShown;
+	// 测试题有几题（隔一阵重读一次题目文件）；-1 = 还没读
+	private int _aiEvalCount = -1;
+	private float _aiEvalAsked = -100f;
 	// 输入框的控件编号（画完输入框时记下），回车判断在画它之前，要靠它认
 	private int _aiInputId;
 	private float _aiRefocusLogged = -100f;
@@ -567,7 +608,7 @@ public partial class StoryReviewPanel
 			ConfigManager.AiDeepMode.Value = !ConfigManager.AiDeepMode.Value;
 		}
 		Hover(deep, "换用更强的模型，回答前核对资料：更准，也更贵、更慢");
-		GUI.Label(new Rect(r.x, r.y, r.width - bwid * 5 - S(36), bh), provider.Name + " · " + AiChat.Model + (AiChat.TokensUsed > 0 ? "　" + string.Format("这次开游戏用了 {0} token", AiChat.TokensUsed) : ""), Middle(_muted));
+		GUI.Label(new Rect(r.x, r.y, r.width - bwid * 5 - S(36), bh), provider.Name + " · " + AiChat.Model + (AiChat.TokensUsed > 0 ? "　" + string.Format("这次开游戏用了 {0} token", AiChat.TokensUsed) + (AiChat.CachedUsed > 0 ? "　" + string.Format("缓存命中 {0}", AiChat.CachedUsed) : "") : ""), Middle(_muted));
 		float bx = r.xMax - bwid * 4 - S(18);
 		GUI.enabled = !AiChat.Busy;
 		if (GUI.Button(new Rect(bx, r.y, bwid, bh), "新对话", _aiSmallButton))
@@ -727,7 +768,22 @@ public partial class StoryReviewPanel
 					break;
 			}
 		}
-		if (AiChat.Busy)
+		if (AiChat.Busy && AiChat.Partial.Length > 0)
+		{
+			// 一边收一边显示
+			GUILayout.Label(persona != null ? TextConverter.ForDisplay(persona.Name) : "攻略助手", _aiName);
+			GUILayout.BeginHorizontal();
+			string partial = TextConverter.Verbatim + RichFromMarkdown(AiChat.Partial.Replace("【攻略提示】", "\n攻略提示\n"));
+			GUILayout.Label(partial, _aiBot, GUILayout.Width(BubbleWidth(partial, _aiBot, area.width - S(30))));
+			GUILayout.FlexibleSpace();
+			GUILayout.EndHorizontal();
+			if (Event.current.type == EventType.Repaint && AiChat.Partial.Length != _aiPartialShown)
+			{
+				_aiPartialShown = AiChat.Partial.Length;
+				_aiScroll.y = float.MaxValue;
+			}
+		}
+		else if (AiChat.Busy)
 		{
 			// 等回答时点点点轮着动
 			string dots = new string('·', 1 + (int)(Time.realtimeSinceStartup * 2.5f) % 3);
