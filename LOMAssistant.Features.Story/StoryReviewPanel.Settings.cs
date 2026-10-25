@@ -170,6 +170,7 @@ public partial class StoryReviewPanel
 				Row(ConfigManager.SaveNoteKey, "存档备注"),
 				Row(ConfigManager.HideUIKey, "隐藏界面看 CG"),
 				Row(ConfigManager.SkipReadKey, "一键快进已读对话"),
+				Row(ConfigManager.AiPanelKey, "AI 页"),
 				Row(ConfigManager.AnytimePanelKey, "随时存档页"),
 				Row(ConfigManager.AnytimeSaveKey, "随时存档：存新档"),
 				Row(ConfigManager.AnytimeLoadKey, "随时存档：读最近的"),

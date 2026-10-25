@@ -33,6 +33,34 @@ public static class AiKnowledge
 			Schema(("name", "string", "女主角的名字或称呼，如 小师妹、唐默铃、小竹、郁竹"))),
 		("player_state", "看玩家现在的进度：游戏日期、主线和可触发的支线、正在进行的剧情、主要数值、所有人的好感、结缘对象。回答和玩家当前进度有关的问题前先看一次。",
 			new JObject { ["type"] = "object", ["properties"] = new JObject() }),
+		("propose_change", "向玩家提议修改数值：会在对话里显示一张卡片，写着每项的当前值和新值，玩家点「确认」才会改，点「不改」就不改。"
+			+ "能改的是 Mod 数值页里有的：各项数值（心相、银两、体力……）、好感（写成「好感·人名」）、心上人（新值可以写女主角的名字）、天赋、旗标、书籍和物品数量等。"
+			+ "调用后告诉玩家去确认，不要说已经改好了。"
+			+ "数值的正常范围：体力、心相、性格、学识等大多是 0 到 100，好感 0 到 100，心上人是 0 到 8（女主角的编号）；玩家没明说要超过上限时，「拉满」就是改到 100，不要写 999 这类数。",
+			new JObject
+			{
+				["type"] = "object",
+				["properties"] = new JObject
+				{
+					["changes"] = new JObject
+					{
+						["type"] = "array",
+						["description"] = "要改的项",
+						["items"] = new JObject
+						{
+							["type"] = "object",
+							["properties"] = new JObject
+							{
+								["name"] = new JObject { ["type"] = "string", ["description"] = "数值页里的名字，如 心相、银两、好感·虞小梅、心上人" },
+								["value"] = new JObject { ["type"] = "string", ["description"] = "改成多少（整数）；心上人可以写女主角的名字" },
+							},
+							["required"] = new JArray("name", "value"),
+						},
+					},
+					["reason"] = new JObject { ["type"] = "string", ["description"] = "一句话说明为什么改，会显示在卡片上" },
+				},
+				["required"] = new JArray("changes"),
+			}),
 	};
 
 	private static JObject Schema(params (string Name, string Type, string Description)[] props)
@@ -86,6 +114,7 @@ public static class AiKnowledge
 			case "endings": return "查结局「" + Arg("query") + "」";
 			case "heroine": return "查看「" + Arg("name") + "」的结缘路线";
 			case "player_state": return "查看当前进度";
+			case "propose_change": return "提议修改数值";
 			default: return name;
 		}
 	}
@@ -375,13 +404,13 @@ public static class AiKnowledge
 			return "结缘路线还在整理，请稍后再问。";
 		}
 		var sb = new StringBuilder(StoryRomance.Name(h)).Append(" 的结缘路线");
-		sb.Append("（玩家现在对她的好感 ").Append(StoryRomance.Affection(h)).Append(StoryRomance.IsLover(h) ? "，已结缘" : "").Append("）\n");
+		sb.Append("（玩家现在对她的好感 ").Append(StoryRomance.Affection(h)).Append(StoryRomance.IsLover(h) ? "，是现在的心上人" : "").Append(AiPersona.Bonded(h) ? "，已经结缘" : "，还没结缘").Append("）\n");
 		foreach (var stop in stops)
 		{
 			sb.Append("- ").Append(MissionLine(stop.Mission));
 			if (stop.Affection != 0)
 			{
-				sb.Append("，这个任务里好感最多 ").Append(stop.Affection > 0 ? "+" : "").Append(stop.Affection);
+				sb.Append("，剧本里有加减她好感的地方（各分岔合计 ").Append(stop.Affection > 0 ? "+" : "").Append(stop.Affection).Append("；分岔互斥，实际走一条路拿到的少得多，具体哪条路加多少用 script 查，不要把合计说成「最多能加」）");
 			}
 			if (stop.Steps.Count > 0)
 			{

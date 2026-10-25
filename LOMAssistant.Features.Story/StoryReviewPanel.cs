@@ -261,6 +261,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 
 	private void OnGUI()
 	{
+		AiTypingGuard();
 		if (!_visible || UiHider.Active)
 		{
 			return;

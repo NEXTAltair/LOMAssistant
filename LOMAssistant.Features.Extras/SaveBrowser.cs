@@ -1242,7 +1242,7 @@ public class SaveBrowser : MonoBehaviour
 
 	private static Dictionary<int, Sprite> _icons;
 
-	private static Sprite LoverIcon(int lover)
+	internal static Sprite LoverIcon(int lover)
 	{
 		if (_icons == null || _icons.Count < IconNames.Count)
 		{

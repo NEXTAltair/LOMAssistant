@@ -7,27 +7,52 @@ namespace LOMAssistant.Features.Ai;
 
 /// <summary>
 /// AI 攻略对话：玩家问一句，AI 自己决定查哪些资料（AiKnowledge 的工具），查完再回答。
-/// 一个问题最多查 MaxRounds 轮，最后一轮不给工具，逼它作答。
+/// 一个问题最多查 MaxRounds 轮，最后一轮不许再调用工具，逼它作答。
 /// 答完以后只留问答本身，查资料的来回丢掉，下一个问题不用再为它们付 token。
 /// </summary>
 public static class AiChat
 {
-	public enum Kind { User, Assistant, Activity, Error }
+	public enum Kind { User, Assistant, Activity, Error, Proposal }
 
 	public sealed class Entry
 	{
 		public Kind Kind;
 		public string Text = "";
+		/// <summary>女主角回答时的表情（立绘文件名）。</summary>
+		public string Mood = "";
+		/// <summary>修改提议：要改的项、玩家点了什么。</summary>
+		public List<Change> Changes;
+		public ProposalState State;
 	}
 
-	private const int MaxRounds = 10;
+	public enum ProposalState { Pending, Applied, Declined, Expired }
+
+	/// <summary>提议里的一项：数值页的一行，当前值、新值，确认后执行 Apply。</summary>
+	public sealed class Change
+	{
+		public string Name = "", From = "", To = "";
+		[Newtonsoft.Json.JsonIgnore]
+		public System.Action Apply;
+	}
+
+	/// <summary>现在用的人设：空 = 攻略助手，否则是女主角的角色编号（AiPersona.Id）。</summary>
+	public static string PersonaId = AiPersona.AssistantId;
+
+	/// <summary>这位现在用的对话（存在磁盘上，见 AiSessions）。</summary>
+	public static AiSession Session => AiSessions.Current(PersonaId);
+
+	private static AiSession Current => Session;
+
+	// 查资料的轮数上限（每轮可以同时查好几处）：只防死循环，正常问题远用不到
+	private const int MaxRounds = 20;
 	private const int KeepTurns = 10;
 	private const int MaxToolChars = 12000;
 
 	/// <summary>给玩家看的对话（含「正在查…」和出错提示）。</summary>
-	public static readonly List<Entry> Shown = new List<Entry>();
-	/// <summary>发给模型的历史（只有问答）。</summary>
-	private static readonly List<ChatMessage> History = new List<ChatMessage>();
+	public static List<Entry> Shown => Current.Shown;
+
+	/// <summary>最近一次女主角回答时的表情，立绘用。</summary>
+	public static string Mood => Current.Shown.LastOrDefault(e => e.Kind == Kind.Assistant)?.Mood ?? "";
 
 	public static bool Busy { get; private set; }
 	public static int TokensUsed { get; private set; }
@@ -38,14 +63,22 @@ public static class AiChat
 	public static bool Configured => ConfigManager.AiBaseUrl.Value.Trim().Length > 0 && ConfigManager.AiModel.Value.Trim().Length > 0
 		&& (Provider.NoKey || ConfigManager.AiApiKey.Value.Trim().Length > 0);
 
-	public static void Clear()
+	/// <summary>开一段新对话（旧的还在，可以切回去）。</summary>
+	public static void NewSession()
 	{
-		if (Busy)
+		if (!Busy)
 		{
-			return;
+			AiSessions.New(PersonaId);
 		}
-		Shown.Clear();
-		History.Clear();
+	}
+
+	/// <summary>删掉现在这段对话。</summary>
+	public static void DeleteSession()
+	{
+		if (!Busy)
+		{
+			AiSessions.Delete(Current);
+		}
 	}
 
 	public static void Stop()
@@ -68,16 +101,31 @@ public static class AiChat
 	{
 		Busy = true;
 		_stop = false;
+		// 中途换了人设，这一问还是记在原来那位的对话里
+		AiSession session = Current;
+		AiPersona persona = AiPersona.Find(PersonaId);
+		List<Entry> Shown = session.Shown;
+		List<ChatMessage> History = session.History;
 		Shown.Add(new Entry { Kind = Kind.User, Text = question });
-		var turn = new List<ChatMessage> { new ChatMessage { Role = ChatMessage.User, Text = question } };
+		// 玩家上次点了确认或不改：接在这次问题前面告诉 AI
+		string asked = session.Note.Length > 0 ? "（" + session.Note + "）\n" + question : question;
+		session.Note = "";
+		var turn = new List<ChatMessage> { new ChatMessage { Role = ChatMessage.User, Text = asked } };
+		var proposals = new List<Entry>();
 		LlmProvider provider = Provider;
 		string answer = null;
 		for (int round = 0; round < MaxRounds && !_stop; round++)
 		{
 			LlmReply reply = null;
-			bool tools = round < MaxRounds - 1;
+			// 最后一轮不许再查：明说一句，工具照给但设成不能调用
+			bool last = round == MaxRounds - 1;
+			var send = History.Concat(turn).ToList();
+			if (last)
+			{
+				send.Add(new ChatMessage { Role = ChatMessage.User, Text = "（查资料的次数到上限了。根据上面已经查到的内容直接回答，不要再调用工具。）" });
+			}
 			yield return LlmClient.Complete(provider, ConfigManager.AiBaseUrl.Value, ConfigManager.AiApiKey.Value, ConfigManager.AiModel.Value,
-				SystemPrompt(), History.Concat(turn).ToList(), tools, 2000, r => reply = r);
+				persona != null ? persona.Prompt(ReplyLanguage, Spoiler) : SystemPrompt(), send, true, 2000, r => reply = r, last);
 			if (_stop)
 			{
 				break;
@@ -91,14 +139,18 @@ public static class AiChat
 			TokensUsed += reply.InputTokens + reply.OutputTokens;
 			if (reply.Calls.Count == 0)
 			{
-				answer = reply.Text.Trim();
+				answer = StripToolMarkup(reply.Text).Trim();
+				if (answer.Length == 0 && reply.Text.Trim().Length > 0)
+				{
+					answer = "（查了很多资料还没整理出答案，换个具体点的问法再问一次吧。）";
+				}
 				break;
 			}
 			turn.Add(new ChatMessage { Role = ChatMessage.Assistant, Text = reply.Text, Calls = reply.Calls });
 			foreach (ToolCall call in reply.Calls)
 			{
 				Shown.Add(new Entry { Kind = Kind.Activity, Text = AiKnowledge.Activity(call.Name, call.Args) });
-				string result = AiKnowledge.Run(call.Name, call.Args);
+				string result = call.Name == "propose_change" ? Propose(call.Args, proposals) : AiKnowledge.Run(call.Name, call.Args);
 				if (result.Length > MaxToolChars)
 				{
 					result = result.Substring(0, MaxToolChars) + "\n……（太长，后面省略）";
@@ -112,7 +164,13 @@ public static class AiChat
 		}
 		else if (answer != null)
 		{
-			Shown.Add(new Entry { Kind = Kind.Assistant, Text = answer.Length > 0 ? answer : "（AI 没有说话）" });
+			string mood = "";
+			if (persona != null)
+			{
+				answer = TakeMood(answer, persona, out mood);
+			}
+			Shown.Add(new Entry { Kind = Kind.Assistant, Text = answer.Length > 0 ? answer : "（AI 没有说话）", Mood = mood });
+			Shown.AddRange(proposals);
 			History.Add(turn[0]);
 			History.Add(new ChatMessage { Role = ChatMessage.Assistant, Text = answer });
 			while (History.Count > KeepTurns * 2)
@@ -120,7 +178,79 @@ public static class AiChat
 				History.RemoveRange(0, 2);
 			}
 		}
+		AiSessions.Save(session);
 		Busy = false;
+	}
+
+	// AI 的修改提议：找到的项做成一张卡片（等回答说完再显示），找不到的告诉 AI
+	private static string Propose(Newtonsoft.Json.Linq.JObject args, List<Entry> proposals)
+	{
+		var missing = new List<string>();
+		List<Change> changes = LOMAssistant.Features.Story.StoryReviewPanel.AiResolveChanges(args?["changes"] as Newtonsoft.Json.Linq.JArray, missing);
+		string reason = args?["reason"]?.ToString().Trim() ?? "";
+		if (changes.Count > 0)
+		{
+			proposals.Add(new Entry { Kind = Kind.Proposal, Text = reason, Changes = changes });
+		}
+		var sb = new System.Text.StringBuilder();
+		if (changes.Count > 0)
+		{
+			sb.Append("已经把修改卡片给玩家看了（").Append(string.Join("；", changes.Select(c => c.Name + " " + c.From + " → " + c.To).ToArray())).Append("），玩家点确认才会改。告诉玩家去确认，不要说已经改好了。");
+		}
+		if (missing.Count > 0)
+		{
+			sb.Append("这些没找到，没放进卡片：").Append(string.Join("、", missing.ToArray())).Append("。可以用数值页里的名字再试一次。");
+		}
+		return sb.Length > 0 ? sb.ToString() : "没有要改的项。";
+	}
+
+	// 有的模型不能调用工具时会把自己的调用格式当正文写出来（DeepSeek 的「<｜DSML｜function_calls>」、<invoke …>、<tool_call>），剪掉
+	private static readonly System.Text.RegularExpressions.Regex ToolMarkup = new System.Text.RegularExpressions.Regex(
+		@"<[｜|]?\s*DSML[\s\S]*$|<\s*/?\s*(?:function_calls|invoke|parameter|tool_call|tool_use)\b[\s\S]*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+	private static string StripToolMarkup(string text) => ToolMarkup.Replace(text ?? "", "");
+
+	/// <summary>玩家点了卡片上的确认或不改。</summary>
+	public static void Resolve(AiSession session, Entry proposal, bool apply)
+	{
+		if (proposal.State != ProposalState.Pending || proposal.Changes.Any(c => c.Apply == null))
+		{
+			return;
+		}
+		string items = string.Join("；", proposal.Changes.Select(c => c.Name + " " + c.From + " → " + c.To).ToArray());
+		if (apply)
+		{
+			foreach (Change c in proposal.Changes)
+			{
+				try
+				{
+					c.Apply();
+				}
+				catch (System.Exception ex)
+				{
+					FileLogger.LogWarning("[AI] 修改 " + c.Name + " 失败: " + ex.Message);
+				}
+			}
+			FileLogger.Log("[AI] 玩家确认修改：" + items);
+		}
+		proposal.State = apply ? ProposalState.Applied : ProposalState.Declined;
+		session.Note = (apply ? "玩家确认了修改：" : "玩家没有同意修改：") + items;
+		AiSessions.Save(session);
+	}
+
+	private static readonly System.Text.RegularExpressions.Regex MoodTag = new System.Text.RegularExpressions.Regex(@"\[\s*(?:表情|mood)\s*[:：]\s*([A-Za-z_0-9]+)\s*\]", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+	// 回复末尾的「[表情: shy]」拿出来，不显示；不在她能用的表情里就用默认
+	private static string TakeMood(string answer, AiPersona persona, out string mood)
+	{
+		mood = persona.Moods[0];
+		System.Text.RegularExpressions.Match m = MoodTag.Match(answer);
+		if (m.Success)
+		{
+			string raw = m.Groups[1].Value.ToLowerInvariant();
+			mood = persona.Moods.Contains(raw) ? raw : persona.Moods.FirstOrDefault(x => x.TrimEnd('1', '2', '3') == raw.TrimEnd('1', '2', '3')) ?? persona.Moods[0];
+		}
+		return MoodTag.Replace(answer, "").Trim();
 	}
 
 	/// <summary>试一下能不能连上：不带工具，问一句很短的话。</summary>
@@ -132,7 +262,7 @@ public static class AiChat
 		done(reply == null ? "没有回复" : reply.Error ?? "");
 	}
 
-	private static string ReplyLanguage => TextConverter.DisplayLanguage switch
+	internal static string ReplyLanguage => TextConverter.DisplayLanguage switch
 	{
 		"ChineseTraditional" => "繁体中文",
 		UiText.Korean => "韩语（한국어）",
@@ -141,7 +271,7 @@ public static class AiChat
 		_ => "简体中文",
 	};
 
-	private static string Spoiler => ConfigManager.AiSpoiler.Value switch
+	internal static string Spoiler => ConfigManager.AiSpoiler.Value switch
 	{
 		1 => "只说玩家当前进度和已经经历过的剧情；问到后面的剧情时，只说「后面会有相关剧情」和要做的准备（数值、好感、选项），不讲具体发生了什么、谁会死、结局是什么。",
 		2 => "只给提示，不直接说结果：告诉玩家该往哪个方向努力（提高什么数值、关注哪个人、在哪类选项上谨慎），让玩家自己去发现剧情。",
@@ -155,6 +285,7 @@ public static class AiChat
 			+ "- 剧情、条件、数值、结局一律以工具查到的游戏数据为准，不要凭印象编。查不到就说查不到，不要猜。\n"
 			+ "- 不知道编号时先 search，再用 quest 看任务、script 看剧本的分岔和对白、endings 看结局、heroine 看结缘路线。\n"
 			+ "- 问题和玩家现在的进度有关（「我现在」「接下来」「来得及吗」）时，先用 player_state 看进度、数值和好感。\n"
+			+ "- 玩家要你帮他改数值、好感、心上人时，用 propose_change 提出修改，玩家在卡片上点确认才会生效；改之前先用 player_state 看当前值。\n"
 			+ "- 玩家问「这里怎么选」「这个选项」「这次掷骰」时，player_state 的【眼前】是屏幕上正在显示的选项或掷骰，再用 script 查那个剧本，按选项文字找到对应的分岔，结合玩家现在的数值说每个选项的结果和推荐。\n"
 			+ "- 资料里「若 …需>=40」是条件，「掷骰「…」（>=50）」是骰子要掷到的点数，「变化」是这条路上的数值和旗标变化。\n"
 			+ "- 剧本的对白很长时会分页，需要时再翻页，不要一次全翻。\n\n"

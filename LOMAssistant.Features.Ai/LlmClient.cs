@@ -43,15 +43,15 @@ public sealed class LlmProvider
 
 	public static readonly LlmProvider[] All =
 	{
-		new LlmProvider { Name = "DeepSeek", BaseUrl = "https://api.deepseek.com/v1", Model = "deepseek-chat", KeysPage = "https://platform.deepseek.com/api_keys" },
-		new LlmProvider { Name = "Kimi（月之暗面）", BaseUrl = "https://api.moonshot.cn/v1", Model = "kimi-k2-turbo-preview", KeysPage = "https://platform.moonshot.cn/console/api-keys" },
-		new LlmProvider { Name = "通义千问（阿里云百炼）", BaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1", Model = "qwen-plus", KeysPage = "https://bailian.console.aliyun.com/?apiKey=1" },
-		new LlmProvider { Name = "智谱 GLM", BaseUrl = "https://open.bigmodel.cn/api/paas/v4", Model = "glm-4.5", KeysPage = "https://open.bigmodel.cn/usercenter/apikeys" },
-		new LlmProvider { Name = "硅基流动", BaseUrl = "https://api.siliconflow.cn/v1", Model = "deepseek-ai/DeepSeek-V3", KeysPage = "https://cloud.siliconflow.cn/account/ak" },
-		new LlmProvider { Name = "OpenRouter", BaseUrl = "https://openrouter.ai/api/v1", Model = "deepseek/deepseek-chat", KeysPage = "https://openrouter.ai/keys" },
-		new LlmProvider { Name = "OpenAI", BaseUrl = "https://api.openai.com/v1", Model = "gpt-4.1-mini", KeysPage = "https://platform.openai.com/api-keys" },
+		new LlmProvider { Name = "DeepSeek", BaseUrl = "https://api.deepseek.com/v1", Model = "deepseek-flash", KeysPage = "https://platform.deepseek.com/api_keys" },
+		new LlmProvider { Name = "Kimi（月之暗面）", BaseUrl = "https://api.moonshot.cn/v1", Model = "kimi-k3.1-pro", KeysPage = "https://platform.moonshot.cn/console/api-keys" },
+		new LlmProvider { Name = "通义千问（阿里云百炼）", BaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1", Model = "qwen3.8-flash", KeysPage = "https://bailian.console.aliyun.com/?apiKey=1" },
+		new LlmProvider { Name = "智谱 GLM", BaseUrl = "https://open.bigmodel.cn/api/paas/v4", Model = "glm-5.3-flash", KeysPage = "https://open.bigmodel.cn/usercenter/apikeys" },
+		new LlmProvider { Name = "硅基流动", BaseUrl = "https://api.siliconflow.cn/v1", Model = "deepseek-ai/DeepSeek-V4.1-Flash", KeysPage = "https://cloud.siliconflow.cn/account/ak" },
+		new LlmProvider { Name = "OpenRouter", BaseUrl = "https://openrouter.ai/api/v1", Model = "deepseek/deepseek-v4.1-flash", KeysPage = "https://openrouter.ai/keys" },
+		new LlmProvider { Name = "OpenAI", BaseUrl = "https://api.openai.com/v1", Model = "gpt-6-luna", KeysPage = "https://platform.openai.com/api-keys" },
 		new LlmProvider { Name = "Claude（Anthropic）", BaseUrl = "https://api.anthropic.com/v1", Model = "claude-sonnet-5-5", KeysPage = "https://console.anthropic.com/settings/keys", Claude = true },
-		new LlmProvider { Name = "Gemini（Google）", BaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai", Model = "gemini-2.5-flash", KeysPage = "https://aistudio.google.com/apikey" },
+		new LlmProvider { Name = "Gemini（Google）", BaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai", Model = "gemini-3.8-flash", KeysPage = "https://aistudio.google.com/apikey" },
 		new LlmProvider { Name = "本地模型（Ollama）", BaseUrl = "http://localhost:11434/v1", Model = "qwen3", NoKey = true },
 		new LlmProvider { Name = "自定义（OpenAI 兼容）", BaseUrl = "", Model = "", Custom = true },
 	};
@@ -90,7 +90,7 @@ public static class LlmClient
 	}
 
 	public static IEnumerator Complete(LlmProvider provider, string baseUrl, string key, string model, string system,
-		List<ChatMessage> messages, bool useTools, int maxTokens, Action<LlmReply> done)
+		List<ChatMessage> messages, bool useTools, int maxTokens, Action<LlmReply> done, bool noMoreCalls = false)
 	{
 		string url = (baseUrl ?? "").Trim().TrimEnd('/');
 		if (url.Length == 0)
@@ -103,7 +103,12 @@ public static class LlmClient
 			done(new LlmReply { Error = "没有填模型名" });
 			yield break;
 		}
-		JObject body = provider.Claude ? ClaudeBody(model, system, messages, useTools, maxTokens) : OpenAiBody(model, system, messages, useTools, maxTokens);
+		JObject body = provider.Claude ? ClaudeBody(model, system, messages, useTools, maxTokens) : OpenAiBody(model, system, messages, useTools, maxTokens, url);
+		// 最后一轮：工具定义照给（历史里有工具调用，不给定义有的服务商会报错，DeepSeek 还会把调用格式当正文写出来），但不许再调用
+		if (useTools && noMoreCalls)
+		{
+			body["tool_choice"] = provider.Claude ? (JToken)new JObject { ["type"] = "none" } : "none";
+		}
 		var request = new UnityWebRequest(url + (provider.Claude ? "/messages" : "/chat/completions"), "POST")
 		{
 			uploadHandler = new UploadHandlerRaw(Encoding.UTF8.GetBytes(body.ToString(Formatting.None))),
@@ -176,7 +181,7 @@ public static class LlmClient
 		return reason + "\n" + code + (detail.Length > 0 ? " " + detail.Trim() : "");
 	}
 
-	private static JObject OpenAiBody(string model, string system, List<ChatMessage> messages, bool useTools, int maxTokens)
+	private static JObject OpenAiBody(string model, string system, List<ChatMessage> messages, bool useTools, int maxTokens, string url)
 	{
 		var list = new JArray { new JObject { ["role"] = "system", ["content"] = system } };
 		foreach (ChatMessage m in messages)
@@ -204,7 +209,14 @@ public static class LlmClient
 				list.Add(new JObject { ["role"] = m.Role, ["content"] = m.Text });
 			}
 		}
-		var body = new JObject { ["model"] = model.Trim(), ["messages"] = list, ["max_tokens"] = maxTokens };
+		var body = new JObject { ["model"] = model.Trim(), ["messages"] = list };
+		// OpenAI 官方的新模型（GPT-5 以后）不认 max_tokens，要用 max_completion_tokens；其他兼容接口还是 max_tokens
+		body[url.IndexOf("api.openai.com", StringComparison.OrdinalIgnoreCase) >= 0 ? "max_completion_tokens" : "max_tokens"] = maxTokens;
+		// OpenAI 的 Luna 系列在 Chat Completions 里只有推理强度为 none 时才能调用工具（官方文档写明）
+		if (useTools && model.IndexOf("luna", StringComparison.OrdinalIgnoreCase) >= 0)
+		{
+			body["reasoning_effort"] = "none";
+		}
 		if (useTools)
 		{
 			body["tools"] = new JArray(AiKnowledge.Tools.Select(t => new JObject
