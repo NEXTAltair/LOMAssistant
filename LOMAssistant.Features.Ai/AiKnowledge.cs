@@ -413,7 +413,8 @@ public static class AiKnowledge
 	}
 
 	// 玩家常用的叫法（好感里的人名、昵称），按 StoryRomance.All 的顺序
-	private static readonly string[][] Aliases =
+	/// <summary>按 StoryRomance.All 的顺序（即 Lover 编号）。</summary>
+	internal static readonly string[][] Aliases =
 	{
 		new[] { "小师妹", "唐默铃", "默铃" },
 		new[] { "瑞杏", "杏花仙", "咖啡" },

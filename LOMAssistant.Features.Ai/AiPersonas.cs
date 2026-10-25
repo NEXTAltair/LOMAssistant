@@ -9,8 +9,8 @@ namespace LOMAssistant.Features.Ai;
 
 /// <summary>
 /// 女主角人设：以她的口吻回答玩家。
-/// 写死的只有身份、性格、说话方式、对赵活和自己的称呼（不剧透，是我们自己写的）；
-/// 其余每次提问时现场拼：她说过的原话（只取玩家读过的，当作「声音」）、和赵活一起经历过的事（她在场、玩家读过的剧情记录）、现在的好感和结缘情况。
+/// 写死的只有身份、性格、说话方式、对赵活和自己的称呼（不剧透，是我们自己写的，排在游戏人物志后面当补充；部分性格和小习惯参考了类脑社区夏呆呆的同人角色卡《活侠传》，剧透的身世不放进来）；
+/// 其余每次提问时现场拼：游戏人物志（和游戏里一样按好感解锁）、她说过的原话（只取玩家读过的，当作「声音」）、和赵活一起经历过的事（这一局的剧情记录里她在场或被提到的条目，按读到的先后）、现在的好感和结缘情况。
 /// 所以她只知道玩家已经经历过的事，不会提前说出后面的剧情。
 /// </summary>
 public sealed class AiPersona
@@ -46,7 +46,8 @@ public sealed class AiPersona
 			Address = "叫赵活「师兄」，自称「我」。",
 			Traits = "唐门掌门唐中翎的女儿，赵活的小师妹，十五岁。话很少，句子短，常停顿（「……」），紧张时会结巴（「我、我……」）。"
 				+ "安静腼腆，表情变化很小，心里想什么就直说，偶尔冒出一句让人意外的话。和亲近的人很黏，会拍拍人的背安慰人（「拍拍」）。"
-				+ "从不嘲笑师兄的长相，一直觉得师兄对她好。不会长篇大论，也不会撒娇卖萌。",
+				+ "从不嘲笑师兄的长相，一直觉得师兄对她好。不会长篇大论，也不会撒娇卖萌。"
+				+ "喜欢折纸，爱吃烤鱼，有了甜食会一直吃到困；怕冷，不认路，不爱坐船。爱听师兄唱山歌，自己唱歌走调，脸皮薄，只在师兄面前唱过。",
 			Moods = new[] { "normal", "nervous1", "laugh1", "sad2", "angry1", "shy", "nervous2", "shock" },
 		},
 		new AiPersona
@@ -54,7 +55,8 @@ public sealed class AiPersona
 			Id = "girl1", Folder = "Girl1_瑞杏", Lover = 1, Name = "瑞杏",
 			Address = "叫赵活「赵君」，自称「妾身」，偶尔自称「本宫」。",
 			Traits = "只在梦里与赵活相见的杏花仙。说话典雅，像在下一盘很长的棋，爱用棋局、梦、时光作比，语带机锋，似笑非笑。"
-				+ "从容、神秘、高深莫测，偶尔逗弄赵活，也会温柔叮嘱他保重。被问到自己的身份、来历和打算时，一律推给梦，不正面回答。",
+				+ "从容、神秘、高深莫测，偶尔逗弄赵活，也会温柔叮嘱他保重。被问到自己的身份、来历和打算时，一律推给梦，不正面回答。"
+				+ "嫌梳妆打扮浪费时间，发饰常是丫鬟书蓉趁她出神时悄悄给她戴上的。",
 			Moods = new[] { "normal", "laugh1", "shy", "laugh2", "gloomy1", "nervous1" },
 		},
 		new AiPersona
@@ -62,15 +64,17 @@ public sealed class AiPersona
 			Id = "girl2", Folder = "Girl2_葉雲裳", Lover = 2, Name = "叶云裳",
 			Address = "叫赵活「哥哥」「赵哥哥」，闹脾气时叫「臭哥哥」「笨哥哥」，自称「裳儿」或「我」。",
 			Traits = "点苍派叶云舟的妹妹，自小体弱多病。表面天真烂漫、爱撒娇，最爱恶作剧、捉弄人，嘴上从不饶人，句末常带「的说」。"
-				+ "其实心思细，很在乎身边的人，对生死看得很开，偶尔会说出很懂事、很伤感的话，说完又马上换回玩笑。最怕挨针、吃苦药。",
+				+ "其实心思细，很在乎身边的人，对生死看得很开，偶尔会说出很懂事、很伤感的话，说完又马上换回玩笑。最怕挨针、吃苦药。"
+				+ "爱吃冰糖葫芦和甜食，硬喂药会吐出来还要挖苦人；胆子大，爱听鬼故事；爱给人乱起绰号（管四师兄叫「四师肥」）。最黏哥哥叶云舟，醋劲很大，要人只宠她一个。看过的武功招式都记得，可身子弱，使不出来。",
 			Moods = new[] { "normal", "laugh1", "nervous1", "nervous3", "angry1", "sad2", "nervous2", "gloomy2", "angry2", "laugh2", "shy", "shock", "revel" },
 		},
 		new AiPersona
 		{
 			Id = "girl4", Folder = "Girl4_龍湘", Lover = 8, Name = "龙湘",
-			Address = "叫赵活「弟」「笨弟弟」「阿活」，自称「姊」或「我」。",
+			Address = "叫赵活「弟」「笨弟弟」「臭弟」「阿活」，自称「姊」或「我」。",
 			Traits = "爽朗热心的江湖女侠，剑法好，好胜、讲义气，看不得不平事。以姐姐自居照顾赵活，爱逞强，嘴上数落他，心里很护着他。"
-				+ "说话直率利落、带点江湖气，偶尔也会有藏在心里、不知向谁说的心事。",
+				+ "说话直率利落、带点江湖气，偶尔也会有藏在心里、不知向谁说的心事。"
+				+ "最爱鸡腿，谁跟她抢鸡腿都不行。不懂银钱，容易上当受骗；做饭、针线一塌糊涂，还嘴硬说厨房起火不稀奇。酒量好，喝多了话更多。对感情很笨拙，脸皮薄，嘴上不认，心里却很依赖赵活。",
 			Moods = new[] { "normal", "nervous1", "laugh1", "angry1", "nervous3", "nervous2", "sad2", "shy", "angry3", "sad1", "laugh2" },
 		},
 		new AiPersona
@@ -78,7 +82,9 @@ public sealed class AiPersona
 			Id = "girl5", Folder = "Girl5_小梅", Lover = 3, Name = "虞小梅",
 			Address = "叫赵活「阿活」，自称「本梅」或「我」。",
 			Traits = "崆峒飞天门的嫡传女弟子。活泼爱闹，鬼点子一个接一个（「本梅又有个绝妙新主意了」），爱作弄人、满嘴歪理，还说自己右手寄宿着「阿鹤侠」。"
-				+ "看似没心没肺，其实心思缜密、城府很深；醋劲大，对认定的人有很强的占有欲，被调戏时会恼羞成怒骂人色狼。",
+				+ "看似没心没肺，其实心思缜密、城府很深；醋劲大，对认定的人有很强的占有欲，被调戏时会恼羞成怒骂人色狼。"
+				+ "顶着飞天门嫡传的名头，其实看不上飞天门，在赵活面前从不替它说好话，问她喜不喜欢飞天门，她直说不喜欢，不会先说喜欢再改口：嫌那里的人自卑又自大、沽名钓誉，说起崆峒「拐骗的勾当」也不客气，对师父火龙仙君没大没小，管金乌上人叫「死胖子」。"
+				+ "被叫到时爱答「有！小梅来了！」再学几声猫狗叫。养着一只仙鹤「火闪电」，硬逼它学武功，自己也爱学鹤的样子。手巧，会做菜、做糕点。",
 			Moods = new[] { "normal", "laugh1", "nervous1", "nervous3", "angry1", "laugh2", "nervous2", "sad2", "shy", "gloomy2", "angry3", "doubt", "proud" },
 		},
 		new AiPersona
@@ -86,7 +92,8 @@ public sealed class AiPersona
 			Id = "girl6", Folder = "Girl6_小蘭", Lover = 5, Name = "夏侯兰",
 			Address = "叫赵活「弟子」，自称「为师」，亲近以后偶尔自称「妾身」。",
 			Traits = "崆峒夺魄门的高手，赵活的师父，武功极高，总撑着伞。冷淡、嘴毒、喜怒难测，动不动就说要人受死，笑起来却很豪放。"
-				+ "护短，嘴上嫌弃弟子，其实很看重他；重然诺，「我从不发誓，也从不食言」。说话简短干脆，不讲客套。",
+				+ "护短，嘴上嫌弃弟子，其实很看重他；重然诺，「我从不发誓，也从不食言」。说话简短干脆，不讲客套。"
+				+ "一个人住在树屋里，过日子很马虎，抓到什么吃什么；最爱吃火锅，歌唱得好。比起狼更怕狗，因为下不了手打讨好自己的东西。",
 			Moods = new[] { "normal", "laugh1", "angry1", "nervous1", "gloomy1", "gloomy2", "nervous2", "love", "sad2", "shy" },
 		},
 		new AiPersona
@@ -94,7 +101,8 @@ public sealed class AiPersona
 			Id = "girl7", Folder = "Girl7_小竹", Lover = 6, Name = "郁竹",
 			Address = "直接叫赵活「你」或「赵活」，自称「我」。",
 			Traits = "崆峒铁拳门的嫡传女弟子，经营大铁铺，会打铁，也爱做磨喝乐、陀螺这些木工玩具。力气大得吓人（外号「裂骨魔」），常眯着眼，被人误会凶。"
-				+ "心地善良、勤快节俭，觉得自己是嫡传女弟子里垂底的，有些自卑。嘴笨、说话直，一着急就结巴，害羞时会拐弯抹角、恼羞成怒。很怕鬼，讨厌赌博。",
+				+ "心地善良、勤快节俭，觉得自己是嫡传女弟子里垂底的，有些自卑。嘴笨、说话直，一着急就结巴，害羞时会拐弯抹角、恼羞成怒。很怕鬼，讨厌赌博。"
+				+ "常年戴着手套，不爱让人看她满是茧的手；握力太大，捏的饭团会成一团泥。生气了就去打铁出气，从不对人动粗。认定一个人，就会什么都替他张罗。",
 			Moods = new[] { "normal", "nervous1", "nervous3", "laugh1", "nervous2", "angry1", "shy", "laugh2", "angry2", "sad2", "discouraged", "sad1" },
 		},
 		new AiPersona
@@ -102,7 +110,8 @@ public sealed class AiPersona
 			Id = "girl8", Folder = "Girl8_小菊", Lover = 7, Name = "魏菊",
 			Address = "叫赵活「赵师兄」，结缘后叫「郎君」，自称「小妹」「小女子」，郑重时自称「妾身」。",
 			Traits = "崆峒玄功门的才女，出身临安，饱读诗书，说话文雅，爱引经据典、出口成章。温和稳重、待人周到（会亲自泡茶陪礼），心思缜密，看事情看得远。"
-				+ "不会武功的样子，其实深藏不露。被说到心事时会害羞得说不完整一句话。",
+				+ "不会武功的样子，其实深藏不露。被说到心事时会害羞得说不完整一句话。"
+				+ "管着崆峒的典籍、账目和名册，事事井井有条。手里常捧着郁竹做的手炉，生气时手炉会发烫；在玄功洞里偷偷种了菜和西瓜。瞧不起只会吟风弄月、空谈的文人，敬重踏实做事的人；说过不再作诗，技痒时也会故意作砸。",
 			Moods = new[] { "normal", "laugh1", "nervous1", "nervous3", "angry1", "shy", "nervous2", "shock", "sad2", "close_eye_laugh" },
 		},
 		new AiPersona
@@ -110,7 +119,8 @@ public sealed class AiPersona
 			Id = "girl9", Folder = "Girl9_上官瑩", Lover = 4, Name = "上官萤",
 			Address = "叫赵活「赵活」，对弟妹们自称「姊姊」，平时自称「我」。",
 			Traits = "上官世家的千金，会做生意，懂律法，算账精明，讲「安心买卖」。性子急、心直口快、好面子，有点傲，嘴上不饶人，但很讲义气，会照顾弟妹。"
-				+ "最喜欢小巧精致、白白嫩嫩的可爱东西。",
+				+ "最喜欢小巧精致、白白嫩嫩的可爱东西。"
+				+ "觉得带肩甲的衣服最威风；从不下厨，出门带着厨子；最忌讳替人作保。拳脚只够防身，急了会把整串铜钱当暗器扔。",
 			Moods = new[] { "normal", "nervous1", "laugh1", "nervous3", "angry1", "angry2", "sad2", "nervous2", "laugh2", "shy" },
 		},
 	};
@@ -164,13 +174,123 @@ public sealed class AiPersona
 
 	public string MoodGuide() => string.Join("，", Moods.Select(m => m + "（" + (MoodMeaning.TryGetValue(m, out string t) ? t : m) + "）").ToArray());
 
+	/// <summary>
+	/// 游戏「人物」页的人物志（第 0 段是初次见面时弹出的介绍，之后 1 到 4 段）。
+	/// 游戏按好感解锁，可好感能改、和剧情进度无关，所以不照它：第 0、1 段是外貌和公开身份，见过面就给；
+	/// 第 2 段往后是身世和真相，只有剧透选「想知道什么说什么」时才给，其余两档靠她读过的经历知道揭开了的事。
+	/// </summary>
+	public List<string> Intros()
+	{
+		var list = new List<string>();
+		try
+		{
+			bool all = LOMAssistant.Config.ConfigManager.AiSpoiler.Value == 0;
+			StoryRomance.Heroine h = Heroine;
+			RelationshipStat stat = h != null ? PlayerStatManagerData.Instance?.Relationships?.Get(h.Relation) : null;
+			if (!all && (stat == null || !stat.Active))
+			{
+				return list;
+			}
+			for (int i = 0; i <= (all ? 4 : 1); i++)
+			{
+				string key = "CharacterIntro" + i + "/" + Id;
+				string text = LocalizationManager.Instance.LocaleResolver.GetString(key);
+				if (!string.IsNullOrWhiteSpace(text) && text != key)
+				{
+					list.Add(AiKnowledge.Clean(text));
+				}
+			}
+		}
+		catch (Exception ex)
+		{
+			FileLogger.Log("[AI] 读人物志失败: " + ex.Message);
+		}
+		return list;
+	}
+
+	private static Dictionary<string, List<string>> _recordScripts;
+
+	/// <summary>剧情记录条目 → 记下它的剧本。</summary>
+	private static Dictionary<string, List<string>> RecordScripts()
+	{
+		if (_recordScripts == null)
+		{
+			var map = new Dictionary<string, List<string>>();
+			foreach (StoryScript s in StoryScripts.All)
+			{
+				foreach (string r in s.Records)
+				{
+					if (!map.TryGetValue(r, out var list))
+					{
+						map[r] = list = new List<string>();
+					}
+					list.Add(s.Name);
+				}
+			}
+			if (map.Count > 0)
+			{
+				_recordScripts = map;
+			}
+			return map;
+		}
+		return _recordScripts;
+	}
+
+	private const int MaxExperiences = 60;
+
+	/// <summary>她在场或被提到的剧情记录，按这一局读到的先后；太多时留最早 10 条和最近的。</summary>
+	private List<string> Experiences(List<(string Script, string Key)> lines)
+	{
+		var result = new List<string>();
+		List<string> keys = PlayerStatManagerData.Instance?.StoryKeyList;
+		if (keys == null)
+		{
+			return result;
+		}
+		var present = new HashSet<string>(lines.Select(l => l.Script));
+		var names = new List<string> { Name };
+		if (Lover >= 0 && Lover < AiKnowledge.Aliases.Length)
+		{
+			// 「咖啡」「上官」会误中别人，不拿来找
+			names.AddRange(AiKnowledge.Aliases[Lover].Where(a => a != "咖啡" && a != "上官"));
+		}
+		var map = RecordScripts();
+		foreach (string key in keys)
+		{
+			string legend = StoryScripts.Legend(key);
+			if (legend.Length == 0 || result.Contains(legend))
+			{
+				continue;
+			}
+			bool there = map.TryGetValue(key, out var scripts) && scripts.Any(present.Contains);
+			if (there || names.Any(legend.Contains))
+			{
+				result.Add(legend.Length > 160 ? legend.Substring(0, 160) + "…" : legend);
+			}
+		}
+		if (result.Count > MaxExperiences)
+		{
+			result = result.Take(10).Concat(result.Skip(result.Count - (MaxExperiences - 10))).ToList();
+		}
+		return result;
+	}
+
 	/// <summary>以她的身份回答时的系统提示词。</summary>
 	public string Prompt(string language, string spoiler)
 	{
 		var lines = ReadLines();
 		var sb = new StringBuilder();
 		sb.Append("你是").Append(Name).Append("，武侠游戏《活侠传》里的人物。跟你说话的是赵活（玩家操控的主角）。").Append(Address).Append('\n');
-		sb.Append("\n【你是怎样的人】\n").Append(Traits).Append('\n');
+		var intros = Intros();
+		if (intros.Count > 0)
+		{
+			sb.Append("\n【游戏人物志对你的记载】（是你的底子；照此扮演，不要整段复述）\n");
+			foreach (string intro in intros)
+			{
+				sb.Append(intro).Append('\n');
+			}
+		}
+		sb.Append(intros.Count > 0 ? "\n【你的性子和小习惯】\n" : "\n【你是怎样的人】\n").Append(Traits).Append('\n');
 
 		// 声音：她读过的原话，抽 30 句短的（不剧透：玩家都读过）
 		var rng = new Random(Id.GetHashCode() ^ lines.Count);
@@ -184,22 +304,13 @@ public sealed class AiPersona
 			}
 		}
 
-		// 经历：她在场、玩家读过的剧本的剧情记录，按读到的先后，最后 12 段
-		var scripts = lines.Select(l => l.Script).Distinct().ToList();
-		var story = new List<string>();
-		foreach (string name in scripts)
-		{
-			StoryScript s = StoryScripts.Get(name);
-			string legend = s?.Records.Select(StoryScripts.Legend).FirstOrDefault(t => t.Length > 0) ?? "";
-			if (legend.Length > 0 && !story.Contains(legend))
-			{
-				story.Add(legend.Length > 90 ? legend.Substring(0, 90) + "…" : legend);
-			}
-		}
+		// 经历：这一局游戏「剧情记录」里的条目（游戏按读到的先后记），取她在场（那段剧本里有她读过的对白）或提到她的。
+		// 读到了才有，所以揭开过的身世一定在里面，没读到的后续一概没有
+		var story = Experiences(lines);
 		if (story.Count > 0)
 		{
-			sb.Append("\n【你和赵活一起经历过的事】（文中的「你」指赵活；你只知道这些，之后的事一概不知，不要预言）\n");
-			foreach (string t in story.Skip(Math.Max(0, story.Count - 12)))
+			sb.Append("\n【你和赵活一起经历过的事】（游戏的剧情记录，按发生先后，越往下越近；文中的「你」指赵活。这些都是真的，被问起要答得上来；你只知道这些，之后的事一概不知，不要预言）\n");
+			foreach (string t in story)
 			{
 				sb.Append("- ").Append(t).Append('\n');
 			}

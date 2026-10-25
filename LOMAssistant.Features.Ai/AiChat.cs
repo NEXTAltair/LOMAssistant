@@ -123,13 +123,14 @@ public static class AiChat
 		var proposals = new List<Entry>();
 		LlmProvider provider = Provider;
 		string answer = null;
-		for (int round = 0; round < MaxRounds && !_stop; round++)
+		bool rewrite = false;
+		for (int round = 0; round < MaxRounds + (rewrite ? 1 : 0) && !_stop; round++)
 		{
 			LlmReply reply = null;
 			// 最后一轮不许再查：明说一句，工具照给但设成不能调用
-			bool last = round == MaxRounds - 1;
+			bool last = round >= MaxRounds - 1 || rewrite;
 			var send = History.Concat(turn).ToList();
-			if (last)
+			if (last && !rewrite)
 			{
 				send.Add(new ChatMessage { Role = ChatMessage.User, Text = "（查资料的次数到上限了。根据上面已经查到的内容直接回答，不要再调用工具。）" });
 			}
@@ -148,7 +149,17 @@ public static class AiChat
 			TokensUsed += reply.InputTokens + reply.OutputTokens;
 			if (reply.Calls.Count == 0)
 			{
-				answer = StripIds(StripToolMarkup(reply.Text), persona != null).Trim();
+				string cut = StripToolMarkup(reply.Text);
+				// 模型把调用工具的格式写进了正文，从那里往后都被剪掉，回答只剩半截：让它不调工具、从头写一遍
+				if (cut.Length < (reply.Text ?? "").Length && !rewrite)
+				{
+					FileLogger.Log("[AI] 回答里夹着工具调用格式，后半截被剪掉，让它重写一遍");
+					rewrite = true;
+					turn.Add(new ChatMessage { Role = ChatMessage.Assistant, Text = cut.Trim().Length > 0 ? cut : "（没写完）" });
+					turn.Add(new ChatMessage { Role = ChatMessage.User, Text = "（你上一条回答写到一半就断了，工具已经不能再用。根据上面已经查到的资料，把完整的回答从头写一遍，不要调用工具。）" });
+					continue;
+				}
+				answer = StripIds(cut, persona != null).Trim();
 				if (answer.Length == 0 && reply.Text.Trim().Length > 0)
 				{
 					answer = "（查了很多资料还没整理出答案，换个具体点的问法再问一次吧。）";

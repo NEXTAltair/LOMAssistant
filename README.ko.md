@@ -171,4 +171,4 @@
 
 ## 크레딧
 
-[중국어 README](README.md#致谢)를 참고하세요. 이 프로젝트는 爱死 님의 「活侠传助手」를 바탕으로 하며, 赵活系统의 기능 아이디어와 LOM_SaveSlotExpander의 코드를 참고·이식했습니다. 풀 리퀘스트를 보내 주신 [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes), [NEXTAltair](https://github.com/NEXTAltair), [pluvivanto](https://github.com/pluvivanto) 님, issue를 올려 주신 [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y), [iampigcheng](https://github.com/iampigcheng) 님께 감사드립니다.
+[중국어 README](README.md#致谢)를 참고하세요. 이 프로젝트는 爱死 님의 「活侠传助手」를 바탕으로 하며, 赵活系统의 기능 아이디어와 LOM_SaveSlotExpander의 코드를 참고·이식했습니다. AI 동행 탭 여주인공들의 성격과 버릇 일부는 类脑 커뮤니티 夏呆呆 님의 2차 창작 캐릭터 카드 『活侠传』를 참고했습니다. 풀 리퀘스트를 보내 주신 [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes), [NEXTAltair](https://github.com/NEXTAltair), [pluvivanto](https://github.com/pluvivanto) 님, issue를 올려 주신 [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y), [iampigcheng](https://github.com/iampigcheng) 님께 감사드립니다.
