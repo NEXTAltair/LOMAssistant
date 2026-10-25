@@ -72,6 +72,7 @@ public static class ConfigManager
 	public static ConfigElement<float> FlagNoticeSeconds;
 
 	public static ConfigElement<int> FontScale;
+	public static ConfigElement<int> GameFontScale;
 
 	public static ConfigElement<int> PanelFont;
 
@@ -354,7 +355,8 @@ public static class ConfigManager
 		EnableSkillColumns = new ConfigElement<bool>("EnableSkillColumns", "技能表全显示：战斗时左上角我方的「技能、特殊」列表太长、会压到血条时分列显示（先填满左边再填下一列）。true=开，false=关", defaultValue: true);
 		EnableOneClickUnlock = new ConfigElement<bool>("EnableOneClickUnlock", "被锁住的选项旁显示「一键设置」：把没满足的解锁条件（属性、好感、旗标）改到满足，选项当场解锁。true=开，false=关", defaultValue: true);
 		FlagNoticeSeconds = new ConfigElement<float>("FlagNoticeSeconds", "剧情旗标变化提示在屏幕上停留几秒（按真实时间，开倍速也一样；原版 1 秒）。0=按游戏原样", 4f);
-		FontScale = new ConfigElement<int>("FontScale", "剧情对白的文字大小（百分比，只放大对白框里的字，不放大界面）。100=原样，120=大两成", 100);
+		FontScale = new ConfigElement<int>("FontScale", "剧情对白的文字大小（百分比，只放大对白框里的字，乘在「游戏文字大小」上）。100=原样，120=大两成", 100);
+		GameFontScale = new ConfigElement<int>("GameFontScale", "游戏里全部文字的大小（百分比，菜单、按钮、数值、对白都放大，适合 Steam Deck 等小屏幕；放得太大有的字会挤出框）。100=原样，120=大两成", 100);
 		UiLanguage = new ConfigElement<int>("UiLanguage", "咖啡伴侣窗口等 Mod 界面的语言：0=跟随游戏（装了日语补丁时显示日语，装了英文补丁时显示英语），1=简体中文，2=繁体中文，3=韩语，4=日语，5=英语", 0);
 		PanelTheme = new ConfigElement<int>("PanelTheme", "咖啡伴侣窗口的配色：0=浅色（宣纸底），1=深色（墨色底，默认），2=跟随系统（Windows 的应用模式）", 1);
 		PanelFont = new ConfigElement<int>("PanelFont", "咖啡伴侣窗口等 Mod 界面的字体：0=思源宋体（游戏对话用的字体，默认），1=微软雅黑（系统字体）", 0);

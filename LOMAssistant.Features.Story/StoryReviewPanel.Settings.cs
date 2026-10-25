@@ -140,6 +140,7 @@ public partial class StoryReviewPanel
 			("其他", new List<SettingRow>
 			{
 				new SettingRow { Element = ConfigManager.GameSpeed, Name = "游戏倍速", Speeds = GameSpeed.Options },
+				Row(ConfigManager.GameFontScale, "游戏文字大小（%）", 50f, 200f),
 				Row(ConfigManager.EnableBackgroundRun, "后台继续运行"),
 				Row(ConfigManager.EnableFastStartup, "开游戏更快"),
 				Row(ConfigManager.EnableFlowSpeedup, "流程提速"),

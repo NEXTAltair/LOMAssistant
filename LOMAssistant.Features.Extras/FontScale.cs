@@ -1,37 +1,55 @@
 using System.Collections.Generic;
 using HarmonyLib;
 using LOMAssistant.Config;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace LOMAssistant.Features.Extras;
 
 /// <summary>
-/// 只放大剧情对白的字，不放大界面：对白框（普通对白、内心独白、旁白，都叫 StoryText，在 SayDialogs 下面）排版时
-/// 先取一份排版参数，在这里把字号乘上设定的比例。不改文字组件本身记的字号，关掉（100%）就完全是原样。
-/// 菜单、按钮、数值这些别的字不动，免得撑破界面。
+/// 文字放大，两个设置：
+/// 「游戏文字大小」放大游戏里的全部文字（菜单、按钮、数值、对白……，Steam Deck 这类小屏幕用）；
+/// 「对白文字大小」只放大剧情对白框（普通对白、内心独白、旁白，都叫 StoryText，在 SayDialogs 下面），乘在前一个上面。
+/// 普通文字（UnityEngine.UI.Text）在排版时先取一份排版参数，在这里把字号乘上比例，不改组件本身记的字号，100% 就完全是原样。
+/// TextMeshPro 的文字没有这一步，启用时记下原字号再改它的字号，比例改回 100% 时换回原字号。
+/// 本 Mod 自己的窗口是 IMGUI 画的，不受影响。放大太多界面可能放不下，字会挤出框。
 /// </summary>
 public static class FontScale
 {
-	private static int _applied = 100;
+	private static int _appliedDialogue = 100, _appliedGame = 100;
 	private static readonly Dictionary<int, bool> Dialogue = new Dictionary<int, bool>();
+	private static readonly Dictionary<int, (float Size, float Min, float Max)> TmpBase = new Dictionary<int, (float, float, float)>();
 
-	private static float Factor => Mathf.Clamp(ConfigManager.FontScale.Value, 50, 200) / 100f;
+	private static float DialogueFactor => Mathf.Clamp(ConfigManager.FontScale.Value, 50, 200) / 100f;
+	private static float GameFactor => Mathf.Clamp(ConfigManager.GameFontScale.Value, 50, 200) / 100f;
 
-	/// <summary>每帧调用：比例改了就让对白重新排版。</summary>
+	/// <summary>每帧调用：比例改了就让文字重新排版。</summary>
 	public static void Tick()
 	{
-		int now = ConfigManager.FontScale.Value;
-		if (now == _applied)
+		int dialogue = ConfigManager.FontScale.Value, game = ConfigManager.GameFontScale.Value;
+		if (dialogue == _appliedDialogue && game == _appliedGame)
 		{
 			return;
 		}
-		_applied = now;
+		bool all = game != _appliedGame;
+		_appliedDialogue = dialogue;
+		_appliedGame = game;
 		foreach (Text text in Resources.FindObjectsOfTypeAll<Text>())
 		{
-			if (text != null && text.gameObject.scene.IsValid() && IsDialogue(text))
+			if (text != null && text.gameObject.scene.IsValid() && (all || IsDialogue(text)))
 			{
 				text.SetAllDirty();
+			}
+		}
+		if (all)
+		{
+			foreach (TMP_Text text in Resources.FindObjectsOfTypeAll<TMP_Text>())
+			{
+				if (text != null && text.gameObject.scene.IsValid())
+				{
+					ApplyTmp(text);
+				}
 			}
 		}
 	}
@@ -63,13 +81,51 @@ public static class FontScale
 	[HarmonyPatch(typeof(Text), nameof(Text.GetGenerationSettings))]
 	public static void GetGenerationSettings_Postfix(Text __instance, ref TextGenerationSettings __result)
 	{
-		float factor = Factor;
-		if (factor == 1f || !IsDialogue(__instance))
+		float factor = GameFactor * (IsDialogue(__instance) ? DialogueFactor : 1f);
+		if (factor == 1f)
 		{
 			return;
 		}
 		__result.fontSize = Mathf.Max(1, Mathf.RoundToInt(__result.fontSize * factor));
 		__result.resizeTextMinSize = Mathf.Max(1, Mathf.RoundToInt(__result.resizeTextMinSize * factor));
 		__result.resizeTextMaxSize = Mathf.Max(1, Mathf.RoundToInt(__result.resizeTextMaxSize * factor));
+	}
+
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(TextMeshProUGUI), "OnEnable")]
+	public static void TmpOnEnable_Postfix(TextMeshProUGUI __instance)
+	{
+		ApplyTmp(__instance);
+	}
+
+	[HarmonyPostfix]
+	[HarmonyPatch(typeof(TextMeshPro), "OnEnable")]
+	public static void TmpWorldOnEnable_Postfix(TextMeshPro __instance)
+	{
+		ApplyTmp(__instance);
+	}
+
+	// 按记下的原字号乘比例；还没记过、比例又是 100% 的不碰
+	private static void ApplyTmp(TMP_Text text)
+	{
+		int id = text.GetInstanceID();
+		float factor = GameFactor;
+		if (!TmpBase.TryGetValue(id, out var original))
+		{
+			if (factor == 1f)
+			{
+				return;
+			}
+			original = (text.fontSize, text.fontSizeMin, text.fontSizeMax);
+			TmpBase[id] = original;
+		}
+		float size = original.Size * factor;
+		if (Mathf.Approximately(text.fontSize, size))
+		{
+			return;
+		}
+		text.fontSizeMin = original.Min * factor;
+		text.fontSizeMax = original.Max * factor;
+		text.fontSize = size;
 	}
 }
