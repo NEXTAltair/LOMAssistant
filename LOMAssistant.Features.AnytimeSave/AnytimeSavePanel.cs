@@ -59,7 +59,7 @@ public partial class AnytimeSave
 		{
 			return;
 		}
-		float scale = Mathf.Min(Screen.width / 1920f, Screen.height / 1080f);
+		float scale = LOMAssistant.PanelTheme.UiScale;
 		if (scale <= 0) return;
 		if (ModFont.NeedsRebuild(scale, _scale, _fontMode))
 		{

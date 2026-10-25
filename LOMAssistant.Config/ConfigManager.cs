@@ -75,6 +75,7 @@ public static class ConfigManager
 	public static ConfigElement<int> GameFontScale;
 
 	public static ConfigElement<int> PanelFont;
+	public static ConfigElement<int> PanelScale;
 
 	public static ConfigElement<int> PanelTheme;
 
@@ -360,6 +361,7 @@ public static class ConfigManager
 		UiLanguage = new ConfigElement<int>("UiLanguage", "咖啡伴侣窗口等 Mod 界面的语言：0=跟随游戏（装了日语补丁时显示日语，装了英文补丁时显示英语），1=简体中文，2=繁体中文，3=韩语，4=日语，5=英语", 0);
 		PanelTheme = new ConfigElement<int>("PanelTheme", "咖啡伴侣窗口的配色：0=浅色（宣纸底），1=深色（墨色底，默认），2=跟随系统（Windows 的应用模式）", 1);
 		PanelFont = new ConfigElement<int>("PanelFont", "咖啡伴侣窗口等 Mod 界面的字体：0=思源宋体（游戏对话用的字体，默认），1=微软雅黑（系统字体）", 0);
+		PanelScale = new ConfigElement<int>("PanelScale", "咖啡伴侣窗口等 Mod 界面的文字大小（百分比，窗口里的字和按钮一起放大，适合 Steam Deck 等小屏幕）。100=原样，130=大三成", 100);
 		// 2.8.3 起默认关（开着时切到别的窗口，背景音乐不停，鼠标经过地图建筑还会响，玩家以为是 bug）。
 		// 老的配置名 EnableBackgroundRun 在玩家配置里存着 true，换个名字让所有人都从「关」开始
 		EnableBackgroundRun = new ConfigElement<bool>("KeepRunningInBackground", "后台继续运行：切到别的窗口时游戏不暂停，背景音乐也不停。true=开，false=关（默认，游戏原本的做法：切走就停）", defaultValue: false);

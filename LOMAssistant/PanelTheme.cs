@@ -11,6 +11,13 @@ namespace LOMAssistant;
 /// </summary>
 internal static class PanelTheme
 {
+	/// <summary>
+	/// 本 Mod 各个窗口的缩放：按 1920×1080 量的尺寸、字号乘上它。屏幕小时跟着缩小，再乘上设置页「窗口文字大小」，
+	/// Steam Deck 这类小屏幕可以调大。
+	/// </summary>
+	public static float UiScale => Mathf.Min(Screen.width / 1920f, Screen.height / 1080f)
+		* Mathf.Clamp(LOMAssistant.Config.ConfigManager.PanelScale?.Value ?? 100, 50, 200) / 100f;
+
 	private static bool _systemDark;
 	private static int _systemCheckedAt = int.MinValue;
 

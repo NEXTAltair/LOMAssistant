@@ -680,7 +680,7 @@ internal sealed class OptionHoverHint : MonoBehaviour
 
 	private void Draw(Button button, string note, Button[] group)
 	{
-		float scale = Mathf.Min(Screen.width / 1920f, Screen.height / 1080f);
+		float scale = PanelTheme.UiScale;
 		if (_style == null || ModFont.NeedsRebuild(scale, _scale, _fontMode))
 		{
 			_scale = scale;

@@ -265,7 +265,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 		{
 			return;
 		}
-		float scale = Mathf.Min(Screen.width / 1920f, Screen.height / 1080f);
+		float scale = LOMAssistant.PanelTheme.UiScale;
 		if (scale <= 0f)
 		{
 			return;

@@ -153,6 +153,7 @@ public partial class StoryReviewPanel
 			{
 				new SettingRow { Element = ConfigManager.PanelTheme, Name = "窗口配色", Choices = new[] { "浅色", "深色", "跟随系统" } },
 				new SettingRow { Element = ConfigManager.PanelFont, Name = "窗口字体", Choices = new[] { "思源宋体", "微软雅黑" } },
+				Row(ConfigManager.PanelScale, "窗口文字大小（%）", 50f, 200f),
 				// 所有窗口的不透明度放在一起
 				Row(ConfigManager.PanelOpacity, "咖啡伴侣窗口不透明度", 0.3f, 1f),
 				Row(ConfigManager.DialogOpacity, "小窗不透明度", 0.3f, 1f),

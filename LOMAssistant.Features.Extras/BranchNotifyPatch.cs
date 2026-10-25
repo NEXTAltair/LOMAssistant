@@ -156,7 +156,7 @@ public class BranchPanel : MonoBehaviour
 		{
 			return;
 		}
-		float scale = Mathf.Min(Screen.width / 1920f, Screen.height / 1080f);
+		float scale = LOMAssistant.PanelTheme.UiScale;
 		if (ModFont.NeedsRebuild(scale, _scale, _fontMode) || !Mathf.Approximately(ConfigManager.PopupOpacity.Value, _opacity))
 		{
 			BuildStyles(scale);

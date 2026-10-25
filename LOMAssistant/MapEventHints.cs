@@ -132,7 +132,7 @@ public class MapEventHints : MonoBehaviour
 		{
 			return;
 		}
-		float scale = Mathf.Min(Screen.width / 1920f, Screen.height / 1080f);
+		float scale = PanelTheme.UiScale;
 		if (scale <= 0f)
 		{
 			return;
