@@ -247,7 +247,7 @@ public class MapEventHints : MonoBehaviour
 			.SelectMany(pool => PositionEventCache.Instance.GetPositionEvents(pool)).Distinct().ToList();
 	}
 
-	private static bool Unread(string script)
+	internal static bool Unread(string script)
 	{
 		// 一句都没读过才算没看过：触发过的事件只走了其中一条分岔，读过的比例到不了 100%
 		StoryScript s = StoryScripts.Get(script);

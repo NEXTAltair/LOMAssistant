@@ -47,6 +47,8 @@ public class EventPicker : MonoBehaviour
 		public string Name;
 		public string Effects;
 		public int Rate;
+		/// <summary>这个事件的剧情一句都没读过（和地图建筑提示的「没看过」一样）。</summary>
+		public bool Unread;
 	}
 
 	/// <summary>正在问的是分支判断（不是事件池）时，判断名。</summary>
@@ -141,7 +143,7 @@ public class EventPicker : MonoBehaviour
 				int rate = data.GetRate();
 				if (rate > 0)
 				{
-					Choices.Add(new Choice { Data = data, Key = data.name, Rate = rate, Name = TextConverter.ToSimplified(DataHelper.GetEventName(data)), Effects = PositionEventCache.Instance.GetCertainEffects(data) });
+					Choices.Add(new Choice { Data = data, Key = data.name, Rate = rate, Name = TextConverter.ToSimplified(DataHelper.GetEventName(data)), Effects = PositionEventCache.Instance.GetCertainEffects(data), Unread = MapEventHints.Unread(PositionEventCache.Instance.ResultScript(data)) });
 				}
 			}
 			if (Choices.Count < 2)
@@ -354,7 +356,7 @@ public class EventPicker : MonoBehaviour
 		Choice c = Choices[i];
 		int rate = EventRules.EffectiveRate(c.Key, c.Rate, Choices.Select(x => x.Key));
 		string odds = rate == 0 && EventRules.Get(c.Key) == EventRules.Never ? "不出" : $"{rate * 100f / Mathf.Max(1, total):0.#}%";
-		return (i < 9 ? (i + 1) + ". " : "") + c.Name + $"（{odds}）";
+		return (i < 9 ? (i + 1) + ". " : "") + c.Name + $"（{odds}）" + (c.Unread ? "　" + RichText.Golden("没看过") : "");
 	}
 
 	// 事件名、效果里的绿、红、金是给深色底配的，画窗口期间在宣纸底上换成看得清的同色系（PanelTheme.MapColors）
