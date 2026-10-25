@@ -4,7 +4,7 @@
 
 [简体中文](README.md) · [繁體中文](README.zh-Hant.md) · [English](README.en.md) · [日本語](README.ja.md) · **한국어**
 
-『활협전』(Legend of Mortal)용 BepInEx 6 플러그인입니다. 이름 「咖啡伴侣」(커피 친구)는 플레이어들이 서행(瑞杏)에게 붙인 별명 「咖啡」(커피)에서 왔습니다. 瑞杏의 중국어 발음이 중국 커피 체인 「瑞幸(Luckin Coffee)」과 같기 때문입니다. 최신 버전 게임을 지원하며, 스토리 전체 보기, 분기 선택, 수치 편집, 새 저장·불러오기 화면, 퀵세이브 등을 추가합니다.
+『활협전』(Legend of Mortal)용 BepInEx 6 플러그인입니다. 이름 「咖啡伴侣」(커피 친구)는 플레이어들이 서행(瑞杏)에게 붙인 별명 「咖啡」(커피)에서 왔습니다. 瑞杏의 중국어 발음이 중국 커피 체인 「瑞幸(Luckin Coffee)」과 같기 때문입니다. 최신 버전 게임을 지원하며, AI 동행, 스토리 전체 보기, 분기 선택, 수치 편집, 저장 개선 등을 추가합니다.
 
 게임 언어를 한국어로 설정하면 이 Mod의 창과 알림도 한국어로 표시됩니다(설정 탭 맨 위 「표시 언어」에서 직접 고를 수도 있습니다). 지금은 자주 쓰는 화면 문구만 번역되어 있고 나머지는 중국어로 나옵니다. 번역이 정확하지 않을 수 있으니, 어색한 번역을 발견하면 [Issues](https://github.com/kevinnie2003/LOMAssistant/issues)로 알려 주세요. 아래 스크린샷은 중국어 화면입니다.
 
@@ -28,7 +28,8 @@
 
 | 키 | 기능 |
 |---|---|
-| Tab | 커피 동반자 창(지금, 루트 맵, 스토리 맵, 분기 저장, 퀵세이브, 수집 현황, 수치, 설정) |
+| Tab | 커피 동반자 창(지금, 루트 맵, 스토리 맵, 분기 저장, 퀵세이브, 수집 현황, 수치, AI 동행, 설정) |
+| F3 | AI 동행 탭 |
 | F8 | 설정. 저장 화면에서는 고른 저장에 메모 쓰기 |
 | F9 | 수치 탭 |
 | F5 / F7 / F6 | 퀵세이브: 저장 / 최근 것 불러오기 / 목록 |
@@ -41,6 +42,20 @@
 키는 설정 탭 「단축키」에서 바꾸거나 해제할 수 있습니다.
 
 ## 기능
+
+### AI 동행 (F3)
+
+자신의 API Key로 대규모 언어 모델에 연결해 스토리와 공략을 묻거나 여주인공과 대화할 수 있습니다. DeepSeek, Kimi, 통이첸원(Qwen), 즈푸 GLM, SiliconFlow, OpenRouter, OpenAI, Claude, Gemini, 로컬 Ollama, 그리고 OpenAI 호환 API를 지원합니다.
+
+- **공략 도우미**: 게임 안의 스토리 데이터를 먼저 찾아본 뒤 답합니다. 임무와 발생 조건, 대본 분기와 대사, 루트별 호감·수치 합계, 엔딩과 사망, 인연 루트, 인물지, 장소 이벤트, 결투 조건, 그리고 지금의 진행 상황과 화면의 선택지.
+- **여주인공**: 인연을 맺을 수 있는 아홉 여주인공이 자기 말투로 말하고, 입식 그림 표정이 말에 따라 바뀌며, 부르는 호칭도 스토리에 따라 바뀝니다. 플레이어가 읽은 스토리만 압니다. 공략을 물으면 대답 뒤에 공략 힌트가 따로 붙고, 대화만 하도록 설정할 수도 있습니다.
+- **스포일러 정도**: 묻는 대로 다 알려 줌 / 현재·지나온 것만 / 방향만 힌트.
+- **수치 변경**: 수치, 호감, 마음에 둔 사람을 바꿀 때는 AI가 먼저 카드를 보여 주고, 확인을 눌러야 바뀝니다.
+- **대화**: 대화는 여주인공별로 로컬에 저장되며 새로 열기, 전환, 삭제가 됩니다. 대답은 쓰이는 대로 바로 표시됩니다.
+- **심층 모드**: 더 강한 모델로 바꾸고 답하기 전에 자료를 다시 확인합니다. 더 정확하지만 더 비싸고 느립니다.
+- **요금과 개인정보**: 요금은 제공업체 가격대로 나가며 이 Mod는 무료입니다. Key와 대화는 고른 제공업체에만 보내지고, 진단 내보내기에서는 Key가 가려집니다.
+
+<img src="media/ai-companion.webp" width="640" alt="AI 동행: 郁竹가 자기 말투로 답하고 아래에 공략 힌트">
 
 ### 스토리 회고 (Tab)
 
@@ -171,4 +186,4 @@
 
 ## 크레딧
 
-[중국어 README](README.md#致谢)를 참고하세요. 이 프로젝트는 爱死 님의 「活侠传助手」를 바탕으로 하며, 赵活系统의 기능 아이디어와 LOM_SaveSlotExpander의 코드를 참고·이식했습니다. AI 동행 탭 여주인공들의 성격과 버릇 일부는 类脑 커뮤니티 夏呆呆 님의 2차 창작 캐릭터 카드 『活侠传』를 참고했습니다. 풀 리퀘스트를 보내 주신 [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes), [NEXTAltair](https://github.com/NEXTAltair), [pluvivanto](https://github.com/pluvivanto) 님, issue를 올려 주신 [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y), [iampigcheng](https://github.com/iampigcheng) 님께 감사드립니다.
+[중국어 README](README.md#致谢)를 참고하세요. 이 프로젝트는 爱死 님의 「活侠传助手」를 바탕으로 하며, 赵活系统의 기능 아이디어와 LOM_SaveSlotExpander의 코드를 참고·이식했습니다. AI 동행 탭의 아이디어는 Cpjjason 님의 [江湖夜话](https://github.com/Cpjjason/jianghu-yehua)(강호야화)를 참고했습니다. 이것도 『활협전』용 AI Mod로, 게임 속 인물과 단둘이 이야기할 수 있고 인물이 물건을 주거나 무공을 가르쳐 주고 나눈 이야기를 기억합니다([Bilibili 소개 영상](https://www.bilibili.com/video/BV1s2nC6pE83/)). AI 동행 탭 여주인공들의 성격과 버릇 일부는 类脑 커뮤니티 夏呆呆 님의 2차 창작 캐릭터 카드 『活侠传』를 참고했습니다. 풀 리퀘스트를 보내 주신 [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes), [NEXTAltair](https://github.com/NEXTAltair), [pluvivanto](https://github.com/pluvivanto) 님, issue를 올려 주신 [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y), [iampigcheng](https://github.com/iampigcheng) 님께 감사드립니다.

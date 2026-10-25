@@ -4,7 +4,7 @@
 
 [简体中文](README.md) · **繁體中文** · [English](README.en.md) · [日本語](README.ja.md) · [한국어](README.ko.md)
 
-《活俠傳》（Legend of Mortal）的 BepInEx 6 插件。名字取自玩家給瑞杏起的外號「咖啡」（瑞杏與瑞幸咖啡同音）。適配最新版遊戲，並加入劇情回顧、分支自選、修改面板、存檔優化、隨時存檔等功能。
+《活俠傳》（Legend of Mortal）的 BepInEx 6 插件。名字取自玩家給瑞杏起的外號「咖啡」（瑞杏與瑞幸咖啡同音）。適配最新版遊戲，並加入 AI 陪玩、劇情回顧、分支自選、修改面板、存檔優化等功能。
 
 [![下載最新版](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fapi.github.com%2Frepos%2Fkevinnie2003%2FLOMAssistant%2Freleases%2Flatest&query=%24.tag_name&suffix=%20%E4%B8%8B%E8%BC%89&style=for-the-badge&label=GitHub&labelColor=24292F&color=A3302A&logo=github&logoColor=white)](https://github.com/kevinnie2003/LOMAssistant/releases/latest/download/LOMAssistant.zip) [![Nexus Mods](https://img.shields.io/badge/Nexus%20Mods-%E4%B8%8B%E8%BC%89-D98F40?style=for-the-badge&labelColor=8A5A28&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAEXElEQVR4AazW7XkTOxAF4E0auaYSQiVAJQmVECrBVEJuJeG8Y42stR3yBz%2BalTQfZ45GWq3vt3%2F8e319PUQeI7%2BH%2FEz%2F8FaamwQSAOQh%2FVUgXUSC7%2BmBt5g%2FJtHvyFPkMARG%2B9BFfW47AgGU%2BGfMQPQCrUQvwWts9BJ8yRh4izl91LO9zNG28YNz2JbfJCB59BJzzHA2AXQSTOU7g6e70%2B9D%2FL5GmggsJOBFvW2TQGbfI90EHDN5jujTVWu9lX6KZhU69k%2FJ%2FS22ahnD4KenQ2LmKgJZPUWzKhCeCcaeCJYAEEKqYStWYf%2BaGHbhU6KDiRQceltd%2Be6T3AAgAwEi4GXYJBHMZosksgrzVcRdJQ%2BGZBYIZ42rsQp8XlBWEEkFqkAnXlx3w2NW2aubhiS3OIm32J2HH9M4BghwqmmcJkjGqmBeAOXw9gPZnXVJXrYx%2F7g4VbUQaJ2EPa4%2BJAQrec1vPBBcq1YuI1kTdzdYuWrOrQ525UOgBom0V9Mh82pxRMI21DwPSdNVO8S%2BzkuZh6Tpqtlr2wynFHnU6tPXa7ga3HAC2KaMJPYQkdX%2Fynesfm7rALlc2Iy7Dzg2vQqGLt2IPXXxe4k8R1Rs%2Bo%2BEJ6c8Y4fndc1s1%2F7LjC3dptpyVQUofnkMOQbU9Xu5imGuzp7WII86WIkBqoJ9Xce0a6pwVT1ngFeBGESAY%2BfuJ8ZRn9tYZa%2FmS5Kr2nuv6iVO5WwCZ%2FRtU%2BItPwFYu7v1UW1bktVKa3J68FurJR65v709IsXNLaBoKUNP0tc8iZXXKgnwy6R0vgMfUqFbZyBQu4boJFCTxWwFy3TzDktQZIZhF5Ok3yIzLmP77c2ZusSt8f9nPgnUhOIdkXT91Da4bVkrUjAh4c1RDeTFehPK1o8%2BA4yte8yggTOcTWLltbJWOrA9dtn0eNeHiBhE5lmKw%2FkQxkHCJqFMK3B8qz3lHLDVZDzEjeFWFYjPmmTrX3LAR6JV9ZevK9BKvSSqoGzmLb54QHruC2feJGyDOK%2FuzXtkkHCbwpDn80qAgqHF5dTgEnVg272SVts%2B9E0aFiII0a%2By%2Bj8UgYuyuWbtmZPfSX3xkJhAI4ZPJ522MUDCtu1IjCo01qEIJGA9nb%2BGEyJuOO%2F2yjru1XbApdk%2FJLGA2us2DeLIUT03AZOWj3GS%2BCFEnPqr5LFL3iAdt%2FZiHDhvhgOtUrZMTI2H849bBHzjrRrA8Dt3Se602%2Fuz8nR9W7HtEIeARdg6lWTjvyZ3qI9NAEsORMlWR7qSkRywMyKRErvt9BJZITsiYh4To1pW7wpHnr4vqNNNmFJjCISR%2BMJ5lWqlAelXDDg7gsZ6wMaSlj%2BHCDLm9BKbR11t5uoKeKetwGrKIw8BXiUJCKCo320WA%2BstR9tri8o%2BCZiNSiCxAiDC3IKIFRBjvnrAgbhzcNng9DaZOw93%2Bc3kAHcEKOJgfyogc%2BDpNquSBLivnr9mxBiwfgc8cI7p%2BZVsN35%2FAAAA%2F%2F8CpstnAAAABklEQVQDAC6567qqPgZJAAAAAElFTkSuQmCC)](https://www.nexusmods.com/legendofmortal/mods/10) [![夸克網盤](https://img.shields.io/badge/%E5%A4%B8%E5%85%8B%E7%B6%B2%E7%9B%A4-%E4%B8%8B%E8%BC%89-4C6EF5?style=for-the-badge&labelColor=3249B8&logo=data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAKYUlEQVR42t2aeXBV1R3HP7%2B75OUleYGELQQQRKlYceuog1o7FFuLg9Sldew41YpaHcelLTod26qxtrXDuA1TxtppnQHrUtO6YO1ULRpArVstigiCgkACCSRkf3nbvefXP8595JGEkMSl6pk5M%2B%2Fdd%2B8539%2Fv9%2F1t5z4A6Tvr6uo8oqGqM1T1ElV9SFU3qmqXqob68Y8wWntjtNclqjojjyPCJAPM3i81NTVOTU2NEwE%2FXFXvUdVd%2Bv8buyIMhwMU4OsvQB%2Fwl6pqfcFCuUhD5lMAbaK9cgXX6lX10gMIYcHX1dV5quqo6h0FD2Y%2FIboMh1bZgu93qKpTV1fnFQiBqGpe84v7aOGzMgqtvzjCagWora11owsLoxuCT4kqI6FWEH1eCFBbW%2BtKBH468CIwEVDA4bM5TESbRuA0EdmaB3otUA0EHwW8UTtH%2BvsQhhNhrI4wI5H2XwKqRqp9A6iCtWd%2FsI7YmR9BCK4DIh%2FJCk3AVz1gTkSdEHBHspoTBeP6tPKfFuXlXcrGRtjbCvQIYx34cqXDqdPhhENh0theIR0ZkRXCCPMcUdWHge9FP8pIwLcEyh%2BaDA9uC3mvCSQJftLB6QLpEkynQ9ABYYdw9CT4%2Ftfhh%2FOgomzEQuSJ%2BBdR1Y3AzOjikJcKAA94I2O4piHH682Kn4KylIMkIdvuELYBnYLf7RDrAU0K3UlIZ%2BG0WbDkSjj%2BMEspzx22AAK8J6raBZSNRPPP5EIWtmTY3Q3lGUG6ha42IWyDiqzDqB6BDqFzj9C63aEohPK4fb4rBVUVsGwRzD1mxJboFlUNh%2BO4edHXhTm%2B3ZOkIetTkhZMj5DsgBPV5dyEy3GlDhNjQCA0tcJbm%2BCxNfDmFigvsQ7fnYHJY%2BCJm%2BGYaTYQDNOxjaiqDpd4nRpwUaqeF0PwKCcZFKNJ4caYz1WjPcb7A6NoaoN7n4a7V1iN%2BS6098DXjoIVNZAojhxRhufRw6COIsCKoJENpoFq6aSUVuJeN78bV0TNOJ%2FxvpBTCBTCaAYGcqGlzG0XwV2XWW2HCqNKYfV6%2BPPzFvhw84QzHN67CJ2aYU2wmTHSQYW0IdLMT3zl8phHiGIAX8ATSxNXwHOstvO54coz4ar50JGMfnfhkVXQ1m3zw3CEGAb3lcDANtNCg%2FmAidJJEU2c6qW4obgCoiRitJdq%2FTaTfJMEPzobZk6BZMY69mub4N3tEBow5mMWQCNwngPbdAcJ2Uu5tFLhNjKqO8azu2O8kzSkjdW8cGAh8jSZNAbmnwCpHitYaGDNemsBzx26EN5Q6htHIBMKyzcpb5ZvZ%2BL4doIgwyg35PmGGPfuhNGVaU6u8LhwnMuFlS6OFGTpQgGw4FwHjp0OfpH1j7JiuP85SGXgsnkwbfzQQuugFgiNXWBTm7LgqZCrVge0ppupdFqpdHeTCNsoViFRAkbgnx2GhfVZztyRYUPG7Ku8BrICURSKF0Va96CxFX79CMy7CR5%2F2e59MH9wBqWNA%2Bv2wIK%2FGv71oZJwhFFkKKeF0exlrNNEKkjRlYVAlIpiKPbhuR7D%2FKYsq9IGLwoA%2B60dgapvgc5G2NthE1txEVSWw4dNcPFdsPz5gwvhHYg2AuzsgsufCtnaolSUQjYrZFJCpdtCEMbwnE4unbKXd0vhhSzUG6XMhUQRbMdwcVuGZ8fFONJz9qtT3KhsOPME0EXQ0Q0vbYCXN0DMh7I4pLJw7e9hyjibqcOIdgcVQAvMvPRVwxtboGK0kM0Y1PU4xB1FOc2IlGJkO%2FOqPqCqCt5PF7G0De5LBri%2BUuZDvSg%2FS%2BV4MhHbL4vneT1rqp0ArV3w1Gvwi%2BU2nMZjNsze%2FAAcewtUJgb2iX4yaXTTpj3wwKtQ6oFmbbT4%2BYmw6MjDcINmSp0uHIrYlNtOQMCMYp8lE30WT%2FDJ%2BRD6UBxTVmvI6jC0zjuApXOBLeYqE3DJN%2BCBG6xDZ7I2yf17A6x8K%2FIbHYYPrNoMu5ohrtDdLsydLNxwCiSYis802rWUDjOD9bqTNt1FCIQYfpzwOK%2FMIe0ZYg60q%2BGVwOxLhn3zgu%2F1hs0ghNOPhWsWQDIdOboPf3spUqwzBAHyJnpli%2BIbMGnBZOD8Ix1iniLmEEqcs9itJbRrNQ2mhLrgDVzAjZabF3P3tU0CtEVeO1jIc5wofyiccwpMnWBDapEHr2%2BGdG4YUSg0UL8H3AAyPcL4GMwc56AYfPGYKKfTRTWtVJDWKfw92MJDubU0apodJsfjuQAHQSOrx6K4ebDc5ERt5hGToXoMZAOr0O4UtHTu76ODRiEFsmmQnEAAvifEHBBcQpTpzmzG8RZvmu0EMoakqWBpdhvLs8JureYdU0JchCwQF%2BH4yKwHLTLFWqDItTXSvvJaeinVt%2B0a0AKuA2PjgqbBD4T2VqFxr302VPCJMd%2B7gJhMp8nESTEaGMNmE2OL8UkgeEBKYb7ncZbvRcXgQUqWSL27WqE92esbjsDYxMBNr3MARTBrEmR7BD%2BErlZYsy4KgQgGpdqp4uqi85niTGOnidOocXooI8CnU5VOVeb6LkuKi%2FALDzIHK1uM1fia9bBllw2loYFDq2z%2FPJAVnYEWAfj6UeAaCANIlMBDq2xI81xAhcAoX5IJ3F50Btf5szhZxjNBS5mMy1zX47exGI8VF1Mt0q%2FZVu0trY3aPUO1azd3wt2PQxjaUiOVhgUn2eQ3UOvVryPL8y6Vhe%2F8Bp79L1SWQVcPHD4J%2FnQdzJ5JP0IalBYUgzAW8AogFyagwdrGHXvgiqWwci2MKrGRp7IMVt5uHXugRDZgSxmGVuIX3oZzfmUx%2Bi70ZOzCC8%2BA82bD6IS9z6AUIfgFJxYZQNTeP7Z8f%2FChgYYW%2Bz0wVjl16%2BDef1ghSqPWsr0L7rwCrj%2F3wKXEAZv6%2FGb3PAnX%2F9HWJ75nM2d32gpUVWGrSS0IbxoBzyed0hj89Hy44DSrweYOuOVBqHs7KtMD2N1mqVIahyLfUqqjG35wBtx3tb0mMqAPmUGPVYyxQO5%2BAn75sLVAacwWXGFUBgxWKbqO1e7MKfDMbbYwW%2Fo0XLsEEqN6i8Z8Ns4GVhCDPfhavBAS8UFp1%2B0BDQc62HKi%2FnTRuXDUVFhcC6%2B%2FDx2t4Pp20301ivQ%2Fe1EDJrQC5y0Sj0JSLrT3GbX%2BFmbAj8PRh8I1Z8HCbw56%2FJjfscED1gJHMEgfqwrf%2BgqcfhyseMWWvR80Qnu3rV%2F2i7%2B6%2F8eyuFXApDF2ne%2BeBluaLIVErGCJOEyvgpOOgLNnw%2BjS3ogzSEemwFqJ3j3df7DD3b6aSGYgnbE0U7G8p9AaaqlQXtLrJ4VxfG9n1PE51kKJeH%2FqDtYsRlgvG9bxuqrdVGTgiDBYgsoDymu2L6fz%2BWAIx%2B77Ha87IrIVeDS6GA5aqkRnOK4zQDI6wOxbBudrm7735NcewqlcGGF9VES2fv5fMdXW1rqRFW4qYLF%2BBsFrgYfdJCJb8y8oP9evWd18oXjrrbe606ZNWwmUAqdG13NDLCQ%2FScrk36UIcCdw45w5c9xly5bp6tWr%2BWL81eAL8WePz%2Bvfbf4H2PlshlOFzAkAAAAASUVORK5CYII%3D)](https://pan.quark.cn/s/e78c41abcebc)
 
@@ -26,7 +26,8 @@
 
 | 按鍵 | 功能 |
 |---|---|
-| Tab | 咖啡伴侶視窗（此刻、路線圖、劇情圖、節點存檔、隨時存檔、收集進度、數值、設定） |
+| Tab | 咖啡伴侶視窗（此刻、路線圖、劇情圖、節點存檔、隨時存檔、收集進度、數值、AI 陪玩、設定） |
+| F3 | AI 陪玩頁 |
 | F8 | 設定頁；存檔介面裡給所選存檔寫備註 |
 | F9 | 數值面板 |
 | F5 / F7 / F6 | 隨時存檔：存新檔 / 讀最近的 / 看全部 |
@@ -39,6 +40,20 @@
 按鍵都能在設定頁「熱鍵」裡改，也能設成「不綁定」。
 
 ## 功能
+
+### AI 陪玩（F3）
+
+用自己的 API Key 接入大模型，問劇情和攻略，或者和女主角聊天。支援 DeepSeek、Kimi、通義千問、智譜 GLM、矽基流動、OpenRouter、OpenAI、Claude、Gemini、本機 Ollama，以及任何 OpenAI 相容介面。
+
+- **攻略助手**：先查遊戲裡的劇情資料再回答：任務和觸發條件、劇本分岔和對白、每條路線上的好感和數值合計、結局和死亡、結緣路線、人物誌、場所事件、決鬥條件，以及現在的進度和畫面上的選項。
+- **女主角**：九位可結緣的女主角用自己的口吻說話，立繪表情跟著話變，對你的稱呼跟著劇情變。她們只知道你讀過的劇情。問到攻略時回答後面另起一段攻略提示，也可以設成只聊天。
+- **劇透程度**：想知道什麼說什麼 / 只說目前和走過的 / 只給方向提示。
+- **改數值**：要改數值、好感、心上人時，AI 先給一張卡片，點確認才改。
+- **對話**：每位的對話存在本機，可以新開、切換、刪除；回答邊生成邊顯示。
+- **深度模式**：換用更強的模型，回答前核對資料，更準，也更貴、更慢。
+- **費用和隱私**：按服務商的價格計費，本 Mod 不收費。Key 和對話只發給你選的服務商；匯出診斷時 Key 會隱去。
+
+<img src="media/ai-companion.webp" width="640" alt="AI 陪玩：郁竹用自己的口吻回答，下面是攻略提示">
 
 ### 劇情回顧（Tab）
 
@@ -197,6 +212,7 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 - **[活俠傳助手](https://mod.3dmgame.com/mod/256420)**：愛死（3DM：wowowo4567）。本專案的基礎，源碼由其發佈的插件反編譯而來後再修改。它又整合自 [骰子大師](https://mod.3dmgame.com/mod/210536)（Gmhaxx）、[多功能 Mod](https://mod.3dmgame.com/mod/210629)（Jim97）、[任意位置存檔](https://mod.3dmgame.com/mod/210679)（NothingNullNull）。
 - **部分功能思路**：參考 [趙活系統](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 許可）。
 - **存檔備註顯示**：移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 許可）。
+- **AI 陪玩的思路**：參考 [江湖夜話](https://github.com/Cpjjason/jianghu-yehua)（Cpjjason）。它也是《活俠傳》的 AI Mod，能和遊戲裡的人物私下閒談，人物會送東西、指點武功、記得聊過的事（[B 站介紹影片](https://www.bilibili.com/video/BV1s2nC6pE83/)）。
 - **AI 陪玩的女主角人設**：部分性格和小習慣參考了類腦社群夏呆呆的同人角色卡《活俠傳》。
 - 感謝 [lxsb222-spec](https://github.com/lxsb222-spec)（愛死）、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair)、[pluvivanto](https://github.com/pluvivanto) 提交的 PR，以及 [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y)、[iampigcheng](https://github.com/iampigcheng) 提交的 issue。
 - 下載包附帶的 [BepInEx](https://github.com/BepInEx/BepInEx)、[UnityDoorstop](https://github.com/NeighTools/UnityDoorstop)、[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) 按各自的許可證分發。
