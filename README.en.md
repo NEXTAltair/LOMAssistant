@@ -62,7 +62,7 @@ All keys can be changed or unbound under 「热键」 (Hotkeys) on the settings 
 
   <img src="media/story-nodes.webp" width="640" alt="Branch saves: recorded story segments by date, replay or delete">
 
-- **Collection**: records from all playthroughs. Story counts how much of each quest's dialogue you have read; endings, deaths, achievements and ending CGs show their gallery numbers and whether you have them. For anything missing it says where and how to get it.
+- **Collection**: records from all playthroughs. Story counts how much of each quest's dialogue you have read; endings, deaths, achievements and ending CGs show their gallery numbers and whether you have them. For anything missing it says where and how to get it. Each entry lists the quests that lead to it; click one to open that quest's story map. The ending CG page can replay the end credits in a story scene (「看片尾动画」, Watch the credits); press Esc to stop.
 
   <img src="media/story-endings.webp" width="640" alt="Collection: story, endings, deaths, achievements and ending CGs, filter by done or not">
 
@@ -123,7 +123,7 @@ Also:
 
 Stats, martial arts, sects, relationships (everyone), talents, training and crafting points, facilities, books, items and flags on one page; add, subtract or set any value, and search by name, ID or description.
 
-- **Books and items**: set the count directly; quests advance as if bought in a shop.
+- **Books and items**: set the count directly; quests advance as if bought in a shop. Hover over a martial manual to see what each layer adds when learned; learned layers are ticked.
 - **Stats** can be set below the bonus from manuals and the like, even below zero, and stay there through later story changes and loading.
 - Your **love interest** is shown by name; mood, the four personality stats, yin-yang and silver each have a **lock** that keeps story and options from changing them; locks stay on across restarts and saves.
 - **Titles**: pick any title or write your own.
