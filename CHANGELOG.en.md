@@ -8,7 +8,7 @@ Changes in each version, newest first. Versions before 2.7.0 are only in Chinese
   - **Guide**: looks up the game's own story data before answering: quests and their triggers, script branches and dialogue, affection and stat totals along each route, endings and deaths, romance routes, character bios, location events, duel conditions, plus your current progress and the options on screen.
   - **Nine heroines**: they speak in their own voice, their portraits change expression with what they say, how they address you follows the story, and they only know the story you have read. When you ask for help, a separate guide tip follows the reply; you can also set them to chat only.
   - Three **spoiler** levels; **deep mode** switches to a stronger model that checks the facts before answering.
-  - When the AI wants to change stats, affection or your sweetheart, it shows a card first; nothing changes until you confirm.
+  - When the AI wants to change stats, affection, your sweetheart, story flags or this mod's settings, it shows a card first; nothing changes until you confirm.
   - Chats are stored locally; start new ones, switch between them, delete them. Replies appear as they are written, and the header shows tokens used and cache hits.
   - Your key and chats go only to the provider you choose, and the key is hidden in diagnostics exports. A debug log can be turned on in the settings and is included in diagnostics exports. On the Steam Deck, tapping the input box opens the on-screen keyboard.
 - **Window text size**: new in the 「咖啡伴侣」 (Coffee Companion) group of the settings page. It enlarges the text and buttons in this mod's windows, small panels and tooltips, for small screens such as the Steam Deck.

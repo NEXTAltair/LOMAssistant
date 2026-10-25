@@ -39,10 +39,13 @@ public static class AiKnowledge
 			Schema(("name", "string", "旗标的名字（说明里的词，如 小竹告白）或编号（如 G11006）；或人名（查她的好感在哪被判定）"))),
 		("routes", "整条路线算账：从一个任务的开头剧本走到底，列出每一条完整的路（要选什么、掷骰掷多少、满足什么条件），以及这一条路上加减的好感、数值合计和设的旗标、结局。分岔互斥，一次只走一条，所以「这个任务最多能加多少好感」「哪条路最好」一定要用它，不要把各剧本的变化自己加起来。",
 			Schema(("key", "string", "任务编号（如 S2700_01）或剧本编号"), ("focus", "string", "关心的那一项，如 郁竹好感、心相；按它从多到少排，并给出最多、最少。不关心就传空字符串"))),
+		("settings", "看咖啡伴侣（本 Mod）的设置项：名字、现在的值、可选值或范围、说明、改了要不要重启。玩家想改 Mod 的设置时先用它，再用 propose_change 提出修改。",
+			Schema(("query", "string", "关键词，如 倍速、骰子、随时存档；传空字符串列出全部"))),
 		("player_state", "看玩家现在的进度：游戏日期、主线和可触发的支线、正在进行的剧情、主要数值、所有人的好感、结缘对象。回答和玩家当前进度有关的问题前先看一次。",
 			new JObject { ["type"] = "object", ["properties"] = new JObject() }),
 		("propose_change", "向玩家提议修改数值：会在对话里显示一张卡片，写着每项的当前值和新值，玩家点「确认」才会改，点「不改」就不改。"
-			+ "能改的是 Mod 数值页里有的：各项数值（心相、银两、体力……）、好感（写成「好感·人名」）、心上人（新值可以写女主角的名字）、天赋、旗标、书籍和物品数量等。"
+			+ "能改的是 Mod 数值页里有的：各项数值（心相、银两、体力……）、好感（写成「好感·人名」）、心上人（新值可以写女主角的名字）、天赋、旗标（写编号或名字，如「旗标·小竹告白」，新值 1 是做到、0 是没做到）、书籍和物品数量等；"
+			+ "也能改咖啡伴侣（本 Mod）的设置项（写成「设置·设置项名字」，名字和可选值先用 settings 查，开关写 开 / 关，几选一写选项原文）。"
 			+ "调用后告诉玩家去确认，不要说已经改好了。"
 			+ "数值的正常范围：体力、心相、性格、学识等大多是 0 到 100，好感 0 到 100，心上人是 0 到 8（女主角的编号）；玩家没明说要超过上限时，「拉满」就是改到 100，不要写 999 这类数。",
 			new JObject
@@ -102,6 +105,7 @@ public static class AiKnowledge
 				case "person": return Person(Arg("name"));
 				case "events": return Events(Arg("query"));
 				case "player_state": return StoryReviewPanel.AiPlayerState();
+				case "settings": return StoryReviewPanel.AiSettingsText(Arg("query"));
 				case "usage": return AiAnalysis.Usage(Arg("name"));
 				case "routes": return AiAnalysis.Routes(Arg("key"), Arg("focus"));
 				default: return "没有这个工具：" + name;
@@ -128,6 +132,7 @@ public static class AiKnowledge
 			case "person": return "查看「" + Arg("name") + "」的人物志";
 			case "events": return "查场所事件「" + Arg("query") + "」";
 			case "player_state": return "查看当前进度";
+			case "settings": return "查看设置项" + (Arg("query").Length > 0 ? "「" + Arg("query") + "」" : "");
 			case "usage": return "反查「" + Arg("name") + "」";
 			case "routes": return "算任务 " + Arg("key") + " 每条路线";
 			case "propose_change": return "提议修改数值";

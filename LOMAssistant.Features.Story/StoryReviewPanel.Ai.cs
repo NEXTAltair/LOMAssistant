@@ -969,7 +969,7 @@ public partial class StoryReviewPanel
 				continue;
 			}
 			string Clean(string t) => AiKnowledge.Clean(t).Replace(" ", "");
-			string key = name.Replace(" ", "");
+			string key = Regex.Replace(name.Replace(" ", ""), @"^(?:旗标|设置)[·:：]", "");
 			// 好感：「好感·小梅」「小梅好感」「小梅的好感」
 			string favorOf = Regex.Match(key, @"^(?:好感[·:：]?(.+)|(.+?)的?好感(?:度)?)$") is Match fm && fm.Success ? (fm.Groups[1].Success && fm.Groups[1].Value.Length > 0 ? fm.Groups[1].Value : fm.Groups[2].Value) : null;
 			(string Section, StatRow Row) hit = default;
@@ -989,12 +989,30 @@ public partial class StoryReviewPanel
 			}
 			if (hit.Row == null)
 			{
+				// 旗标：数值页里旗标行的名字是编号（G00006），说明里才是「小竹告白」这样的名字
+				hit = rows.FirstOrDefault(x => x.Section == "旗标" && (x.Row.Id == "flag:" + key || Clean(x.Row.Note ?? "") == key));
+			}
+			if (hit.Row == null)
+			{
 				var near = rows.Where(x => Clean(x.Row.Name).Contains(key)).Take(2).ToList();
+				if (near.Count != 1)
+				{
+					near = rows.Where(x => x.Section == "旗标" && Clean(x.Row.Note ?? "").Contains(key)).Take(2).ToList();
+				}
 				hit = near.Count == 1 ? near[0] : default;
 			}
 			if (hit.Row == null)
 			{
-				missing.Add(name + "（数值页里没有这一项）");
+				// 不是数值，就看是不是咖啡伴侣的设置项
+				AiChat.Change setting = AiSettingChange(key, raw, out string problem);
+				if (setting != null)
+				{
+					result.Add(setting);
+				}
+				else
+				{
+					missing.Add(name + (problem ?? "（数值页和设置页里都没有这一项）"));
+				}
 				continue;
 			}
 			int value;
@@ -1012,7 +1030,7 @@ public partial class StoryReviewPanel
 				}
 			}
 			StatRow row = hit.Row;
-			string label = AiKnowledge.Clean(row.Name);
+			string label = AiKnowledge.Clean(row.Name) + (hit.Section == "旗标" && !string.IsNullOrEmpty(row.Note) ? "「" + AiKnowledge.Clean(row.Note) + "」" : "");
 			System.Func<int, string> show = row.Id == "stat:" + (int)GameStatType.愛人
 				? v => v + (StoryRomance.All.FirstOrDefault(h => h.Lover == v) is StoryRomance.Heroine hh ? "（" + StoryRomance.Name(hh) + "）" : "")
 				: v => v.ToString();
@@ -1025,6 +1043,143 @@ public partial class StoryReviewPanel
 			});
 		}
 		return result;
+	}
+
+	// AI 不能碰的设置：接入 AI 本身的（Key、地址、模型），免得把自己改坏
+	private static bool AiCanTouch(SettingRow row) => !row.Element.Name.StartsWith("Ai", System.StringComparison.Ordinal)
+		&& (row.Element.ElementType == typeof(bool) || row.Element.ElementType == typeof(int) || row.Element.ElementType == typeof(float));
+
+	private static IEnumerable<(string Section, SettingRow Row)> AiSettings() =>
+		BuildSettingSections().SelectMany(s => s.Item2.Where(AiCanTouch).Select(r => (s.Item1, r)));
+
+	private static string SettingValueText(SettingRow row, object value)
+	{
+		if (value is bool b)
+		{
+			return b ? "开" : "关";
+		}
+		if (row.Choices != null && value is int i && i >= 0 && i < row.Choices.Length)
+		{
+			return row.Choices[i];
+		}
+		return System.Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
+	}
+
+	/// <summary>给 AI 的 settings 工具：咖啡伴侣设置页的设置项（名字、当前值、可选值或范围、说明）。</summary>
+	internal static string AiSettingsText(string query)
+	{
+		string q = TextConverter.ToSimplified(query ?? "").Trim();
+		var sb = new StringBuilder();
+		string section = null;
+		foreach (var (title, row) in AiSettings())
+		{
+			string desc = Describe(row.Element.Description);
+			if (q.Length > 0 && !(row.Name + title + desc).Contains(q))
+			{
+				continue;
+			}
+			if (title != section)
+			{
+				section = title;
+				sb.Append("【").Append(title).Append("】\n");
+			}
+			sb.Append("- ").Append(row.Name).Append("：现在 ").Append(SettingValueText(row, row.Element.BoxedValue));
+			if (row.Element.ElementType == typeof(bool))
+			{
+				sb.Append("（开 / 关）");
+			}
+			else if (row.Choices != null)
+			{
+				sb.Append("（可选：").Append(string.Join(" / ", row.Choices)).Append("）");
+			}
+			else if (row.Speeds != null)
+			{
+				sb.Append("（可选：").Append(string.Join(" / ", row.Speeds.Select(v => v.ToString(System.Globalization.CultureInfo.InvariantCulture)).ToArray())).Append("）");
+			}
+			else if (row.Max > row.Min)
+			{
+				sb.Append("（").Append(row.Min).Append(" 到 ").Append(row.Max).Append("）");
+			}
+			sb.Append(row.Restart ? "，改后重启游戏生效" : "").Append("。").Append(desc).Append('\n');
+		}
+		return sb.Length > 0 ? sb.ToString() : "没有「" + query + "」相关的设置项。";
+	}
+
+	// 设置项的修改提议：按设置页上的名字找，新值按类型读（开关、几选一、数字）
+	private static AiChat.Change AiSettingChange(string key, string raw, out string problem)
+	{
+		problem = null;
+		string Clean(string t) => TextConverter.ToSimplified(t ?? "").Replace(" ", "");
+		var all = AiSettings().ToList();
+		var hit = all.FirstOrDefault(x => Clean(x.Row.Name) == key || x.Row.Element.Name == key);
+		if (hit.Row == null)
+		{
+			var near = all.Where(x => Clean(x.Row.Name).Contains(key)).Take(2).ToList();
+			hit = near.Count == 1 ? near[0] : default;
+		}
+		if (hit.Row == null)
+		{
+			return null;
+		}
+		SettingRow row = hit.Row;
+		IConfigElement element = row.Element;
+		string v = Clean(raw).ToLowerInvariant();
+		object value = null;
+		int choice = -1;
+		if (element.ElementType == typeof(bool))
+		{
+			if (v == "开" || v == "打开" || v == "开启" || v == "true" || v == "1" || v == "是" || v == "on")
+			{
+				value = true;
+			}
+			else if (v == "关" || v == "关闭" || v == "关掉" || v == "false" || v == "0" || v == "否" || v == "off")
+			{
+				value = false;
+			}
+		}
+		else if (row.Choices != null)
+		{
+			choice = System.Array.FindIndex(row.Choices, c => Clean(c) == Clean(raw));
+			if (choice < 0 && int.TryParse(v, out int n) && n >= 0 && n < row.Choices.Length)
+			{
+				choice = n;
+			}
+			if (choice >= 0)
+			{
+				value = choice;
+			}
+		}
+		else if (float.TryParse(v.TrimEnd('x', '倍', '%'), System.Globalization.NumberStyles.Float, System.Globalization.CultureInfo.InvariantCulture, out float f))
+		{
+			if (row.Max > row.Min)
+			{
+				f = Mathf.Clamp(f, row.Min, row.Max);
+			}
+			value = element.ElementType == typeof(int) ? (object)Mathf.RoundToInt(f) : f;
+		}
+		if (value == null)
+		{
+			problem = "（设置项「" + row.Name + "」的新值「" + raw + "」看不懂）";
+			return null;
+		}
+		object newValue = value;
+		return new AiChat.Change
+		{
+			Name = "设置·" + row.Name + (row.Restart ? "（重启游戏后生效）" : ""),
+			From = SettingValueText(row, element.BoxedValue),
+			To = SettingValueText(row, newValue),
+			Apply = () =>
+			{
+				if (row.Choose != null && choice >= 0)
+				{
+					row.Choose(choice);
+				}
+				else
+				{
+					element.BoxedValue = newValue;
+				}
+			},
+		};
 	}
 
 	// 养成地图在哪：地图标题（游戏左上角那行）和地图上能去的场所。唐门、崆峒等地图的场所不一样，AI 靠这个分清人在哪

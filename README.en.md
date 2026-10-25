@@ -50,7 +50,7 @@ Connect a large language model with your own API key to ask about the story and 
 - **Guide**: looks up the game's own story data before answering: quests and their triggers, script branches and dialogue, affection and stat totals along each route, endings and deaths, romance routes, character bios, location events, duel conditions, plus your current progress and the options on screen.
 - **Heroines**: the nine romanceable heroines speak in their own voice, their portraits change expression with what they say, and how they address you follows the story. They only know the story you have read. When you ask for help, a separate guide tip follows the reply; you can also set them to chat only.
 - **Spoilers**: Tell me anything / Only current and past / Hints only.
-- **Edits**: when the AI wants to change stats, affection or your sweetheart, it shows a card first; nothing changes until you confirm.
+- **Edits**: when the AI wants to change stats, affection, your sweetheart, story flags or this mod's settings, it shows a card first; nothing changes until you confirm.
 - **Chats**: each heroine's chats are stored locally; start new ones, switch between them, delete them. Replies appear as they are written.
 - **Deep mode**: switches to a stronger model that checks the facts before answering: more accurate, but costlier and slower.
 - **Cost and privacy**: you pay the provider's own rates; the mod charges nothing. Your key and chats go only to the provider you choose, and the key is hidden in diagnostics exports.
