@@ -475,7 +475,12 @@ public partial class StoryReviewPanel : MonoBehaviour
 		{
 			Fill(new Rect(0, 0, _windowRect.width, _windowRect.height), new Color(0.1f, 0.08f, 0.05f, 0.35f));
 		}
-		float width = S(460), height = S(210);
+		// 剧情段名长、字体放大或换语言时提示会折成好几行：按显示出来的文字量高度，框跟着长高
+		string where = StoryScripts.SegmentName(node.Script) + "　" + $"第{node.Year}年{node.Month}月";
+		string text = "读取「" + where + "」？\n当前没有存档的进度会丢失。";
+		float width = S(460);
+		float textHeight = Mathf.Max(S(70), _label.CalcHeight(new GUIContent(TextConverter.ForDisplay(text)), width - S(48)));
+		float height = S(140) + textHeight;
 		var box = new Rect((_windowRect.width - width) / 2, (_windowRect.height - height) / 2, width, height);
 		if (Event.current.type == EventType.Repaint)
 		{
@@ -483,8 +488,7 @@ public partial class StoryReviewPanel : MonoBehaviour
 			Frame(box, Cinnabar, 2);
 		}
 		GUI.Label(new Rect(box.x + S(24), box.y + S(18), width - S(48), S(36)), "确认读档", _heading);
-		string where = StoryScripts.SegmentName(node.Script) + "　" + $"第{node.Year}年{node.Month}月";
-		GUI.Label(new Rect(box.x + S(24), box.y + S(60), width - S(48), S(70)), "读取「" + where + "」？\n当前没有存档的进度会丢失。", _label);
+		GUI.Label(new Rect(box.x + S(24), box.y + S(60), width - S(48), textHeight), text, _label);
 		float bw = S(150), bh = S(40), by = box.yMax - bh - S(20);
 		if (GUI.Button(new Rect(box.xMax - S(24) - bw * 2 - S(14), by, bw, bh), "取消", _button))
 		{
