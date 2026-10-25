@@ -195,6 +195,8 @@ public class LOMAssistantPlugin : BaseUnityPlugin
 			TryPatchAll(typeof(LOMAssistant.Features.Story.StoryNodePatches));
 			LOMAssistant.Features.Story.StoryReviewPanel.Ensure(base.gameObject);
 			TryPatchAll(typeof(LoadClickGuard));
+			TryPatchAll(typeof(LeanTweenGuard));
+			LeanTweenGuard.Install();
 			TryPatchAll(typeof(ReadStoryKeeper));
 			TryPatchAll(typeof(TitlePartnerPatch));
 			TryPatchAll(typeof(SettingsDiagnosticsButton));

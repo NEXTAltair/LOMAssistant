@@ -120,6 +120,7 @@ public partial class AnytimeSave : MonoBehaviour
 			.GetField("_dynamicCodeGeneration", BindingFlags.Static | BindingFlags.NonPublic).SetValue(null, (bool?)false);
 		scriptPrefix = ReadResource("Replay.lua");
 		SceneManager.activeSceneChanged += SceneChanged;
+		Application.logMessageReceived += ScriptCrashed;
 		installed = true;
 		FileLogger.Log("[随时存档] 已启用。");
 	}
@@ -141,6 +142,15 @@ public partial class AnytimeSave : MonoBehaviour
 	{
 		active = -1; busy = false;
 		if (next.name != "Story" && !Restoring) { trace.Clear(); stamps.Clear(); rootScript = null; ClearRollback(); }
+	}
+
+	// 恢复途中剧本的 Lua 协程报错就停了，剧情不会再往下走；不用等 180 秒超时，直接停下并说明
+	private void ScriptCrashed(string condition, string stackTrace, LogType type)
+	{
+		if (Replaying && type == LogType.Exception && stackTrace != null && stackTrace.Contains("RunLuaCoroutine"))
+		{
+			Fail("剧本报错（" + (condition ?? "").Split('\n')[0] + "）");
+		}
 	}
 
 	internal void Notice(string s, float seconds = 8)
