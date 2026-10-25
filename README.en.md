@@ -28,7 +28,7 @@ The zip already contains BepInEx.
 
 | Key | Action |
 |---|---|
-| Tab | The 咖啡伴侣 window (now, route map, story map, branch saves, save-anywhere, collection, stats, settings) |
+| Tab | The Coffee Companion window (now, route map, story map, branch saves, save-anywhere, collection, stats, settings) |
 | F8 | Settings; on the save screen, edit the note of the selected save |
 | F9 | Stats page |
 | F5 / F7 / F6 | Save-anywhere: new save / load the latest / list all |
@@ -36,9 +36,9 @@ The zip already contains BepInEx.
 | F4 | Roll back to before the last story check |
 | Right click | Hide the UI to view CGs |
 | Gamepad L3 | Open / close the window |
-| ESC | The game menu gets 「空过」 (skip turn), 「直接获胜」 (win now) and 「导出诊断」 (export diagnostics) |
+| ESC | The game menu gets **Skip turn**, **Win now** and **Export diagnostics** |
 
-All keys can be changed or unbound under 「热键」 (Hotkeys) on the settings page.
+All keys can be changed or unbound under **Hotkeys** on the settings page.
 
 ## Features
 
@@ -58,22 +58,22 @@ All keys can be changed or unbound under 「热键」 (Hotkeys) on the settings 
 
   <img src="media/story-flow.webp" width="640" alt="Story map: options, conditions and destinations between story segments">
 
-- **Branch saves**: progress is recorded at quest starts and key options; click 「从这里重玩」 to go back and try another path. Separate per save, uses no save slots, synced with Steam Cloud.
+- **Branch saves**: progress is recorded at quest starts and key options; click **Replay from here** to go back and try another path. Separate per save, uses no save slots, synced with Steam Cloud.
 
   <img src="media/story-nodes.webp" width="640" alt="Branch saves: recorded story segments by date, replay or delete">
 
-- **Collection**: records from all playthroughs. Story counts how much of each quest's dialogue you have read; endings, deaths, achievements and ending CGs show their gallery numbers and whether you have them. For anything missing it says where and how to get it. Each entry lists the quests that lead to it; click one to open that quest's story map. The ending CG page can replay the end credits in a story scene (「看片尾动画」, Watch the credits); press Esc to stop.
+- **Collection**: records from all playthroughs. Story counts how much of each quest's dialogue you have read; endings, deaths, achievements and ending CGs show their gallery numbers and whether you have them. For anything missing it says where and how to get it. Each entry lists the quests that lead to it; click one to open that quest's story map. On the ending CG page, **Watch the credits** replays the end credits in a story scene; press Esc to stop.
 
   <img src="media/story-endings.webp" width="640" alt="Collection: story, endings, deaths, achievements and ending CGs, filter by done or not">
 
 ### Story helpers
 
 - **Pick dice results**: click a line on the dice wheel to choose that result.
-- **Option results**: dialogue options and dice lines show what they will change; locked options show their real unlock conditions, and 「一键设置」 next to them sets the conditions. 「选项后果」 in settings shows these always, only on hover (no spoilers unless you look), or never.
+- **Option results**: dialogue options and dice lines show what they will change; locked options show their real unlock conditions, and **Unlock** next to them sets the conditions. **Option results** in settings shows these always, only on hover (no spoilers unless you look), or never.
 
   <img src="media/option-hint.webp" width="640" alt="Options followed by their results and unlock conditions">
 
-- **Pick random events** (off by default): when working, wandering and so on, choose which event triggers, or roll with the normal odds. Branch checks that roll a random number (such as being pulled into a run by 小梅 while training) also let you pick the path. Each event or path can be set to 「总是」 (always) or 「不出」 (never); the rule is remembered and applies even with the picker off.
+- **Pick random events** (off by default): when working, wandering and so on, choose which event triggers, or roll with the normal odds. Branch checks that roll a random number also let you pick the path. Each event or path can be set to **Always** or **Never**; the rule is remembered and applies even with the picker off.
 
   <img src="media/event-picker.webp" width="480" alt="Pick random events: the events that can trigger, their odds and changes">
 
@@ -139,9 +139,9 @@ Changing values or flags at random can break the story; save first.
 - **Gamepad**: the whole window works with a gamepad (L3 opens it, the left stick moves the pointer, A clicks, LB / RB switch tabs); dice, skip turn and the event picker too.
 - **Interface**: dark mode; Source Han Serif or Microsoft YaHei font; separate opacity for the main window, small windows and hint boxes; larger dialogue text.
 - **Languages**: Simplified Chinese, Traditional Chinese and Korean following the game language, Japanese with the [Japanese patch](https://dlaqe2334.github.io/LOM-JPMOD/), English with an English patch; can also be chosen in settings.
-- **Export diagnostics**: ESC → 「环境设定」 → 「导出诊断」 packs logs and settings to the desktop (no saves); also in the installer.
+- **Export diagnostics**: ESC → Settings → **Export diagnostics** packs logs and settings to the desktop (no saves); also in the installer.
 - **Conflict detection**: warns about conflicting old mods at the top of settings; if another mod uses the same key, this mod gives it up.
-- **Export legend**: export this playthrough's legend as a txt at any time from 「状态 → 传奇」.
+- **Export legend**: export this playthrough's legend as a txt at any time from Status → Legend.
 - **Faster start**: the title animation is sped up, and the installer can skip the opening logos.
 - **Also**: choose who appears on the title screen; the lecture hall shows everything unlocked; the game can keep running in the background (off by default); the window's top right shows each version's changes and a red note when a new version is out.
 
@@ -155,7 +155,7 @@ Changing values or flags at random can break the story; save first.
 
 **Option results missing, dice cannot be picked?** An older mod of the same kind is installed. The installer handles this; for manual installs, remove the old mods from `BepInEx\plugins`.
 
-**Works with 邪神认知污染ON and 剧情随行?** Yes. For 邪神认知污染ON install only 「1_必装_插件」, not 「2_只有没装过BepInEx才装」 (if you did, run this mod's installer again). Clashing hotkeys are given up automatically; bind another under 「热键」.
+**Works with 邪神认知污染ON and 剧情随行?** Yes. For 邪神认知污染ON install only 「1_必装_插件」, not 「2_只有没装过BepInEx才装」 (if you did, run this mod's installer again). Clashing hotkeys are given up automatically; bind another under **Hotkeys**.
 
 **Linux / Steam Deck?** Install manually and add `WINEDLLOVERRIDES="winhttp=n,b" %command%` to the Steam launch options.
 
@@ -165,7 +165,7 @@ Everything is on the settings page of the window (F8). Changes are saved immedia
 
 <img src="media/settings.webp" width="640" alt="Settings page: switches, numbers, game speed and hotkeys by group">
 
-**Presets**: at the top of the settings page you can switch in one click to 「原汁原味」 (as the game intended), 「辅助」 (assist) or 「全开」 (everything on). They only change story hints, life-sim and combat aids and cheats; saves, speed-ups, interface and hotkeys stay as they are. Changing any of those switches makes it 「自定义」 (custom), which you can switch back to later. New players pick one the first time they open the window; if they don't, it stays on 「辅助」.
+**Presets**: at the top of the settings page you can switch in one click to **As intended**, **Assist** or **All on**. They only change story hints, life-sim and combat aids and cheats; saves, speed-ups, interface and hotkeys stay as they are. Changing any of those switches makes it **Custom**, which you can switch back to later. New players pick one the first time they open the window; if they don't, it stays on **Assist**.
 
 <img src="media/presets.webp" width="640" alt="Choosing a preset: three cards saying who each one suits and what it changes">
 
