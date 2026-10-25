@@ -73,7 +73,7 @@ All keys can be changed or unbound under **Hotkeys** on the settings page.
 
   <img src="media/option-hint.webp" width="640" alt="Options followed by their results and unlock conditions">
 
-- **Pick random events** (off by default): when working, wandering and so on, choose which event triggers, or roll with the normal odds. Branch checks that roll a random number also let you pick the path. Each event or path can be set to **Always** or **Never**; the rule is remembered and applies even with the picker off.
+- **Pick random events** (off by default): when working, wandering and so on, choose which event triggers, or roll with the normal odds. Events you haven't seen yet are marked **Not seen**. Branch checks that roll a random number also let you pick the path. Each event or path can be set to **Always** or **Never**; the rule is remembered and applies even with the picker off.
 
   <img src="media/event-picker.webp" width="480" alt="Pick random events: the events that can trigger, their odds and changes">
 
