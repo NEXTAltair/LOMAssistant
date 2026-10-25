@@ -2,6 +2,17 @@
 
 Changes in each version, newest first. Versions before 2.7.0 are only in Chinese; see CHANGELOG.md.
 
+## 2.9.1 (2026-10-24)
+
+- **English interface**: 「界面语言」 (Language) on the settings page now has English; with an English patch installed, 「跟随游戏」 (Follow game) shows English automatically.
+- **Jump from Collection**: each ending, death, achievement and CG lists the quests that lead to it; click one to open that quest's story map.
+- **Watch the credits**: the ending CG page in Collection can replay the end credits from finishing the game. Press Esc to stop; the previous music comes back. Only works in a story scene.
+- **Martial manual layer bonuses**: under martial training and books on the stats page, hover over a martial manual to see what each layer adds when learned; learned layers are ticked.
+- **The installer no longer downgrades**: when it cannot download the latest version, it does not install the copy in the zip if that is older than the installed one.
+- The zip now has an English readme, Readme (English).txt; Chinese text in the installer's English interface uses Microsoft YaHei.
+- **Fixed the legend page in the library not showing its page buttons.**
+- **Fixed 「直接获胜」 in the team battle pause menu showing in Simplified Chinese in the Traditional Chinese interface.**
+
 ## 2.9.0 (2026-10-24)
 
 - **Presets**: at the top of the settings page, switch in one click to 「原汁原味」 (as the game intended), 「辅助」 (assist) or 「全开」 (everything on). They only change story hints, life-sim and combat aids and cheats; changing any of those makes it 「自定义」 (custom), which you can switch back to. New players pick one the first time they open the window; the default is 「辅助」.
