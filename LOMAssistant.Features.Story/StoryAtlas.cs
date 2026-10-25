@@ -142,6 +142,11 @@ public static class StoryAtlas
 
 	private static IEnumerator _steps;
 
+	// 回养成地图、开始新一旬的公共剧本（很多任务演完用 SetNextScript 接到这里）：和 ChangeScene("Free") 一样算回地图，
+	// 不再往下走。走进去的话，地图上之后演到的各种剧本都算成这个任务的，别的存档演过地图剧情就显示「这一局走过」
+	private static readonly System.Text.RegularExpressions.Regex MapStart =
+		new System.Text.RegularExpressions.Regex(@"^section_\d+_free_start_\d+$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
 	public static void Start()
 	{
 		if (_steps != null)
@@ -263,7 +268,7 @@ public static class StoryAtlas
 			while (todo.Count > 0 && seen.Count < 400)
 			{
 				string name = todo.Dequeue();
-				if (seen.Contains(name) || (seen.Count > 0 && starts.Contains(name)))
+				if (seen.Contains(name) || (seen.Count > 0 && (starts.Contains(name) || MapStart.IsMatch(name))))
 				{
 					continue;
 				}
