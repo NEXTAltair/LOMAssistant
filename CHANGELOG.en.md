@@ -2,6 +2,11 @@
 
 Changes in each version, newest first. Versions before 2.7.0 are only in Chinese; see CHANGELOG.md.
 
+## 2.9.3 (2026-10-25)
+
+- **Game text size**: new in the 「其他」 (Other) group of the settings page. It enlarges all text in the game (menus, buttons, numbers, dialogue) for small screens such as the Steam Deck; dialogue text size stacks on top of it.
+- **More Korean translations**: over a hundred missing Korean interface texts are added, and quest names with arrows or ticks on the route map are translated too.
+
 ## 2.9.2 (2026-10-24)
 
 - **Fixed loading an anytime save getting stuck**: loading a long anytime save could use up the game's portrait animation capacity and leave the story frozen on one scene. The capacity is now larger, and if the script fails while loading, the load stops at once with a message instead of waiting.
