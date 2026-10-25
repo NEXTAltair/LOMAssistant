@@ -2,6 +2,12 @@
 
 Changes in each version, newest first. Versions before 2.7.0 are only in Chinese; see CHANGELOG.md.
 
+## 2.9.2 (2026-10-24)
+
+- **Fixed loading an anytime save getting stuck**: loading a long anytime save could use up the game's portrait animation capacity and leave the story frozen on one scene. The capacity is now larger, and if the script fails while loading, the load stops at once with a message instead of waiting.
+- **The random event picker marks events you haven't seen**: they show **Not seen** after their odds.
+- **The branch save load confirmation no longer cuts off text**: the box grows to fit long segment names.
+
 ## 2.9.1 (2026-10-24)
 
 - **English interface**: 「界面语言」 (Language) on the settings page now has English; with an English patch installed, 「跟随游戏」 (Follow game) shows English automatically.
