@@ -198,7 +198,7 @@ internal static class InstallerText
 		new[] { "确定卸载咖啡伴侣吗？", "Uninstall Coffee Companion?", "珈琲のおともをアンインストールしますか？", "커피 동반자를 제거할까요?" },
 		new[] { "还有 {0} 个别的 Mod，BepInEx 加载器会留给它们用，只删本 Mod。", "There are {0} other mods, so the BepInEx loader stays for them; only this mod is removed.", "ほかに {0} 個の MOD があるため、BepInEx ローダーは残し、このMODだけを削除します。", "다른 Mod가 {0}개 있어 BepInEx 로더는 남겨 두고 이 Mod만 삭제합니다." },
 		new[] { "没有别的 Mod 了，BepInEx 加载器也一起删掉，游戏回到没装 Mod 的样子。", "No other mods are left, so the BepInEx loader is removed too and the game goes back to unmodded.", "ほかの MOD がないので BepInEx ローダーも削除し、MOD を入れる前の状態に戻します。", "다른 Mod가 없으므로 BepInEx 로더도 함께 삭제해 Mod를 설치하기 전 상태로 되돌립니다." },
-		new[] { "存档不受影响（随时存档、剧情回顾收录的节点也留着，以后重装还能接着用）。", "Saves are not touched (quick saves and branch saves are kept too, so you can use them again after reinstalling).", "セーブには影響しません（クイックセーブや分岐セーブも残るので、再インストール後も使えます）。", "저장 파일에는 영향이 없습니다(수시 저장과 분기 저장도 남아 있어 다시 설치하면 이어서 쓸 수 있습니다)." },
+		new[] { "存档不受影响（随时存档、剧情回顾收录的节点也留着，以后重装还能接着用）。", "Saves are not touched (quick saves and branch saves are kept too, so you can use them again after reinstalling).", "セーブには影響しません（クイックセーブや分岐セーブも残るので、再インストール後も使えます）。", "저장 파일에는 영향이 없습니다(퀵세이브와 분기 저장도 남아 있어 다시 설치하면 이어서 쓸 수 있습니다)." },
 		new[] { "恢复开头 Logo 失败（{0}）。", "Failed to restore the opening logos ({0}).", "冒頭ロゴの復元に失敗しました（{0}）。", "시작 로고 복원 실패({0})." },
 		new[] { "已卸载咖啡伴侣。", "Coffee Companion has been uninstalled.", "珈琲のおともをアンインストールしました。", "커피 동반자를 제거했습니다." },
 		new[] { "以前停用的别的 Mod 还在「BepInEx\\DisabledMods」里，想用的话自己挪回去。", "Mods you disabled earlier are still in 「BepInEx\\DisabledMods」; move them back yourself if you want them.", "以前無効にしたほかの MOD は「BepInEx\\DisabledMods」に残っています。使う場合は自分で戻してください。", "이전에 사용 중지한 다른 Mod는 「BepInEx\\DisabledMods」에 남아 있습니다. 쓰려면 직접 옮기세요." },
