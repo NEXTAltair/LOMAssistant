@@ -83,6 +83,7 @@ public partial class StoryReviewPanel
 			ConfigManager.AiProvider.Value = picked;
 			ConfigManager.AiBaseUrl.Value = p.BaseUrl;
 			ConfigManager.AiModel.Value = p.Model;
+			ConfigManager.AiDeepModel.Value = p.DeepModel;
 			_aiTestStatus = "";
 		}
 		LlmProvider provider = AiChat.Provider;
@@ -107,6 +108,10 @@ public partial class StoryReviewPanel
 			}
 			GUILayout.EndHorizontal();
 		}
+		GUILayout.BeginHorizontal();
+		GUILayout.Label("深度模式模型", _label, GUILayout.Width(S(160)), Ctl());
+		Assign(ConfigManager.AiDeepModel, GUILayout.TextField(ConfigManager.AiDeepModel.Value, 100, _field, Ctl()));
+		GUILayout.EndHorizontal();
 		GUILayout.Label("模型名是建议值，服务商出了新模型可以自己改。要选支持工具调用（function calling）的模型。", _muted);
 		GUILayout.Space(S(8));
 
@@ -116,6 +121,10 @@ public partial class StoryReviewPanel
 		{
 			ConfigManager.AiSpoiler.Value = spoiler;
 		}
+		GUILayout.Space(S(8));
+		GUILayout.Label("女主角的攻略提示", _label);
+		int hints = Pick(new[] { "问到攻略时给", "只聊天，不给" }, ConfigManager.AiHints.Value ? 0 : 1, 2, r.width - S(30));
+		ConfigManager.AiHints.Value = hints == 0;
 		GUILayout.Space(S(12));
 
 		GUILayout.BeginHorizontal();
@@ -333,6 +342,8 @@ public partial class StoryReviewPanel
 	private bool _aiFocusInput;
 	// 玩家点了输入框、还没点别处：这期间输入框一直拿着键盘焦点
 	private bool _aiTyping;
+	// 输入框的控件编号（画完输入框时记下），回车判断在画它之前，要靠它认
+	private int _aiInputId;
 	private float _aiRefocusLogged = -100f;
 	private int _aiSeenFrame;
 
@@ -550,7 +561,13 @@ public partial class StoryReviewPanel
 		// 右上：模型名和小按钮
 		float bh = S(32), bwid = S(110);
 		LlmProvider provider = AiChat.Provider;
-		GUI.Label(new Rect(r.x, r.y, r.width - bwid * 4 - S(30), bh), provider.Name + " · " + ConfigManager.AiModel.Value + (AiChat.TokensUsed > 0 ? "　" + string.Format("这次开游戏用了 {0} token", AiChat.TokensUsed) : ""), Middle(_muted));
+		var deep = new Rect(r.xMax - bwid * 5 - S(24), r.y, bwid, bh);
+		if (GUI.Button(deep, "深度模式", AiChat.Deep ? _primary : _aiSmallButton) && !AiChat.Busy)
+		{
+			ConfigManager.AiDeepMode.Value = !ConfigManager.AiDeepMode.Value;
+		}
+		Hover(deep, "换用更强的模型，回答前核对资料：更准，也更贵、更慢");
+		GUI.Label(new Rect(r.x, r.y, r.width - bwid * 5 - S(36), bh), provider.Name + " · " + AiChat.Model + (AiChat.TokensUsed > 0 ? "　" + string.Format("这次开游戏用了 {0} token", AiChat.TokensUsed) : ""), Middle(_muted));
 		float bx = r.xMax - bwid * 4 - S(18);
 		GUI.enabled = !AiChat.Busy;
 		if (GUI.Button(new Rect(bx, r.y, bwid, bh), "新对话", _aiSmallButton))
@@ -737,6 +754,20 @@ public partial class StoryReviewPanel
 				GUI.FocusWindow(WindowId);
 			}
 		}
+		GUI.SetNextControlName("AiInput");
+		// 回车发送：Unity 把回车分成两个事件（按键、换行字符），两个都吞掉，不然清空后的输入框里会多一个空行
+		if (e.type == EventType.KeyDown && !e.shift && _aiInputId != 0 && GUIUtility.keyboardControl == _aiInputId && string.IsNullOrEmpty(Input.compositionString)
+			&& (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter || e.character == '\n' || e.character == '\r'))
+		{
+			send = e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter;
+			e.Use();
+		}
+		_aiInput = GUI.TextArea(box, _aiInput, 500, _aiField);
+		if (GUI.GetNameOfFocusedControl() == "AiInput")
+		{
+			_aiInputId = GUIUtility.keyboardControl;
+		}
+		// 焦点名要在画完输入框之后才查得到（之前查总是空的，会每帧重抢焦点、把光标放回开头）。
 		// 正在输入时焦点被别的东西拿走（第一下点击被窗口激活吃掉、别处清了键盘焦点……），每帧抢回来
 		if (_aiTyping && e.type == EventType.Layout && GUI.GetNameOfFocusedControl() != "AiInput")
 		{
@@ -748,15 +779,6 @@ public partial class StoryReviewPanel
 			GUI.FocusWindow(WindowId);
 			GUI.FocusControl("AiInput");
 		}
-		GUI.SetNextControlName("AiInput");
-		// 回车发送：Unity 把回车分成两个事件（按键、换行字符），两个都吞掉，不然清空后的输入框里会多一个空行
-		if (e.type == EventType.KeyDown && !e.shift && GUI.GetNameOfFocusedControl() == "AiInput" && string.IsNullOrEmpty(Input.compositionString)
-			&& (e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter || e.character == '\n' || e.character == '\r'))
-		{
-			send = e.keyCode == KeyCode.Return || e.keyCode == KeyCode.KeypadEnter;
-			e.Use();
-		}
-		_aiInput = GUI.TextArea(box, _aiInput, 500, _aiField);
 		bool focused = _aiTyping || (GUI.GetNameOfFocusedControl() == "AiInput" && GUIUtility.keyboardControl != 0);
 		if (e.type == EventType.Repaint)
 		{
@@ -967,7 +989,7 @@ public partial class StoryReviewPanel
 				.Where(n => n.Length > 0 && n != "无").Distinct().ToList();
 			if (places.Count > 0)
 			{
-				sb.Append("这张地图上的场所：").Append(string.Join("、", places.ToArray())).Append("（从场所判断玩家在唐门还是崆峒等地，不要只凭身份猜）\n");
+				sb.Append("这张地图上的场所：").Append(string.Join("、", places.ToArray())).Append("（从场所判断玩家在唐门还是崆峒等地，不要只凭身份猜；任务触发的场所不在这里面，就是不在这张地图上，要先回到那里）\n");
 			}
 		}
 		catch (System.Exception ex)
@@ -1017,7 +1039,9 @@ public partial class StoryReviewPanel
 			foreach (var pair in subs)
 			{
 				bool ready = active != null && active.Values.Contains(pair.Key) && !string.IsNullOrEmpty(pair.Key.StartScript);
-				sb.Append("- ").Append(AiKnowledge.Clean(pair.Value.Item1).Replace("\n", " ")).Append(ready ? "（可以触发）" : "").Append("：").Append(AiKnowledge.Clean(pair.Value.Item2).Replace("\n", " ")).Append('\n');
+				string where = TextConverter.ToSimplified(pair.Key.Position.ToString());
+				sb.Append("- ").Append(AiKnowledge.Clean(pair.Value.Item1).Replace("\n", " ")).Append(ready ? "（可以触发）" : "")
+					.Append(where.Length > 0 && where != "无" ? "（在「" + where + "」触发）" : "").Append("：").Append(AiKnowledge.Clean(pair.Value.Item2).Replace("\n", " ")).Append('\n');
 			}
 		}
 		string onScreen = OnScreen();

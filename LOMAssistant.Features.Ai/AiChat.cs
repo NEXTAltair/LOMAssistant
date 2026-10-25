@@ -60,6 +60,15 @@ public static class AiChat
 
 	public static LlmProvider Provider => LlmProvider.At(ConfigManager.AiProvider.Value);
 
+	public static bool Deep => ConfigManager.AiDeepMode.Value;
+
+	/// <summary>这次用的模型：深度模式且填了深度模型就用它。</summary>
+	public static string Model => Deep && ConfigManager.AiDeepModel.Value.Trim().Length > 0 ? ConfigManager.AiDeepModel.Value.Trim() : ConfigManager.AiModel.Value;
+
+	private static string DeepRule => Deep
+		? "\n\n【深度模式】回答前把要说的每个结论对照查到的资料核对一遍：数字、条件、选项通向哪里、日期都要有资料依据；拿不准的再查一次，宁可多查。好感、数值的「最多」「合计」一定用 routes 算。"
+		: "";
+
 	public static bool Configured => ConfigManager.AiBaseUrl.Value.Trim().Length > 0 && ConfigManager.AiModel.Value.Trim().Length > 0
 		&& (Provider.NoKey || ConfigManager.AiApiKey.Value.Trim().Length > 0);
 
@@ -124,8 +133,8 @@ public static class AiChat
 			{
 				send.Add(new ChatMessage { Role = ChatMessage.User, Text = "（查资料的次数到上限了。根据上面已经查到的内容直接回答，不要再调用工具。）" });
 			}
-			yield return LlmClient.Complete(provider, ConfigManager.AiBaseUrl.Value, ConfigManager.AiApiKey.Value, ConfigManager.AiModel.Value,
-				persona != null ? persona.Prompt(ReplyLanguage, Spoiler) : SystemPrompt(), send, true, 2000, r => reply = r, last);
+			yield return LlmClient.Complete(provider, ConfigManager.AiBaseUrl.Value, ConfigManager.AiApiKey.Value, Model,
+				(persona != null ? persona.Prompt(ReplyLanguage, Spoiler) : SystemPrompt()) + DeepRule, send, true, Deep ? 4000 : 2000, r => reply = r, last);
 			if (_stop)
 			{
 				break;
@@ -139,7 +148,7 @@ public static class AiChat
 			TokensUsed += reply.InputTokens + reply.OutputTokens;
 			if (reply.Calls.Count == 0)
 			{
-				answer = StripToolMarkup(reply.Text).Trim();
+				answer = StripIds(StripToolMarkup(reply.Text), persona != null).Trim();
 				if (answer.Length == 0 && reply.Text.Trim().Length > 0)
 				{
 					answer = "（查了很多资料还没整理出答案，换个具体点的问法再问一次吧。）";
@@ -209,6 +218,18 @@ public static class AiChat
 		@"<[｜|]?\s*DSML[\s\S]*$|<\s*/?\s*(?:function_calls|invoke|parameter|tool_call|tool_use)\b[\s\S]*$", System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
 	private static string StripToolMarkup(string text) => ToolMarkup.Replace(text ?? "", "");
+
+	// 剧本编号（ch4_9_3_8、S2700_01_03）；女主角口中连任务编号、旗标编号（S2700_01、G11006）也不要
+	private const string ScriptId = @"ch\d+(?:_[A-Za-z0-9]+)+|[A-Z]\d{4}(?:_[A-Za-z0-9]+){2,}";
+	private const string AnyId = ScriptId + @"|[A-Z]{1,2}\d{4,}(?:_[A-Za-z0-9]+)*";
+	private static readonly System.Text.RegularExpressions.Regex ScriptIds = IdPattern(ScriptId);
+	private static readonly System.Text.RegularExpressions.Regex AnyIds = IdPattern(AnyId);
+
+	private static System.Text.RegularExpressions.Regex IdPattern(string id) => new System.Text.RegularExpressions.Regex(
+		@"[（(「]\s*(?:" + id + @")\s*[）)」]|[ \t]?(?<![A-Za-z0-9_])(?:" + id + @")(?![A-Za-z0-9_])[ \t]?");
+
+	/// <summary>模型不听话写出来的编号，显示前去掉。</summary>
+	private static string StripIds(string text, bool all) => (all ? AnyIds : ScriptIds).Replace(text, "");
 
 	/// <summary>玩家点了卡片上的确认或不改。</summary>
 	public static void Resolve(AiSession session, Entry proposal, bool apply)
@@ -284,6 +305,9 @@ public static class AiChat
 			+ "怎么查资料\n"
 			+ "- 剧情、条件、数值、结局一律以工具查到的游戏数据为准，不要凭印象编。查不到就说查不到，不要猜。\n"
 			+ "- 不知道编号时先 search，再用 quest 看任务、script 看剧本的分岔和对白、endings 看结局、heroine 看结缘路线。\n"
+			+ "- 问「这个任务最多能加多少」「哪条路最好」「怎么走好感最高」时用 routes：它把每条完整的路和这条路上的合计算好了。分岔互斥，不要自己把几个剧本的变化加在一起。\n"
+			+ "- 问「某个旗标在哪设」「要满足什么才触发」「某人好感在哪被判定」时用 usage。\n"
+			+ "- 「目前时间」是从开局数的第几旬，资料里已经在括号里换成了日期。\n"
 			+ "- 问题和玩家现在的进度有关（「我现在」「接下来」「来得及吗」）时，先用 player_state 看进度、数值和好感。\n"
 			+ "- 玩家要你帮他改数值、好感、心上人时，用 propose_change 提出修改，玩家在卡片上点确认才会生效；改之前先用 player_state 看当前值。\n"
 			+ "- 玩家问「这里怎么选」「这个选项」「这次掷骰」时，player_state 的【眼前】是屏幕上正在显示的选项或掷骰，再用 script 查那个剧本，按选项文字找到对应的分岔，结合玩家现在的数值说每个选项的结果和推荐。\n"
@@ -293,7 +317,7 @@ public static class AiChat
 			+ "- 先给结论，再分条说清楚条件、每条路的结果和依据；可以引用一两句原文对白。\n"
 			+ "- 好感、数值、旗标的变化只说资料「变化」里写了的；资料里没写某人的好感变化，就是这段剧情不改她的好感，不要说「好感容易涨」「好感涨得最多」这类话。\n"
 			+ "- 「准备」只说具体能做的（提高哪项数值到多少、先存档、用 Mod 的骰子自选），不说空泛的话。\n"
-			+ "- 用游戏里的叫法（人名、数值名、任务名）。任务编号可以括注在任务名后面，方便玩家在剧情图里找；剧本编号不要写给玩家，用「之后」「接下来的剧情」代替；不要提工具、文件、数据这些词。\n"
+			+ "- 用游戏里的叫法（人名、数值名、任务名）。任务编号可以括注在任务名后面，方便玩家在剧情图里找；剧本编号（ch4_9_3_8、S2700_01_03 这类）不要写给玩家，用「之后」「接下来的剧情」代替；不要提工具、文件、数据这些词。\n"
 			+ "- 简洁：一般不超过 400 字，玩家要细节时再展开。\n"
 			+ "- 剧透：" + Spoiler + "\n"
 			+ "- 用" + ReplyLanguage + "回答。";

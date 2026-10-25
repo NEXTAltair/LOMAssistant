@@ -79,6 +79,9 @@ public static class ConfigManager
 	public static ConfigElement<string> AiModel;
 	public static ConfigElement<string> AiApiKey;
 	public static ConfigElement<int> AiSpoiler;
+	public static ConfigElement<bool> AiHints;
+	public static ConfigElement<bool> AiDeepMode;
+	public static ConfigElement<string> AiDeepModel;
 
 	public static ConfigElement<int> PanelFont;
 	public static ConfigElement<int> PanelScale;
@@ -369,6 +372,9 @@ public static class ConfigManager
 		AiBaseUrl = new ConfigElement<string>("AiBaseUrl", "AI 服务商的 API 地址（选服务商时自动填）", "https://api.deepseek.com/v1");
 		AiModel = new ConfigElement<string>("AiModel", "AI 用的模型名（选服务商时自动填建议的，可以改）", "deepseek-flash");
 		AiApiKey = new ConfigElement<string>("AiApiKey", "AI 服务商的 API Key：只存在这台电脑的配置文件里，只发给选的服务商", "");
+		AiDeepMode = new ConfigElement<bool>("AiDeepMode", "AI 深度模式：换用更强的模型（AiDeepModel），回答更长，答前把结论对照查到的资料核对一遍。更准，也更贵、更慢", defaultValue: false);
+		AiDeepModel = new ConfigElement<string>("AiDeepModel", "深度模式用的模型名；空着就和平时用同一个模型", "deepseek-v4-pro");
+		AiHints = new ConfigElement<bool>("AiHints", "女主角人设问到攻略时，在回答后面单独给一段攻略提示；关掉就只用她的口吻聊天", defaultValue: true);
 		AiSpoiler = new ConfigElement<int>("AiSpoiler", "AI 剧透程度：0=想知道什么说什么，1=只说当前和走过的剧情，2=只给方向提示", 0);
 		UiLanguage = new ConfigElement<int>("UiLanguage", "咖啡伴侣窗口等 Mod 界面的语言：0=跟随游戏（装了日语补丁时显示日语，装了英文补丁时显示英语），1=简体中文，2=繁体中文，3=韩语，4=日语，5=英语", 0);
 		PanelTheme = new ConfigElement<int>("PanelTheme", "咖啡伴侣窗口的配色：0=浅色（宣纸底），1=深色（墨色底，默认），2=跟随系统（Windows 的应用模式）", 1);

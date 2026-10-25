@@ -45,6 +45,9 @@ public static class StoryUsage
 	/// <summary>这个人的好感在哪些剧情里被判定（人名用简体）。剧本还没读完返回 null。</summary>
 	public static List<StoryUse> Relation(string name) => Ensure() ? Relations.TryGetValue(name, out var list) ? list : new List<StoryUse>() : null;
 
+	/// <summary>剧本里改过、判定过的全部旗标编号（按名字找旗标用）；剧本还没读完为空。</summary>
+	public static IEnumerable<string> FlagIds => Ensure() ? Flags.Keys.ToList() : new List<string>();
+
 	/// <summary>剧本还没读完返回 null。</summary>
 	public static List<StoryUse> Flag(string id) => Ensure() ? Flags.TryGetValue(id, out var list) ? list : new List<StoryUse>() : null;
 

@@ -35,6 +35,8 @@ public sealed class ToolCall
 public sealed class LlmProvider
 {
 	public string Name = "", BaseUrl = "", Model = "", KeysPage = "";
+	/// <summary>深度模式默认用的更强模型；空 = 和平时同一个模型。</summary>
+	public string DeepModel = "";
 	public bool Claude;
 	/// <summary>本地模型不用 Key。</summary>
 	public bool NoKey;
@@ -43,14 +45,14 @@ public sealed class LlmProvider
 
 	public static readonly LlmProvider[] All =
 	{
-		new LlmProvider { Name = "DeepSeek", BaseUrl = "https://api.deepseek.com/v1", Model = "deepseek-flash", KeysPage = "https://platform.deepseek.com/api_keys" },
+		new LlmProvider { Name = "DeepSeek", BaseUrl = "https://api.deepseek.com/v1", Model = "deepseek-flash", DeepModel = "deepseek-v4-pro", KeysPage = "https://platform.deepseek.com/api_keys" },
 		new LlmProvider { Name = "Kimi（月之暗面）", BaseUrl = "https://api.moonshot.cn/v1", Model = "kimi-k3.1-pro", KeysPage = "https://platform.moonshot.cn/console/api-keys" },
-		new LlmProvider { Name = "通义千问（阿里云百炼）", BaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1", Model = "qwen3.8-flash", KeysPage = "https://bailian.console.aliyun.com/?apiKey=1" },
-		new LlmProvider { Name = "智谱 GLM", BaseUrl = "https://open.bigmodel.cn/api/paas/v4", Model = "glm-5.3-flash", KeysPage = "https://open.bigmodel.cn/usercenter/apikeys" },
+		new LlmProvider { Name = "通义千问（阿里云百炼）", BaseUrl = "https://dashscope.aliyuncs.com/compatible-mode/v1", Model = "qwen3.8-flash", DeepModel = "qwen3.8-max", KeysPage = "https://bailian.console.aliyun.com/?apiKey=1" },
+		new LlmProvider { Name = "智谱 GLM", BaseUrl = "https://open.bigmodel.cn/api/paas/v4", Model = "glm-5.3-flash", DeepModel = "glm-5.3", KeysPage = "https://open.bigmodel.cn/usercenter/apikeys" },
 		new LlmProvider { Name = "硅基流动", BaseUrl = "https://api.siliconflow.cn/v1", Model = "deepseek-ai/DeepSeek-V4.1-Flash", KeysPage = "https://cloud.siliconflow.cn/account/ak" },
 		new LlmProvider { Name = "OpenRouter", BaseUrl = "https://openrouter.ai/api/v1", Model = "deepseek/deepseek-v4.1-flash", KeysPage = "https://openrouter.ai/keys" },
 		new LlmProvider { Name = "OpenAI", BaseUrl = "https://api.openai.com/v1", Model = "gpt-6-luna", KeysPage = "https://platform.openai.com/api-keys" },
-		new LlmProvider { Name = "Claude（Anthropic）", BaseUrl = "https://api.anthropic.com/v1", Model = "claude-sonnet-5-5", KeysPage = "https://console.anthropic.com/settings/keys", Claude = true },
+		new LlmProvider { Name = "Claude（Anthropic）", BaseUrl = "https://api.anthropic.com/v1", Model = "claude-sonnet-5-5", DeepModel = "claude-opus-5-5", KeysPage = "https://console.anthropic.com/settings/keys", Claude = true },
 		new LlmProvider { Name = "Gemini（Google）", BaseUrl = "https://generativelanguage.googleapis.com/v1beta/openai", Model = "gemini-3.8-flash", KeysPage = "https://aistudio.google.com/apikey" },
 		new LlmProvider { Name = "本地模型（Ollama）", BaseUrl = "http://localhost:11434/v1", Model = "qwen3", NoKey = true },
 		new LlmProvider { Name = "自定义（OpenAI 兼容）", BaseUrl = "", Model = "", Custom = true },

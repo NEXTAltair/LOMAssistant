@@ -27,10 +27,14 @@ public static class AiKnowledge
 			Schema(("key", "string", "任务编号，如 S2700_01（从 search 结果里拿）"))),
 		("script", "看一个剧本的详情：游戏的剧情记录、选项、每条分岔路径上的数值和旗标变化、接到哪个剧本、结局和死亡、决斗；以及按分岔分开的对白原文。对白多时分页。",
 			Schema(("name", "string", "剧本编号，如 S2700_02_01"), ("page", "integer", "对白第几页，从 1 开始，默认 1"))),
-		("endings", "按关键词查结局、死亡、成就、结局 CG：名称、说明，以及在哪个剧本、走哪条分岔能达成。关键词留空则列出全部名称。",
+		("endings", "按关键词查结局（汗青书）、死亡（生死簿）、成就、结局 CG：名称、说明，以及在哪个剧本、走哪条分岔能达成。也能按图鉴编号查，如「生死簿3」「结局4」。关键词留空则列出全部名称。",
 			Schema(("query", "string", "关键词；传空字符串列出全部名称"))),
 		("heroine", "看一位可结缘女主角的结缘路线：要经过哪些任务、每一站的好感门槛和要设的结缘旗标、玩家现在做到哪一步。",
 			Schema(("name", "string", "女主角的名字或称呼，如 小师妹、唐默铃、小竹、郁竹"))),
+		("usage", "反查：一面旗标（名字或编号）、某人的好感，在哪些剧情里被改、被判定（剧本、所属任务、走哪条分岔、改成多少或要多少）。问「某个旗标在哪设」「某人好感在哪被判定」「要满足什么才能触发」时用。",
+			Schema(("name", "string", "旗标的名字（说明里的词，如 小竹告白）或编号（如 G11006）；或人名（查她的好感在哪被判定）"))),
+		("routes", "整条路线算账：从一个任务的开头剧本走到底，列出每一条完整的路（要选什么、掷骰掷多少、满足什么条件），以及这一条路上加减的好感、数值合计和设的旗标、结局。分岔互斥，一次只走一条，所以「这个任务最多能加多少好感」「哪条路最好」一定要用它，不要把各剧本的变化自己加起来。",
+			Schema(("key", "string", "任务编号（如 S2700_01）或剧本编号"), ("focus", "string", "关心的那一项，如 郁竹好感、心相；按它从多到少排，并给出最多、最少。不关心就传空字符串"))),
 		("player_state", "看玩家现在的进度：游戏日期、主线和可触发的支线、正在进行的剧情、主要数值、所有人的好感、结缘对象。回答和玩家当前进度有关的问题前先看一次。",
 			new JObject { ["type"] = "object", ["properties"] = new JObject() }),
 		("propose_change", "向玩家提议修改数值：会在对话里显示一张卡片，写着每项的当前值和新值，玩家点「确认」才会改，点「不改」就不改。"
@@ -92,6 +96,8 @@ public static class AiKnowledge
 				case "endings": return EndingList(Arg("query"));
 				case "heroine": return Heroine(Arg("name"));
 				case "player_state": return StoryReviewPanel.AiPlayerState();
+				case "usage": return AiAnalysis.Usage(Arg("name"));
+				case "routes": return AiAnalysis.Routes(Arg("key"), Arg("focus"));
 				default: return "没有这个工具：" + name;
 			}
 		}
@@ -114,6 +120,8 @@ public static class AiKnowledge
 			case "endings": return "查结局「" + Arg("query") + "」";
 			case "heroine": return "查看「" + Arg("name") + "」的结缘路线";
 			case "player_state": return "查看当前进度";
+			case "usage": return "反查「" + Arg("name") + "」";
+			case "routes": return "算任务 " + Arg("key") + " 每条路线";
 			case "propose_change": return "提议修改数值";
 			default: return name;
 		}
@@ -122,7 +130,7 @@ public static class AiKnowledge
 	private static readonly Regex Current = new Regex(@" ?→ ?当前[^ ，；、。)）\n]*");
 
 	/// <summary>去掉富文本标记、条件里的当前值，转成简体。</summary>
-	internal static string Clean(string text) => Current.Replace(TextConverter.ToSimplified(RichText.Strip(text ?? "")), "").Trim();
+	internal static string Clean(string text) => AiAnalysis.ExplainTime(Current.Replace(TextConverter.ToSimplified(RichText.Strip(text ?? "")), "").Trim());
 
 	private static string PathText(List<StoryStep> path) => path.Count == 0 ? "（开头，不经分岔）" : string.Join(" → ", path.Select(s => Clean(StoryScripts.Describe(s))).ToArray());
 
@@ -181,7 +189,18 @@ public static class AiKnowledge
 				sb.Append("- ").Append(Clean(e.Title)).Append(e.Death ? "（死亡）" : "").Append('\n');
 			}
 		}
+		var flags = AiAnalysis.FlagsNamed(q, 8);
+		if (flags.Count > 0)
+		{
+			sb.Append("【旗标】（用 usage 看在哪改、在哪判定）\n");
+			foreach (string f in flags)
+			{
+				sb.Append("- ").Append(f).Append('\n');
+			}
+		}
 		var lines = StoryAtlas.SearchDialogue(q, 15);
+		// 任务以外的剧本（地点事件、随机事件）也搜
+		lines.AddRange(AiAnalysis.SearchOtherDialogue(q, 10));
 		if (lines.Count > 0)
 		{
 			sb.Append("【对白】（剧本编号：片段）\n");
@@ -324,13 +343,43 @@ public static class AiKnowledge
 		return sb.ToString();
 	}
 
+	/// <summary>问题里的编号：阿拉伯数字或一到九十九的中文数字；没有为 0。</summary>
+	private static int ChineseNumber(string q)
+	{
+		// 只认「第三」「生死簿3」「结局四」「3条」这种位置的数字，别把「一如人间」当成 1
+		var m = System.Text.RegularExpressions.Regex.Match(q, @"(?:第|簿|局|亡)\s*([一二三四五六七八九十\d]+)|([一二三四五六七八九十\d]+)\s*[条号]");
+		if (!m.Success)
+		{
+			return 0;
+		}
+		string s = m.Groups[1].Success ? m.Groups[1].Value : m.Groups[2].Value;
+		if (char.IsDigit(s[0]))
+		{
+			return int.TryParse(s, out int n) ? n : 0;
+		}
+		const string digits = "一二三四五六七八九";
+		int ten = s.IndexOf('十');
+		if (ten < 0)
+		{
+			return s.Length == 1 ? digits.IndexOf(s[0]) + 1 : 0;
+		}
+		int tens = ten == 0 ? 1 : digits.IndexOf(s[ten - 1]) + 1;
+		int ones = ten + 1 < s.Length ? digits.IndexOf(s[ten + 1]) + 1 : 0;
+		return tens * 10 + ones;
+	}
+
 	private static string EndingList(string query)
 	{
 		string q = TextConverter.ToSimplified(query);
 		var sb = new StringBuilder();
+		// 「生死簿第三条」「结局4」：按图鉴编号找
+		int number = ChineseNumber(q);
+		bool deaths = q.Contains("生死簿") || q.Contains("死亡") || q.Contains("死法");
+		bool endings = q.Contains("汗青") || q.Contains("结局");
+		bool byNumber = number > 0 && deaths != endings;
 		void List(string title, List<StoryEnding> items)
 		{
-			var hits = items.Where(e => q.Length == 0 || (e.Title + e.Desc).Contains(q)).ToList();
+			var hits = items.Where(e => byNumber ? e.Number == number && e.Death == deaths : q.Length == 0 || (e.Title + e.Desc).Contains(q)).ToList();
 			if (hits.Count == 0)
 			{
 				return;
@@ -344,6 +393,10 @@ public static class AiKnowledge
 					if (e.Desc.Length > 0)
 					{
 						sb.Append("：").Append(Clean(e.Desc).Replace("\n", " "));
+					}
+					if (e.Ways.Count == 0)
+					{
+						sb.Append("\n  · 剧本里没找到直接走到它的地方（可能由游戏代码判定）。照实告诉玩家没查到，不要拿别的剧情去猜。");
 					}
 					foreach (StoryEndingWay w in e.Ways.Take(6))
 					{
@@ -410,7 +463,7 @@ public static class AiKnowledge
 			sb.Append("- ").Append(MissionLine(stop.Mission));
 			if (stop.Affection != 0)
 			{
-				sb.Append("，剧本里有加减她好感的地方（各分岔合计 ").Append(stop.Affection > 0 ? "+" : "").Append(stop.Affection).Append("；分岔互斥，实际走一条路拿到的少得多，具体哪条路加多少用 script 查，不要把合计说成「最多能加」）");
+				sb.Append("，剧本里有加减她好感的地方（各分岔合计 ").Append(stop.Affection > 0 ? "+" : "").Append(stop.Affection).Append("；分岔互斥，实际走一条路拿到的少得多，具体哪条路加多少用 routes 查，不要把合计说成「最多能加」）");
 			}
 			if (stop.Steps.Count > 0)
 			{
