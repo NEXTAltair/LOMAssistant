@@ -839,6 +839,7 @@ public static class UiText
 		new[] { "(未解锁)", "(미해금)", "（未解放）" },
 		new[] { "｜旧档", "｜이전 기록", "｜旧データ" },
 		new[] { "可触发：", "발생 가능:", "発生可能：" },
+		new[] { "可觸發：", "발생 가능:", "発生可能：" },
 
 		// Supplement: assembled sentences, fragments, and place names
 		// 第二步补上的：拼接后的整句、片段、地点名
