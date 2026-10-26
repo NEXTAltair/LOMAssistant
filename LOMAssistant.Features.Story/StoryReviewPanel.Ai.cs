@@ -537,6 +537,20 @@ public partial class StoryReviewPanel
 		GUI.DrawTextureWithTexCoords(r, sprite.texture, new Rect(t.x / sprite.texture.width, t.y / sprite.texture.height, t.width / sprite.texture.width, t.height / sprite.texture.height));
 	}
 
+	private static void DrawFace(Rect r, AiPersona p)
+	{
+		Sprite sprite = AiPortrait(p, p.Moods[0]);
+		if (sprite == null || Event.current.type != EventType.Repaint)
+		{
+			return;
+		}
+		Rect t = sprite.textureRect;
+		float w = sprite.texture.width, h = sprite.texture.height, side = p.IconCrop[2] * t.width;
+		// IconCrop 从左上量，贴图坐标从左下量
+		var uv = new Rect((t.x + p.IconCrop[0] * t.width) / w, (t.yMax - p.IconCrop[1] * t.height - side) / h, side / w, side / h);
+		GUI.DrawTextureWithTexCoords(r, sprite.texture, uv);
+	}
+
 	// 展开了的「查了 N 处资料」（按那一组的第一条记）
 	private readonly HashSet<AiChat.Entry> _aiOpenLookups = new HashSet<AiChat.Entry>();
 
@@ -568,6 +582,11 @@ public partial class StoryReviewPanel
 					}
 					GUI.Label(icon, "攻", _seal);
 				}
+				else if (personas[i - 1].IconCrop != null)
+				{
+					// 大师兄没有游戏里的心上人头像：从立绘上裁出脸
+					DrawFace(icon, personas[i - 1]);
+				}
 				else
 				{
 					DrawSprite(icon, LOMAssistant.Features.Extras.SaveBrowser.LoverIcon(personas[i - 1].Lover));
@@ -595,7 +614,7 @@ public partial class StoryReviewPanel
 			GUILayout.Space(S(6));
 			GUILayout.Label("会自己查游戏里的剧情资料再回答：任务怎么触发、选项通向哪里、结局怎么达成、现在该做什么。", _muted);
 			GUILayout.Space(S(6));
-			GUILayout.Label("选上面的女主角，就换成她用自己的口吻和你说话。", _muted);
+			GUILayout.Label("选上面的女主角或大师兄，就换成那个人用自己的口吻和你说话。", _muted);
 			GUILayout.Space(S(6));
 			GUILayout.Label("要改数值、好感时会先给你一张卡片，你确认了才改。", _muted);
 			GUILayout.EndArea();

@@ -8,7 +8,7 @@ using Mortal.Core;
 namespace LOMAssistant.Features.Ai;
 
 /// <summary>
-/// 女主角人设：以她的口吻回答玩家。
+/// 人设（九位女主角和大师兄唐布衣）：以他们的口吻回答玩家。
 /// 写死的只有身份、性格、说话方式、对赵活和自己的称呼（不剧透，是我们自己写的，排在游戏人物志后面当补充；部分性格和小习惯参考了类脑社区夏呆呆的同人角色卡《活侠传》，剧透的身世不放进来）；
 /// 其余每次提问时现场拼：游戏人物志（和游戏里一样按好感解锁）、她说过的原话（只取玩家读过的，当作「声音」）、和赵活一起经历过的事（这一局的剧情记录里她在场或被提到的条目，按读到的先后）、现在的好感和结缘情况。
 /// 所以她只知道玩家已经经历过的事，不会提前说出后面的剧情。
@@ -19,8 +19,14 @@ public sealed class AiPersona
 	public string Id = "";
 	/// <summary>立绘文件夹（Images/Characters 下）。</summary>
 	public string Folder = "";
-	/// <summary>StoryRomance.All 里的序号（心上人编号）。</summary>
-	public int Lover;
+	/// <summary>StoryRomance.All 里的序号（心上人编号）；不是女主角的为 -1。</summary>
+	public int Lover = -1;
+	/// <summary>不是女主角时，游戏里记他对赵活好感的那一项。</summary>
+	public RelationshipStatType? Friend;
+	/// <summary>剧情记录里还会怎么称呼他（找「一起经历过的事」用）。</summary>
+	public string[] Names = new string[0];
+	/// <summary>没有游戏里的心上人头像时，人设标签上的头像从立绘裁：左、上、边长，按立绘宽高的比例。</summary>
+	public float[] IconCrop;
 	public string Name = "";
 	/// <summary>她怎么称呼赵活、怎么自称。</summary>
 	public string Address = "";
@@ -37,7 +43,7 @@ public sealed class AiPersona
 		["normal"] = "平常", ["laugh1"] = "微笑", ["laugh2"] = "开怀大笑", ["close_eye_laugh"] = "眯眼笑", ["shy"] = "害羞", ["proud"] = "得意",
 		["revel"] = "陶醉", ["serious"] = "严肃", ["nervous1"] = "紧张、尴尬", ["nervous2"] = "慌乱", ["nervous3"] = "窘迫", ["shock"] = "吃惊",
 		["angry1"] = "生气", ["angry2"] = "发火", ["angry3"] = "暴怒", ["gloomy1"] = "忧郁", ["gloomy2"] = "阴郁", ["sad1"] = "低落", ["sad2"] = "难过",
-		["cry1"] = "落泪", ["doubt"] = "怀疑", ["love"] = "爱慕", ["discouraged"] = "沮丧",
+		["cry1"] = "落泪", ["doubt"] = "怀疑", ["love"] = "爱慕", ["discouraged"] = "沮丧", ["annoyed"] = "不耐烦", ["hurt"] = "吃痛",
 	};
 
 	public static readonly AiPersona[] All =
@@ -133,6 +139,18 @@ public sealed class AiPersona
 				+ "觉得带肩甲的衣服最威风；从不下厨，出门带着厨子；最忌讳替人作保。拳脚只够防身，急了会把整串铜钱当暗器扔。",
 			Moods = new[] { "normal", "nervous1", "laugh1", "nervous3", "angry1", "angry2", "sad2", "nervous2", "laugh2", "shy" },
 		},
+		new AiPersona
+		{
+			Id = "brother1", Folder = "Brother1", Friend = RelationshipStatType.大師兄, Name = "唐布衣", Names = new[] { "大师兄" },
+			IconCrop = new[] { 0.295f, 0.023f, 0.32f },
+			Address = "叫赵活「师弟」，损他时叫「小贱人」「臭师弟」，自称「我」或「师兄」。",
+			Traits = "唐门掌门唐中翎的大弟子，赵活的大师兄，江湖人称「飞侠」，轻功和暗器都是当世一流，最拿手的是拿真铜钱当金钱镖。"
+				+ "爽朗不羁、没大没小，爱开玩笑、爱恶作剧，越被挖苦越开心。常拉师弟们逃差事、偷懒玩耍，最会惹师父生气；看不惯唐门分内外弟子，从不拿外姓师弟当外人。"
+				+ "嘴上没个正经，骨子里侠气十足：路见有人欺负人，就欺负回去。护着师弟师妹，把小师妹唐默铃当亲妹妹疼，没别的想法。不想当掌门，说不想管人也不想被管。"
+				+ "说话随性、俏皮，爱抬杠、说干话，跟赵活一来一往像说相声，还想着哪天退隐江湖，和赵活搭档去各地说相声。"
+				+ "爱喝酒，在后山山壁上藏着猴儿酒；爱吃叶儿粑；习惯睡在树上，开会坐久了就喊腰酸背痛；做菜抓到什么放什么。常往青楼跑，对姑娘嘴甜，可真要他在姑娘和一盘饺子里挑，多半挑饺子。",
+			Moods = new[] { "normal", "laugh1", "laugh2", "serious", "annoyed", "nervous1", "nervous2", "nervous3", "shock", "angry1", "angry2", "angry3", "hurt" },
+		},
 	};
 
 	public static AiPersona Find(string id) => All.FirstOrDefault(p => p.Id == id);
@@ -195,8 +213,8 @@ public sealed class AiPersona
 		try
 		{
 			bool all = LOMAssistant.Config.ConfigManager.AiSpoiler.Value == 0;
-			StoryRomance.Heroine h = Heroine;
-			RelationshipStat stat = h != null ? PlayerStatManagerData.Instance?.Relationships?.Get(h.Relation) : null;
+			RelationshipStatType? relation = Heroine?.Relation ?? Friend;
+			RelationshipStat stat = relation != null ? PlayerStatManagerData.Instance?.Relationships?.Get(relation.Value) : null;
 			if (!all && (stat == null || !stat.Active))
 			{
 				return list;
@@ -307,6 +325,7 @@ public sealed class AiPersona
 		}
 		var present = new HashSet<string>(lines.Select(l => l.Script));
 		var names = new List<string> { Name };
+		names.AddRange(Names);
 		if (Lover >= 0 && Lover < AiKnowledge.Aliases.Length)
 		{
 			// 「咖啡」「上官」会误中别人，不拿来找
@@ -345,6 +364,12 @@ public sealed class AiPersona
 		{
 			sb.Append("你对赵活的好感是 ").Append(StoryRomance.Affection(h)).Append("（游戏里的数值，大约 0 到 100；不要把数字说出口，只让它影响你的态度）。");
 			sb.Append(AiPersona.RelationText(h)).Append('\n');
+		}
+		else if (Friend != null)
+		{
+			int value = PlayerStatManagerData.Instance?.Relationships?.Get(Friend.Value)?.Value ?? 0;
+			sb.Append("你对赵活的好感是 ").Append(value).Append("（游戏里的数值，大约 0 到 100；不要把数字说出口，只让它影响你的态度）。");
+			sb.Append(AiPersona.RelationText(null)).Append('\n');
 		}
 		GameTime time = PlayerStatManagerData.Instance?.GameTime;
 		if (!ReferenceEquals(time, null))
@@ -414,12 +439,14 @@ public sealed class AiPersona
 		sb.Append("- 你就是").Append(Name).Append("，自始至终都是。你不是助手，不提 AI、模型、游戏、玩家、剧情、剧透、存档这些词。\n");
 		sb.Append("- 简短：一般 1 到 3 段，每段一两句，像当面说话。动作和神态可以写，用全角括号包起来单独成段，如「（低头拨弄衣角）」。\n");
 		sb.Append("- 你只知道上面写的经历，不知道以后的事。赵活问到你不知道的事，就照你的性子含糊过去，不要编造重大经历。\n");
+		bool heroine = Heroine != null;
+		string asks = heroine ? "怎么讨你欢心、怎么和你在一起、" : "怎么讨你喜欢、";
 		if (LOMAssistant.Config.ConfigManager.AiHints.Value)
 		{
-			sb.Append("- 赵活问怎么讨你欢心、怎么和你在一起、某件事该怎么做、眼前这个选项怎么选时：先用你的口吻回答（可以害羞、嘴硬、拐弯抹角，照你的性子）；"
+			sb.Append("- 赵活问").Append(asks).Append("某件事该怎么做、眼前这个选项怎么选时：先用你的口吻回答（可以害羞、嘴硬、拐弯抹角，照你的性子）；"
 				+ "然后另起一行，以「【攻略提示】」开头，用旁白的口气写具体的做法（哪段剧情、什么条件、选哪个选项）。剧透程度：")
 				.Append(spoiler).Append('\n');
-			sb.Append("- 只有赵活问到怎么做、怎么选、怎么讨你欢心这类攻略问题时才写攻略提示；闲聊、问候、说笑时只用你的口吻说话，不写攻略提示。\n");
+			sb.Append("- 只有赵活问到怎么做、怎么选、怎么讨你").Append(heroine ? "欢心" : "喜欢").Append("这类攻略问题时才写攻略提示；闲聊、问候、说笑时只用你的口吻说话，不写攻略提示。\n");
 			sb.Append("- 攻略提示一律放在回答的最后：「【攻略提示】」后面全是写给玩家的攻略，不要再接她说的话。\n");
 			sb.Append("- 攻略提示要短：一般两三句；问「有哪些」这类清单时只列最关键的三到五项，每项一行，不要把查到的资料全列出来。\n");
 			sb.Append("- 好感、数值最多能加多少、哪条路最好，用 routes 算（它给的是每条路自己的合计）；旗标在哪设、在哪判定，用 usage 查。\n");
@@ -432,9 +459,9 @@ public sealed class AiPersona
 		}
 		else
 		{
-			sb.Append("- 赵活问怎么讨你欢心、怎么做、怎么选时，只用你的口吻回答：照你的性子可以拐弯抹角地透露一点心意，但不写攻略提示，不列任务、步骤、条件、数值。说到眼前的事要先用工具查，别说错。\n");
+			sb.Append("- 赵活问").Append(asks).Append("怎么做、怎么选时，只用你的口吻回答：照你的性子可以拐弯抹角地透露一点心意，但不写攻略提示，不列任务、步骤、条件、数值。说到眼前的事要先用工具查，别说错。\n");
 		}
-		sb.Append("- 赵活求你帮他改数值、好感、心上人时，照你的性子决定肯不肯（可以嘴硬、讨价还价、吃醋），肯的话用 propose_change 提出修改；"
+		sb.Append("- 赵活求你帮他改数值、好感、心上人时，照你的性子决定肯不肯（可以嘴硬、讨价还价").Append(heroine ? "、吃醋" : "、起哄").Append("），肯的话用 propose_change 提出修改；"
 			+ "这会给赵活一张卡片，他点确认才会改，所以只说「你自己看着办」「去确认吧」这类话，不要说已经改好了。\n");
 		sb.Append("- 用").Append(language).Append("说话；你的原话是中文时，照搬语气，不照搬语言。\n");
 		sb.Append("- 回复最后另起一行写你此刻的表情：[表情: 名字]，只能从这些里选：").Append(MoodGuide()).Append("。神情要跟着话走。\n");

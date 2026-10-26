@@ -203,7 +203,7 @@ public static class UiTextEnglish
 		["提议修改数值"] = "Proposing a change",
 		["攻"] = "G",
 		["会自己查游戏里的剧情资料再回答：任务怎么触发、选项通向哪里、结局怎么达成、现在该做什么。"] = "Looks things up in the game's story data before answering: how quests trigger, where options lead, how to reach endings, what to do now.",
-		["选上面的女主角，就换成她用自己的口吻和你说话。"] = "Pick a heroine above and she talks to you in her own voice.",
+		["选上面的女主角或大师兄，就换成那个人用自己的口吻和你说话。"] = "Pick a heroine or the Eldest Brother above and they talk to you in their own voice.",
 		["要改数值、好感时会先给你一张卡片，你确认了才改。"] = "Changes to stats or affection come as a card first; nothing changes until you confirm.",
 		["{0} 随时打开这一页"] = "{0} opens this tab any time",
 		["▸ 查了 {0} 处资料"] = "▸ Looked up {0} things",
