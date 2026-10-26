@@ -121,6 +121,64 @@ public static class AiSessions
 
 	public static void Select(AiSession session) => Selected[session.Persona] = session.Id;
 
+	/// <summary>
+	/// 把一段对话导出成 Markdown 放到桌面，返回文件路径。查资料的明细、修改卡片写进去，系统提示词和 Key 不写。
+	/// 固定的字（「你」「攻略提示」……）按界面语言显示。
+	/// </summary>
+	public static string Export(AiSession session, string who)
+	{
+		string T(string zh) => TextConverter.ForDisplay(zh);
+		var sb = new StringBuilder();
+		sb.Append("# ").Append(string.Format(T("和{0}的对话"), who)).Append("\n\n");
+		sb.Append(T("咖啡伴侣")).Append(" · ").Append(session.Updated.ToString("yyyy-MM-dd HH:mm")).Append("\n\n");
+		var lookups = new List<string>();
+		void FlushLookups()
+		{
+			if (lookups.Count > 0)
+			{
+				sb.Append("> ").Append(string.Format(T("查了 {0} 处资料"), lookups.Count)).Append("：").Append(string.Join("；", lookups.ToArray())).Append("\n\n");
+				lookups.Clear();
+			}
+		}
+		foreach (AiChat.Entry e in session.Shown)
+		{
+			if (e.Kind == AiChat.Kind.Activity)
+			{
+				lookups.Add(T(e.Text));
+				continue;
+			}
+			FlushLookups();
+			switch (e.Kind)
+			{
+				case AiChat.Kind.User:
+					sb.Append("**").Append(T("你")).Append("**：").Append(e.Text).Append("\n\n");
+					break;
+				case AiChat.Kind.Assistant:
+					string text = e.Text.Replace("【攻略提示】", "\n\n**" + T("攻略提示") + "**\n\n");
+					sb.Append("**").Append(who).Append("**：").Append(text.Trim()).Append("\n\n");
+					break;
+				case AiChat.Kind.Proposal:
+					sb.Append("**").Append(T("修改提议")).Append("**").Append(e.Text.Length > 0 ? "：" + e.Text : "").Append("\n");
+					foreach (AiChat.Change c in e.Changes ?? new List<AiChat.Change>())
+					{
+						sb.Append("- ").Append(T(c.Name)).Append("：").Append(c.From).Append(" → ").Append(c.To).Append("\n");
+					}
+					sb.Append("（").Append(T(e.State == AiChat.ProposalState.Applied ? "已修改" : e.State == AiChat.ProposalState.Pending ? "还没确认" : "没有修改")).Append("）\n\n");
+					break;
+				default:
+					sb.Append("_").Append(T(e.Text).Replace("\n", " ")).Append("_\n\n");
+					break;
+			}
+		}
+		FlushLookups();
+		string desktop = Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory);
+		string safe = new string(who.Where(ch => !Path.GetInvalidFileNameChars().Contains(ch)).ToArray());
+		string path = Path.Combine(desktop, T("咖啡伴侣AI对话") + "_" + safe + "_" + DateTime.Now.ToString("yyyyMMdd_HHmmss") + ".md");
+		File.WriteAllText(path, sb.ToString(), new UTF8Encoding(false));
+		FileLogger.Log("[AI] 导出对话：" + Path.GetFileName(path));
+		return path;
+	}
+
 	public static void Delete(AiSession session)
 	{
 		All.Remove(session);

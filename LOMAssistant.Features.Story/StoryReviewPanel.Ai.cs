@@ -398,6 +398,9 @@ public partial class StoryReviewPanel
 		}
 	}
 	private float _aiDeleteAsked = -100f;
+	// 刚导出的对话文件名，顶上那行提示几秒
+	private float _aiExportedAt = -100f;
+	private string _aiExportedName = "";
 
 	private static Steamworks.Callback<Steamworks.GamepadTextInputDismissed_t> _keyboardDone;
 
@@ -602,14 +605,15 @@ public partial class StoryReviewPanel
 		// 右上：模型名和小按钮
 		float bh = S(32), bwid = S(110);
 		LlmProvider provider = AiChat.Provider;
-		var deep = new Rect(r.xMax - bwid * 5 - S(24), r.y, bwid, bh);
+		var deep = new Rect(r.xMax - bwid * 6 - S(30), r.y, bwid, bh);
 		if (GUI.Button(deep, "深度模式", AiChat.Deep ? _primary : _aiSmallButton) && !AiChat.Busy)
 		{
 			ConfigManager.AiDeepMode.Value = !ConfigManager.AiDeepMode.Value;
 		}
 		Hover(deep, "换用更强的模型，回答前核对资料：更准，也更贵、更慢");
-		GUI.Label(new Rect(r.x, r.y, r.width - bwid * 5 - S(36), bh), provider.Name + " · " + AiChat.Model + (AiChat.TokensUsed > 0 ? "　" + string.Format("这次开游戏用了 {0} token", AiChat.TokensUsed) + (AiChat.CachedUsed > 0 ? "　" + string.Format("缓存命中 {0}", AiChat.CachedUsed) : "") : ""), Middle(_muted));
-		float bx = r.xMax - bwid * 4 - S(18);
+		bool exported = Time.realtimeSinceStartup - _aiExportedAt < 5f;
+		GUI.Label(new Rect(r.x, r.y, r.width - bwid * 6 - S(42), bh), exported ? string.Format("已导出到桌面：{0}", _aiExportedName) : provider.Name + " · " + AiChat.Model + (AiChat.TokensUsed > 0 ? "　" + string.Format("这次开游戏用了 {0} token", AiChat.TokensUsed) + (AiChat.CachedUsed > 0 ? "　" + string.Format("缓存命中 {0}", AiChat.CachedUsed) : "") : ""), Middle(_muted));
+		float bx = r.xMax - bwid * 5 - S(24);
 		GUI.enabled = !AiChat.Busy;
 		if (GUI.Button(new Rect(bx, r.y, bwid, bh), "新对话", _aiSmallButton))
 		{
@@ -621,8 +625,23 @@ public partial class StoryReviewPanel
 			_aiHistory = !_aiHistory;
 		}
 		GUI.enabled = !AiChat.Busy && AiChat.Shown.Count > 0;
+		if (GUI.Button(new Rect(bx + (bwid + S(6)) * 2, r.y, bwid, bh), "导出对话", _aiSmallButton))
+		{
+			try
+			{
+				AiPersona who = AiPersona.Find(AiChat.PersonaId);
+				string path = AiSessions.Export(AiChat.Session, who != null ? TextConverter.ForDisplay(who.Name) : TextConverter.ForDisplay("攻略助手"));
+				_aiExportedName = System.IO.Path.GetFileName(path);
+				_aiExportedAt = Time.realtimeSinceStartup;
+				GUIUtility.systemCopyBuffer = path;
+			}
+			catch (System.Exception ex)
+			{
+				FileLogger.LogWarning("[AI] 导出对话失败: " + ex.Message);
+			}
+		}
 		bool confirming = Time.realtimeSinceStartup - _aiDeleteAsked < 3f;
-		if (GUI.Button(new Rect(bx + (bwid + S(6)) * 2, r.y, bwid, bh), confirming ? "确定删除？" : "删除这段", confirming ? _primary : _aiSmallButton))
+		if (GUI.Button(new Rect(bx + (bwid + S(6)) * 3, r.y, bwid, bh), confirming ? "确定删除？" : "删除这段", confirming ? _primary : _aiSmallButton))
 		{
 			if (confirming)
 			{
@@ -635,7 +654,7 @@ public partial class StoryReviewPanel
 			}
 		}
 		GUI.enabled = true;
-		if (GUI.Button(new Rect(bx + (bwid + S(6)) * 3, r.y, bwid, bh), "AI 设置", _aiSmallButton))
+		if (GUI.Button(new Rect(bx + (bwid + S(6)) * 4, r.y, bwid, bh), "AI 设置", _aiSmallButton))
 		{
 			_aiSetup = true;
 		}
