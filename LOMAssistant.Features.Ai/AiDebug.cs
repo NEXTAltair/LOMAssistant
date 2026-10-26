@@ -30,7 +30,7 @@ public static class AiDebug
 	public static void Reply(LlmReply reply)
 	{
 		Write("\n--- 回复：输入 " + reply.InputTokens + "（缓存命中 " + reply.CachedTokens + "），输出 " + reply.OutputTokens
-			+ (reply.Calls.Count > 0 ? "，要查 " + reply.Calls.Count + " 处" : "") + "\n" + reply.Text + "\n");
+			+ (reply.Calls.Count > 0 ? "，要查 " + reply.Calls.Count + " 处" : "") + (reply.StopReason.Length > 0 ? "，停止原因 " + reply.StopReason : "") + "\n" + reply.Text + "\n");
 	}
 
 	private static void Write(string text)

@@ -166,6 +166,19 @@ public static class AiChat
 			AiDebug.Reply(reply);
 			if (reply.Calls.Count == 0)
 			{
+				// 回复是空的（Claude 查完资料有时直接结束这一轮，一个字不写）：不带工具、把查到的资料交给它再写一次
+				if ((reply.Text ?? "").Trim().Length == 0)
+				{
+					FileLogger.LogWarning("[AI] 回复是空的（停止原因 " + (reply.StopReason.Length > 0 ? reply.StopReason : "未知") + "，第 " + (round + 1) + " 轮）"
+						+ (rewrite ? "，重写也是空的" : "，让它根据查到的资料直接写"));
+					if (!rewrite)
+					{
+						rewrite = true;
+						continue;
+					}
+					answer = "（查了很多资料还没整理出答案，换个具体点的问法再问一次吧。）";
+					break;
+				}
 				string cut = StripToolMarkup(reply.Text);
 				// 模型把调用工具的格式写进了正文，从那里往后都被剪掉，回答只剩半截：让它不调工具、从头写一遍
 				if (cut.Length < (reply.Text ?? "").Length && !rewrite)
@@ -181,7 +194,7 @@ public static class AiChat
 				}
 				break;
 			}
-			turn.Add(new ChatMessage { Role = ChatMessage.Assistant, Text = reply.Text, Calls = reply.Calls });
+			turn.Add(new ChatMessage { Role = ChatMessage.Assistant, Text = reply.Text, Calls = reply.Calls, Raw = reply.Raw });
 			foreach (ToolCall call in reply.Calls)
 			{
 				Shown.Add(new Entry { Kind = Kind.Activity, Text = AiKnowledge.Activity(call.Name, call.Args) });
@@ -422,6 +435,7 @@ public static class AiChat
 			+ "怎么查资料\n"
 			+ "- 剧情、条件、数值、结局一律以工具查到的游戏数据为准，不要凭印象编。查不到就说查不到，不要猜。\n"
 			+ "- 前面的回答可能说错过：涉及数字、条件、剧情走向时，以这次查到的资料为准，不要照抄前面说过的。\n"
+			+ "- 要资料就直接用工具查，不要先问玩家「要我查吗」。\n"
 			+ "- 问某个人物是谁、什么来历、哪一门、父母师父是谁，先用 person 看人物志，一次就够，不要一处处去搜对白。\n"
 			+ "- 在某个场所修炼、工作、闲逛时随机抽到的事件（求仙问道、跑步邀请这类）用 events 找；决斗要撑几回合、第几回合谁来帮、输了会不会死，看 script 或 search 结果里的「战斗中的条件」。\n"
 			+ "- 不知道编号时先 search，再用 quest 看任务、script 看剧本的分岔和对白、endings 看结局、heroine 看结缘路线。\n"

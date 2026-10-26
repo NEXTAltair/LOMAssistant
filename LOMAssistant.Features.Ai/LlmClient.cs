@@ -20,6 +20,8 @@ public sealed class ChatMessage
 	public List<ToolCall> Calls = new List<ToolCall>();
 	/// <summary>工具结果：对应哪一次调用。</summary>
 	public string CallId = "";
+	/// <summary>Claude 回复的原始内容块（含思考块和签名）：同一问的下一轮要原样传回，否则缓存失效、它也看不到自己刚才的思考。</summary>
+	public JArray Raw;
 }
 
 public sealed class ToolCall
@@ -69,6 +71,10 @@ public sealed class LlmReply
 	public string Error;
 	/// <summary>这一轮用掉的 token（服务商有返回才有）；InputTokens 含缓存命中的 CachedTokens。</summary>
 	public int InputTokens, OutputTokens, CachedTokens;
+	/// <summary>服务商说的这一轮为什么停（end_turn、max_tokens、tool_use……），排查空回复用。</summary>
+	public string StopReason = "";
+	/// <summary>Claude 的原始内容块，见 ChatMessage.Raw。</summary>
+	public JArray Raw;
 }
 
 /// <summary>
@@ -204,6 +210,9 @@ public static class LlmClient
 		private readonly SortedDictionary<int, (string Id, string Name, StringBuilder Args)> _calls = new SortedDictionary<int, (string, string, StringBuilder)>();
 		private int _in, _out, _cached;
 		private string _error;
+		private string _stopReason = "";
+		// Claude 的内容块按序号攒起来（思考块的文字和签名、正文），回传时原样用
+		private readonly SortedDictionary<int, JObject> _blocks = new SortedDictionary<int, JObject>();
 
 		public StreamHandler(bool claude) : base(new byte[16 * 1024])
 		{
@@ -314,6 +323,10 @@ public static class LlmClient
 					_calls[index] = c;
 				}
 			}
+			if (json["choices"]?[0]?["finish_reason"]?.Type == JTokenType.String)
+			{
+				_stopReason = json["choices"][0]["finish_reason"].ToString();
+			}
 			if (json["usage"] is JObject usage)
 			{
 				_in = usage["prompt_tokens"]?.Value<int>() ?? _in;
@@ -335,6 +348,10 @@ public static class LlmClient
 					}
 					break;
 				case "content_block_start":
+					if (json["content_block"] is JObject started)
+					{
+						_blocks[json["index"]?.Value<int>() ?? _blocks.Count] = (JObject)started.DeepClone();
+					}
 					if (json["content_block"]?["type"]?.ToString() == "tool_use")
 					{
 						_calls[json["index"]?.Value<int>() ?? _calls.Count] = (json["content_block"]["id"]?.ToString() ?? "", json["content_block"]["name"]?.ToString() ?? "", new StringBuilder());
@@ -342,9 +359,22 @@ public static class LlmClient
 					break;
 				case "content_block_delta":
 					JToken delta = json["delta"];
+					_blocks.TryGetValue(json["index"]?.Value<int>() ?? -1, out JObject block);
 					if (delta?["type"]?.ToString() == "text_delta")
 					{
 						_text.Append(delta["text"]?.ToString() ?? "");
+						if (block != null)
+						{
+							block["text"] = (block["text"]?.ToString() ?? "") + (delta["text"]?.ToString() ?? "");
+						}
+					}
+					else if (delta?["type"]?.ToString() == "thinking_delta" && block != null)
+					{
+						block["thinking"] = (block["thinking"]?.ToString() ?? "") + (delta["thinking"]?.ToString() ?? "");
+					}
+					else if (delta?["type"]?.ToString() == "signature_delta" && block != null)
+					{
+						block["signature"] = (block["signature"]?.ToString() ?? "") + (delta["signature"]?.ToString() ?? "");
 					}
 					else if (delta?["type"]?.ToString() == "input_json_delta" && _calls.TryGetValue(json["index"]?.Value<int>() ?? -1, out var c))
 					{
@@ -353,16 +383,28 @@ public static class LlmClient
 					break;
 				case "message_delta":
 					_out = json["usage"]?["output_tokens"]?.Value<int>() ?? _out;
+					_stopReason = json["delta"]?["stop_reason"]?.ToString() ?? _stopReason;
 					break;
 			}
 		}
 
 		public LlmReply Reply()
 		{
-			var reply = new LlmReply { Text = _text.ToString(), InputTokens = _in, OutputTokens = _out, CachedTokens = _cached, Error = _error };
-			foreach (var c in _calls.Values)
+			var reply = new LlmReply { Text = _text.ToString(), InputTokens = _in, OutputTokens = _out, CachedTokens = _cached, Error = _error, StopReason = _stopReason };
+			foreach (var kv in _calls)
 			{
-				reply.Calls.Add(new ToolCall { Id = c.Id.Length > 0 ? c.Id : Guid.NewGuid().ToString("N"), Name = c.Name, Args = ParseArgs(c.Args.ToString()) });
+				var c = kv.Value;
+				var call = new ToolCall { Id = c.Id.Length > 0 ? c.Id : Guid.NewGuid().ToString("N"), Name = c.Name, Args = ParseArgs(c.Args.ToString()) };
+				reply.Calls.Add(call);
+				if (_blocks.TryGetValue(kv.Key, out JObject b))
+				{
+					b["id"] = call.Id;
+					b["input"] = call.Args;
+				}
+			}
+			if (_claude && _blocks.Count > 0)
+			{
+				reply.Raw = new JArray(_blocks.Values);
 			}
 			return reply;
 		}
@@ -474,6 +516,7 @@ public static class LlmClient
 			return reply;
 		}
 		reply.Text = message["content"]?.Type == JTokenType.String ? message["content"].ToString() : "";
+		reply.StopReason = json["choices"]?[0]?["finish_reason"]?.ToString() ?? "";
 		foreach (JToken call in message["tool_calls"] as JArray ?? new JArray())
 		{
 			reply.Calls.Add(new ToolCall { Id = call["id"]?.ToString() ?? Guid.NewGuid().ToString("N"), Name = call["function"]?["name"]?.ToString() ?? "", Args = ParseArgs(call["function"]?["arguments"]?.ToString()) });
@@ -505,6 +548,12 @@ public static class LlmClient
 				continue;
 			}
 			pendingResults = null;
+			// 同一问里 Claude 自己的回复：原样传回（思考块不能删也不能改，删了缓存就从这里失效）
+			if (m.Role == ChatMessage.Assistant && m.Raw != null && m.Raw.Count > 0)
+			{
+				list.Add(new JObject { ["role"] = "assistant", ["content"] = m.Raw.DeepClone() });
+				continue;
+			}
 			if (m.Role == ChatMessage.Assistant)
 			{
 				var content = new JArray();
@@ -567,6 +616,8 @@ public static class LlmClient
 			}
 		}
 		reply.Text = text.ToString();
+		reply.StopReason = json["stop_reason"]?.ToString() ?? "";
+		reply.Raw = json["content"] is JArray content ? (JArray)content.DeepClone() : null;
 		// Claude 的 input_tokens 不含缓存读写，合起来才是这一轮的输入
 		int read = json["usage"]?["cache_read_input_tokens"]?.Value<int>() ?? 0;
 		reply.InputTokens = (json["usage"]?["input_tokens"]?.Value<int>() ?? 0) + read + (json["usage"]?["cache_creation_input_tokens"]?.Value<int>() ?? 0);
