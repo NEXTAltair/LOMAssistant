@@ -45,7 +45,11 @@ public static class AiChat
 
 	// 查资料的轮数上限（每轮可以同时查好几处）：只防死循环，正常问题远用不到；深度模式放宽
 	private static int MaxRounds => Deep ? 30 : 20;
-	private const int KeepTurns = 10;
+	// 发给模型的问答历史按字数算：超过 HistoryChars 时，较早的部分压缩成一段摘要，最近 HistoryKeepChars 字原样留着；
+	// 两次压缩之间前缀不变，缓存一直命中。一问里查资料最多要 8 万 token 左右，历史再加 3 万字，128K 窗口的模型也放得下
+	private const int HistoryChars = 30000;
+	private const int HistoryKeepChars = 12000;
+	private const string SummaryHead = "（前面聊过的内容摘要）";
 	private const int MaxToolChars = 12000;
 
 	/// <summary>给玩家看的对话（含「正在查…」和出错提示）。</summary>
@@ -213,9 +217,9 @@ public static class AiChat
 			Shown.AddRange(proposals);
 			History.Add(turn[0]);
 			History.Add(new ChatMessage { Role = ChatMessage.Assistant, Text = answer });
-			while (History.Count > KeepTurns * 2)
+			if (History.Sum(m => m.Text.Length) > HistoryChars)
 			{
-				History.RemoveRange(0, 2);
+				yield return Compress(provider, History);
 			}
 		}
 		if (save)
@@ -224,6 +228,52 @@ public static class AiChat
 		}
 		Busy = false;
 		done?.Invoke(answer ?? Shown.LastOrDefault(e => e.Kind == Kind.Error)?.Text ?? "", Shown.Count(e => e.Kind == Kind.Activity));
+	}
+
+	// 问答历史太长：较早的部分（连同上次的摘要）请模型压成一段摘要放在最前面，最近的原样留着。
+	// 摘要只记玩家说过的情况和打算、聊过什么、确认过哪些修改；回答里的数字和结论不当事实记，免得一错再错。压缩失败就直接丢掉较早的部分
+	private static IEnumerator Compress(LlmProvider provider, List<ChatMessage> history)
+	{
+		int keep = history.Count, chars = 0;
+		while (keep >= 2 && chars + history[keep - 1].Text.Length + history[keep - 2].Text.Length <= HistoryKeepChars)
+		{
+			chars += history[keep - 1].Text.Length + history[keep - 2].Text.Length;
+			keep -= 2;
+		}
+		keep = System.Math.Min(keep, history.Count - 2);
+		if (keep <= 0)
+		{
+			yield break;
+		}
+		var old = new System.Text.StringBuilder();
+		for (int i = 0; i < keep; i++)
+		{
+			old.Append(history[i].Role == ChatMessage.User ? "玩家：" : "回答：").Append(history[i].Text).Append("\n\n");
+		}
+		string system = "下面是《活侠传》玩家和游戏 Mod 里 AI 的一段对话。把它压缩成摘要，给接着聊的 AI 当记忆用。\n"
+			+ "- 只记：玩家说过的自己的情况、打算和偏好（走哪条线、想和谁结缘、不想知道什么）；聊过哪些话题；玩家确认或拒绝过哪些修改；说好的约定；还没解决的问题。\n"
+			+ "- 回答里说过的数字、条件、剧情结论不要当事实记，最多写「聊过某某的条件」，之后要用时会重新查。\n"
+			+ "- 开头已经有摘要的，把它和后面的内容合在一起重写成一份。\n"
+			+ "- 分条写，不超过 800 字，用" + ReplyLanguage + "。只输出摘要。";
+		LlmReply reply = null;
+		yield return LlmClient.Complete(provider, ConfigManager.AiBaseUrl.Value, ConfigManager.AiApiKey.Value, ConfigManager.AiModel.Value,
+			system, new List<ChatMessage> { new ChatMessage { Role = ChatMessage.User, Text = old.ToString() } }, false, 1500, r => reply = r);
+		history.RemoveRange(0, keep);
+		string summary = reply != null && reply.Error == null ? StripToolMarkup(reply.Text ?? "").Trim() : "";
+		if (summary.Length == 0)
+		{
+			FileLogger.LogWarning("[AI] 压缩对话失败，较早的 " + keep + " 条直接丢掉：" + (reply?.Error ?? "没有回复"));
+			yield break;
+		}
+		TokensUsed += reply.InputTokens + reply.OutputTokens;
+		CachedUsed += reply.CachedTokens;
+		AiDebug.Reply(reply);
+		history.InsertRange(0, new[]
+		{
+			new ChatMessage { Role = ChatMessage.User, Text = SummaryHead + "\n" + summary },
+			new ChatMessage { Role = ChatMessage.Assistant, Text = "（记下了）" },
+		});
+		FileLogger.Log("[AI] 对话太长，较早的 " + keep + " 条压缩成摘要（" + summary.Length + " 字）");
 	}
 
 	// AI 的修改提议：找到的项做成一张卡片（等回答说完再显示），找不到的告诉 AI
@@ -371,6 +421,7 @@ public static class AiChat
 		return "你是武侠游戏《活侠传》的攻略助手，在游戏 Mod「咖啡伴侣」里回答玩家的问题。玩家操控的主角是赵活。\n\n"
 			+ "怎么查资料\n"
 			+ "- 剧情、条件、数值、结局一律以工具查到的游戏数据为准，不要凭印象编。查不到就说查不到，不要猜。\n"
+			+ "- 前面的回答可能说错过：涉及数字、条件、剧情走向时，以这次查到的资料为准，不要照抄前面说过的。\n"
 			+ "- 问某个人物是谁、什么来历、哪一门、父母师父是谁，先用 person 看人物志，一次就够，不要一处处去搜对白。\n"
 			+ "- 在某个场所修炼、工作、闲逛时随机抽到的事件（求仙问道、跑步邀请这类）用 events 找；决斗要撑几回合、第几回合谁来帮、输了会不会死，看 script 或 search 结果里的「战斗中的条件」。\n"
 			+ "- 不知道编号时先 search，再用 quest 看任务、script 看剧本的分岔和对白、endings 看结局、heroine 看结缘路线。\n"
