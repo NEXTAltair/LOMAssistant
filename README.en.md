@@ -45,13 +45,13 @@ All keys can be changed or unbound under **Hotkeys** on the settings page.
 
 ### AI companion (F3)
 
-Connect a large language model with your own API key to ask about the story and strategy, or to chat with the heroines. Supports DeepSeek, Kimi, Qwen, Zhipu GLM, SiliconFlow, OpenRouter, OpenAI, Claude, Gemini, local Ollama, and any OpenAI-compatible endpoint.
+Connect a large language model with your own API key to ask about the story and strategy, or to chat with the heroines and the Eldest Brother. Supports DeepSeek, Kimi, Qwen, Zhipu GLM, SiliconFlow, OpenRouter, OpenAI, Claude, Gemini, local Ollama, and any OpenAI-compatible endpoint.
 
 - **Guide**: looks up the game's own story data before answering: quests and their triggers, script branches and dialogue, affection and stat totals along each route, endings and deaths, romance routes, character bios, location events, duel conditions, plus your current progress and the options on screen.
-- **Heroines**: the nine romanceable heroines speak in their own voice, their portraits change expression with what they say, and how they address you follows the story. They only know the story you have read. When you ask for help, a separate guide tip follows the reply; you can also set them to chat only.
+- **Heroines and the Eldest Brother**: the nine romanceable heroines and Tang Buyi, the Eldest Brother, speak in their own voice, their portraits change expression with what they say, and how they address you follows the story. They only know the story you have read. When you ask for help, a separate guide tip follows the reply; you can also set them to chat only.
 - **Spoilers**: Tell me anything / Only current and past / Hints only.
 - **Edits**: when the AI wants to change stats, affection, your sweetheart, story flags or this mod's settings, it shows a card first; nothing changes until you confirm.
-- **Chats**: each heroine's chats are stored locally; start new ones, switch between them, delete them. Replies appear as they are written.
+- **Chats**: each character's chats are stored locally; start new ones, switch between them, delete them, or export them to the desktop. Replies appear as they are written.
 - **Deep mode**: switches to a stronger model that checks the facts before answering: more accurate, but costlier and slower.
 - **Cost and privacy**: you pay the provider's own rates; the mod charges nothing. Your key and chats go only to the provider you choose, and the key is hidden in diagnostics exports.
 
@@ -195,4 +195,4 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 
 ## Credits
 
-See the [Chinese README](README.md#致谢). This project builds on 活侠传助手 by 爱死, takes ideas from 赵活系统 and code from LOM_SaveSlotExpander. The AI Companion tab takes ideas from [江湖夜话](https://github.com/Cpjjason/jianghu-yehua) (Jianghu Yehua) by Cpjjason, another AI mod for the game that lets you chat privately with its characters, who can give you items, teach you martial arts and remember past talks ([video on Bilibili](https://www.bilibili.com/video/BV1s2nC6pE83/)). Some personality traits and habits of the heroines on the AI Companion tab draw on the 活侠传 fan character card by 夏呆呆 from the 类脑 community. Thanks to [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes), [NEXTAltair](https://github.com/NEXTAltair) and [pluvivanto](https://github.com/pluvivanto) for their pull requests, and to [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y) and [iampigcheng](https://github.com/iampigcheng) for their issues.
+See the [Chinese README](README.md#致谢). This project builds on 活侠传助手 by 爱死, takes ideas from 赵活系统 and code from LOM_SaveSlotExpander. The AI Companion tab takes ideas from [江湖夜话](https://github.com/Cpjjason/jianghu-yehua) (Jianghu Yehua) by Cpjjason, another AI mod for the game that lets you chat privately with its characters, who can give you items, teach you martial arts and remember past talks ([video on Bilibili](https://www.bilibili.com/video/BV1s2nC6pE83/)). Some personality traits and habits of the characters on the AI Companion tab draw on the 活侠传 fan character card by 夏呆呆 from the 类脑 community. Thanks to [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes), [NEXTAltair](https://github.com/NEXTAltair) and [pluvivanto](https://github.com/pluvivanto) for their pull requests, and to [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y) and [iampigcheng](https://github.com/iampigcheng) for their issues.

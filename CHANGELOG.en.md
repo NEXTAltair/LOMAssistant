@@ -2,6 +2,13 @@
 
 Changes in each version, newest first. Versions before 2.7.0 are only in Chinese; see CHANGELOG.md.
 
+## 3.0.1 (2026-10-26)
+
+- **Tang Buyi, the Eldest Brother, joins the AI companion**: like the heroines, he speaks in his own voice, his portrait changes expression with what he says, and he only knows the story you have read.
+- **Export chat**: a new Export chat button at the top of the AI companion saves the current chat to the desktop as Markdown.
+- **Steadier long chats**: when the chat history gets too long, the older part is condensed into a summary and the recent part is kept as is; answers go by what was looked up this time instead of repeating earlier replies.
+- **Fixed side quests that write no story records always showing "not taken this run" on the route map**: it now checks how far that quest line has progressed in the save.
+
 ## 3.0.0 (2026-10-25)
 
 - **AI companion** (F3, a new tab in the Coffee Companion window): connect a large language model with your own API key. Supports DeepSeek, Kimi, Qwen, Zhipu GLM, SiliconFlow, OpenRouter, OpenAI, Claude, Gemini, local Ollama and any OpenAI-compatible endpoint.

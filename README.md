@@ -43,13 +43,13 @@
 
 ### AI 陪玩（F3）
 
-用自己的 API Key 接入大模型，问剧情和攻略，或者和女主角聊天。支持 DeepSeek、Kimi、通义千问、智谱 GLM、硅基流动、OpenRouter、OpenAI、Claude、Gemini、本地 Ollama，以及任意 OpenAI 兼容接口。
+用自己的 API Key 接入大模型，问剧情和攻略，或者和女主角、大师兄聊天。支持 DeepSeek、Kimi、通义千问、智谱 GLM、硅基流动、OpenRouter、OpenAI、Claude、Gemini、本地 Ollama，以及任意 OpenAI 兼容接口。
 
 - **攻略助手**：先查游戏里的剧情数据再回答：任务和触发条件、剧本分岔和对白、每条路线上的好感和数值合计、结局和死亡、结缘路线、人物志、场所事件、决斗条件，以及现在的进度和屏幕上的选项。
-- **女主角**：九位可结缘的女主角用自己的口吻说话，立绘表情跟着话变，对你的称呼跟着剧情变。她们只知道你读过的剧情。问到攻略时回答后面另起一段攻略提示，也可以设成只聊天。
+- **女主角和大师兄**：九位可结缘的女主角和大师兄唐布衣用自己的口吻说话，立绘表情跟着话变，对你的称呼跟着剧情变。他们只知道你读过的剧情。问到攻略时回答后面另起一段攻略提示，也可以设成只聊天。
 - **剧透程度**：想知道什么说什么 / 只说当前和走过的 / 只给方向提示。
 - **改数值和设置**：要改数值、好感、心上人、旗标或咖啡伴侣的设置时，AI 先给一张卡片，点确认才改。
-- **对话**：每位的对话存在本地，可以新开、切换、删除；回答边生成边显示。
+- **对话**：每位的对话存在本地，可以新开、切换、删除，也能导出到桌面；回答边生成边显示。
 - **深度模式**：换用更强的模型，回答前核对资料，更准，也更贵、更慢。
 - **费用和隐私**：按服务商的价格计费，本 Mod 不收费。Key 和对话只发给你选的服务商；导出诊断时 Key 会隐去。
 
@@ -213,6 +213,6 @@ DOTNET=/path/to/dotnet ./Installer/build-installer.sh
 - **部分功能思路**：参考 [赵活系统](https://github.com/Toufff/zhaohuo-system)（Toufff，MIT 许可）。
 - **存档备注显示**：移植自 [LOM_SaveSlotExpander](https://gitlab.com/ame-chan/lom_saveslotexpander)（ame-chan，MIT 许可）。
 - **AI 陪玩的思路**：参考 [江湖夜话](https://github.com/Cpjjason/jianghu-yehua)（Cpjjason）。它也是《活侠传》的 AI Mod，能和游戏里的人物私下闲谈，人物会送东西、指点武功、记得聊过的事（[B 站介绍视频](https://www.bilibili.com/video/BV1s2nC6pE83/)）。
-- **AI 陪玩的女主角人设**：部分性格和小习惯参考了类脑社区夏呆呆的同人角色卡《活侠传》。
+- **AI 陪玩的人设**：部分性格和小习惯参考了类脑社区夏呆呆的同人角色卡《活侠传》。
 - 感谢 [lxsb222-spec](https://github.com/lxsb222-spec)（爱死）、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair)、[pluvivanto](https://github.com/pluvivanto) 提交的 PR，以及 [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y)、[iampigcheng](https://github.com/iampigcheng) 提交的 issue。
 - 下载包附带的 [BepInEx](https://github.com/BepInEx/BepInEx)、[UnityDoorstop](https://github.com/NeighTools/UnityDoorstop)、[Newtonsoft.Json](https://github.com/JamesNK/Newtonsoft.Json) 按各自的许可证分发。

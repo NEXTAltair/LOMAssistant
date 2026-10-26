@@ -45,13 +45,13 @@
 
 ### AI 동행 (F3)
 
-자신의 API Key로 대규모 언어 모델에 연결해 스토리와 공략을 묻거나 여주인공과 대화할 수 있습니다. DeepSeek, Kimi, 통이첸원(Qwen), 즈푸 GLM, SiliconFlow, OpenRouter, OpenAI, Claude, Gemini, 로컬 Ollama, 그리고 OpenAI 호환 API를 지원합니다.
+자신의 API Key로 대규모 언어 모델에 연결해 스토리와 공략을 묻거나 여주인공, 대사형과 대화할 수 있습니다. DeepSeek, Kimi, 통이첸원(Qwen), 즈푸 GLM, SiliconFlow, OpenRouter, OpenAI, Claude, Gemini, 로컬 Ollama, 그리고 OpenAI 호환 API를 지원합니다.
 
 - **공략 도우미**: 게임 안의 스토리 데이터를 먼저 찾아본 뒤 답합니다. 임무와 발생 조건, 대본 분기와 대사, 루트별 호감·수치 합계, 엔딩과 사망, 인연 루트, 인물지, 장소 이벤트, 결투 조건, 그리고 지금의 진행 상황과 화면의 선택지.
-- **여주인공**: 인연을 맺을 수 있는 아홉 여주인공이 자기 말투로 말하고, 입식 그림 표정이 말에 따라 바뀌며, 부르는 호칭도 스토리에 따라 바뀝니다. 플레이어가 읽은 스토리만 압니다. 공략을 물으면 대답 뒤에 공략 힌트가 따로 붙고, 대화만 하도록 설정할 수도 있습니다.
+- **여주인공과 대사형**: 인연을 맺을 수 있는 아홉 여주인공과 대사형 당포의가 자기 말투로 말하고, 입식 그림 표정이 말에 따라 바뀌며, 부르는 호칭도 스토리에 따라 바뀝니다. 플레이어가 읽은 스토리만 압니다. 공략을 물으면 대답 뒤에 공략 힌트가 따로 붙고, 대화만 하도록 설정할 수도 있습니다.
 - **스포일러 정도**: 묻는 대로 다 알려 줌 / 현재·지나온 것만 / 방향만 힌트.
 - **수치·설정 변경**: 수치, 호감, 마음에 둔 사람, 플래그, 이 Mod의 설정을 바꿀 때는 AI가 먼저 카드를 보여 주고, 확인을 눌러야 바뀝니다.
-- **대화**: 대화는 여주인공별로 로컬에 저장되며 새로 열기, 전환, 삭제가 됩니다. 대답은 쓰이는 대로 바로 표시됩니다.
+- **대화**: 대화는 상대별로 로컬에 저장되며 새로 열기, 전환, 삭제, 바탕 화면으로 내보내기가 됩니다. 대답은 쓰이는 대로 바로 표시됩니다.
 - **심층 모드**: 더 강한 모델로 바꾸고 답하기 전에 자료를 다시 확인합니다. 더 정확하지만 더 비싸고 느립니다.
 - **요금과 개인정보**: 요금은 제공업체 가격대로 나가며 이 Mod는 무료입니다. Key와 대화는 고른 제공업체에만 보내지고, 진단 내보내기에서는 Key가 가려집니다.
 
@@ -186,4 +186,4 @@
 
 ## 크레딧
 
-[중국어 README](README.md#致谢)를 참고하세요. 이 프로젝트는 爱死 님의 「活侠传助手」를 바탕으로 하며, 赵活系统의 기능 아이디어와 LOM_SaveSlotExpander의 코드를 참고·이식했습니다. AI 동행 탭의 아이디어는 Cpjjason 님의 [江湖夜话](https://github.com/Cpjjason/jianghu-yehua)(강호야화)를 참고했습니다. 이것도 『활협전』용 AI Mod로, 게임 속 인물과 단둘이 이야기할 수 있고 인물이 물건을 주거나 무공을 가르쳐 주고 나눈 이야기를 기억합니다([Bilibili 소개 영상](https://www.bilibili.com/video/BV1s2nC6pE83/)). AI 동행 탭 여주인공들의 성격과 버릇 일부는 类脑 커뮤니티 夏呆呆 님의 2차 창작 캐릭터 카드 『活侠传』를 참고했습니다. 풀 리퀘스트를 보내 주신 [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes), [NEXTAltair](https://github.com/NEXTAltair), [pluvivanto](https://github.com/pluvivanto) 님, issue를 올려 주신 [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y), [iampigcheng](https://github.com/iampigcheng) 님께 감사드립니다.
+[중국어 README](README.md#致谢)를 참고하세요. 이 프로젝트는 爱死 님의 「活侠传助手」를 바탕으로 하며, 赵活系统의 기능 아이디어와 LOM_SaveSlotExpander의 코드를 참고·이식했습니다. AI 동행 탭의 아이디어는 Cpjjason 님의 [江湖夜话](https://github.com/Cpjjason/jianghu-yehua)(강호야화)를 참고했습니다. 이것도 『활협전』용 AI Mod로, 게임 속 인물과 단둘이 이야기할 수 있고 인물이 물건을 주거나 무공을 가르쳐 주고 나눈 이야기를 기억합니다([Bilibili 소개 영상](https://www.bilibili.com/video/BV1s2nC6pE83/)). AI 동행 탭 인물들의 성격과 버릇 일부는 类脑 커뮤니티 夏呆呆 님의 2차 창작 캐릭터 카드 『活侠传』를 참고했습니다. 풀 리퀘스트를 보내 주신 [lxsb222-spec](https://github.com/lxsb222-spec), [blakceyes](https://github.com/blakceyes), [NEXTAltair](https://github.com/NEXTAltair), [pluvivanto](https://github.com/pluvivanto) 님, issue를 올려 주신 [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y), [iampigcheng](https://github.com/iampigcheng) 님께 감사드립니다.

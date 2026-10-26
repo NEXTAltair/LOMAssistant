@@ -45,13 +45,13 @@ ZIP には BepInEx が同梱されています。
 
 ### AIお供（F3）
 
-自分の API Key で大規模言語モデルにつなぎ、ストーリーや攻略を質問したり、ヒロインとおしゃべりしたりできます。DeepSeek、Kimi、通義千問、智譜 GLM、SiliconFlow、OpenRouter、OpenAI、Claude、Gemini、ローカルの Ollama、そのほか OpenAI 互換の API に対応しています。
+自分の API Key で大規模言語モデルにつなぎ、ストーリーや攻略を質問したり、ヒロインや大師兄とおしゃべりしたりできます。DeepSeek、Kimi、通義千問、智譜 GLM、SiliconFlow、OpenRouter、OpenAI、Claude、Gemini、ローカルの Ollama、そのほか OpenAI 互換の API に対応しています。
 
 - **攻略アシスタント**：ゲーム内のストーリーデータを調べてから答えます。任務と発生条件、台本の分岐と会話、ルートごとの好感度・数値の合計、エンディングと死亡、縁結びルート、人物誌、場所イベント、決闘の条件、それに今の進行状況と画面の選択肢。
-- **ヒロイン**：縁結びできる九人のヒロインが本人の口調で話し、立ち絵の表情も話に合わせて変わり、呼び方はストーリーに合わせて変わります。知っているのはプレイヤーが読んだストーリーだけです。攻略を聞くと返事のあとに攻略ヒントが別に付きます。おしゃべりだけにもできます。
+- **ヒロインと大師兄**：縁結びできる九人のヒロインと大師兄の唐布衣が本人の口調で話し、立ち絵の表情も話に合わせて変わり、呼び方はストーリーに合わせて変わります。知っているのはプレイヤーが読んだストーリーだけです。攻略を聞くと返事のあとに攻略ヒントが別に付きます。おしゃべりだけにもできます。
 - **ネタバレの程度**：何でも答える／今と通った所だけ／方向のヒントだけ。
 - **数値と設定の変更**：数値、好感度、想い人、フラグ、この Mod の設定を変えるときは、AI がまずカードを出し、確定を押すまで変わりません。
-- **会話**：会話はヒロインごとにローカルに保存され、新規・切り替え・削除ができます。返事は書かれたそばから表示されます。
+- **会話**：会話は相手ごとにローカルに保存され、新規・切り替え・削除のほか、デスクトップへの書き出しもできます。返事は書かれたそばから表示されます。
 - **じっくりモード**：より強いモデルに切り替え、答える前に資料を確かめます。より正確ですが、料金が高く時間もかかります。
 - **料金とプライバシー**：料金はプロバイダーの価格どおりで、この Mod は無料です。Key と会話は選んだプロバイダーにだけ送られ、診断の書き出しでは Key は伏せられます。
 
@@ -186,4 +186,4 @@ ZIP には BepInEx が同梱されています。
 
 ## クレジット
 
-[中国語版 README](README.md#致谢) を参照してください。本プロジェクトは爱死氏の「活侠传助手」をもとにしており、赵活系统の機能のアイデアと LOM_SaveSlotExpander のコードを参考・移植しています。AIお供タブのアイデアは Cpjjason さんの [江湖夜话](https://github.com/Cpjjason/jianghu-yehua)（江湖夜話）を参考にしています。同じく『活俠傳』の AI Mod で、登場人物と二人きりで話ができ、人物が物を贈ったり武功を指南したり、話したことを覚えていたりします（[Bilibili の紹介動画](https://www.bilibili.com/video/BV1s2nC6pE83/)）。AIお供タブのヒロインの性格や癖の一部は、类脑コミュニティの夏呆呆さんによる二次創作キャラクターカード『活侠传』を参考にしています。プルリクエストをくださった [lxsb222-spec](https://github.com/lxsb222-spec)、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair)、[pluvivanto](https://github.com/pluvivanto) さん、issue をくださった [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y)、[iampigcheng](https://github.com/iampigcheng) さんに感謝します。
+[中国語版 README](README.md#致谢) を参照してください。本プロジェクトは爱死氏の「活侠传助手」をもとにしており、赵活系统の機能のアイデアと LOM_SaveSlotExpander のコードを参考・移植しています。AIお供タブのアイデアは Cpjjason さんの [江湖夜话](https://github.com/Cpjjason/jianghu-yehua)（江湖夜話）を参考にしています。同じく『活俠傳』の AI Mod で、登場人物と二人きりで話ができ、人物が物を贈ったり武功を指南したり、話したことを覚えていたりします（[Bilibili の紹介動画](https://www.bilibili.com/video/BV1s2nC6pE83/)）。AIお供タブの人物の性格や癖の一部は、类脑コミュニティの夏呆呆さんによる二次創作キャラクターカード『活侠传』を参考にしています。プルリクエストをくださった [lxsb222-spec](https://github.com/lxsb222-spec)、[blakceyes](https://github.com/blakceyes)、[NEXTAltair](https://github.com/NEXTAltair)、[pluvivanto](https://github.com/pluvivanto) さん、issue をくださった [mahosalieri85-a11y](https://github.com/mahosalieri85-a11y)、[iampigcheng](https://github.com/iampigcheng) さんに感謝します。
